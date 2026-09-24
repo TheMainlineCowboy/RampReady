@@ -40818,5 +40818,5459 @@
       "offset": 62985000,
       "text": "XCloseDisplay"
     }
+  ],
+  "drmRange": [
+    {
+      "offset": 16956003,
+      "text": "Delete %s and re-try"
+    },
+    {
+      "offset": 16956024,
+      "text": "AUTH_SERVER_FAIL"
+    },
+    {
+      "offset": 16956041,
+      "text": "do_work"
+    },
+    {
+      "offset": 16956049,
+      "text": "Error getting directory: %s"
+    },
+    {
+      "offset": 16956077,
+      "text": "--branch"
+    },
+    {
+      "offset": 16956086,
+      "text": "ERROR: did not find branch head %s"
+    },
+    {
+      "offset": 16956122,
+      "text": "WARNING: found %d branches named %s. Using build number %d"
+    },
+    {
+      "offset": 16956182,
+      "text": "--install_name"
+    },
+    {
+      "offset": 16956197,
+      "text": "Beta build %d not selected because manifest goes up to %d"
+    },
+    {
+      "offset": 16956256,
+      "text": "Final build %d not selected because manifest goes up to %d"
+    },
+    {
+      "offset": 16956316,
+      "text": "License"
+    },
+    {
+      "offset": 16956324,
+      "text": "End User License Agreement"
+    },
+    {
+      "offset": 16956351,
+      "text": "Run X-Plane"
+    },
+    {
+      "offset": 16956363,
+      "text": "Please pick which copy of the X-Plane 12 demo you would like to run."
+    },
+    {
+      "offset": 16956432,
+      "text": "Please pick which copy of X-Plane 12 you would like to run."
+    },
+    {
+      "offset": 16956492,
+      "text": "Run Install"
+    },
+    {
+      "offset": 16956504,
+      "text": "Beginning installation to %s"
+    },
+    {
+      "offset": 16956533,
+      "text": "Recursive delete on %s failed: %s"
+    },
+    {
+      "offset": 16956567,
+      "text": "Files: %d"
+    },
+    {
+      "offset": 16956578,
+      "text": "Chunks: %d"
+    },
+    {
+      "offset": 16956590,
+      "text": "Total kbytes: %f"
+    },
+    {
+      "offset": 16956608,
+      "text": "DL Time: %f"
+    },
+    {
+      "offset": 16956621,
+      "text": "DL Rate: %f"
+    },
+    {
+      "offset": 16956634,
+      "text": "DL deviation: %f"
+    },
+    {
+      "offset": 16956652,
+      "text": "Retries: %d"
+    },
+    {
+      "offset": 16956665,
+      "text": "Source: %d"
+    },
+    {
+      "offset": 16956677,
+      "text": "Product: %d"
+    },
+    {
+      "offset": 16956690,
+      "text": "Complete: %s"
+    },
+    {
+      "offset": 16956704,
+      "text": "Fatal Errors: %d"
+    },
+    {
+      "offset": 16956722,
+      "text": "X-Plane Installer"
+    },
+    {
+      "offset": 16956740,
+      "text": "Please insert DVD number %1:disk number%, then wait a few moments for the DVD to be recognized by your computer."
+    },
+    {
+      "offset": 16956853,
+      "text": "Installing: %1:file%"
+    },
+    {
+      "offset": 16956874,
+      "text": "Retrying files due to network errors, this may take up to 10 minutes (%1:count% file remaining)..."
+    },
+    {
+      "offset": 16956973,
+      "text": "Retrying files due to network errors, this may take up to 10 minutes (%1:count% files remaining)..."
+    },
+    {
+      "offset": 16957073,
+      "text": "Finishing up..."
+    },
+    {
+      "offset": 16957089,
+      "text": "Unable to download. Please check your internet connection."
+    },
+    {
+      "offset": 16957148,
+      "text": "The installer will try to download again shortly."
+    },
+    {
+      "offset": 16957198,
+      "text": "Press the Back button to cancel installation."
+    },
+    {
+      "offset": 16957244,
+      "text": "About %1:time% left in the install, downloading at %2:rate% from %3:number% download server."
+    },
+    {
+      "offset": 16957337,
+      "text": "About %1:time% left in the install, downloading at %2:rate% from %3:number% download servers."
+    },
+    {
+      "offset": 16957431,
+      "text": "Installing files from DVD."
+    },
+    {
+      "offset": 16957458,
+      "text": "Downloading at %1:rate% from %2:server%."
+    },
+    {
+      "offset": 16957499,
+      "text": "Unable to download from server %1:server%."
+    },
+    {
+      "offset": 16957542,
+      "text": "Contacting %1:server%."
+    },
+    {
+      "offset": 16957565,
+      "text": "X-Plane Analytics.prf"
+    },
+    {
+      "offset": 16957587,
+      "text": "_send_analytics "
+    },
+    {
+      "offset": 16957604,
+      "text": "_proxy_host "
+    },
+    {
+      "offset": 16957617,
+      "text": "_force_ipv4 1"
+    },
+    {
+      "offset": 16957632,
+      "text": "_lang "
+    },
+    {
+      "offset": 16957639,
+      "text": "Global Scenery/installer_receipt.json"
+    },
+    {
+      "offset": 16957677,
+      "text": "Could not write scenery receipt at '%s'"
+    },
+    {
+      "offset": 16957718,
+      "text": "Writing scenery receipt for %d"
+    },
+    {
+      "offset": 16957752,
+      "text": "\"version\":1,"
+    },
+    {
+      "offset": 16957766,
+      "text": "\"build_number\":%d"
+    },
+    {
+      "offset": 16957788,
+      "text": "Check Servers"
+    },
+    {
+      "offset": 16957802,
+      "text": "Get Installation Info from Internet"
+    },
+    {
+      "offset": 16957838,
+      "text": "This product key cannot be used to install X-Plane 12."
+    },
+    {
+      "offset": 16957893,
+      "text": "Please contact Laminar Research for information on how to re-install X-Plane"
+    },
+    {
+      "offset": 16957970,
+      "text": "Scan Existing Files"
+    },
+    {
+      "offset": 16957990,
+      "text": "Scanning %1:number% of %2:total% files."
+    },
+    {
+      "offset": 16958030,
+      "text": "Identity Controller"
+    },
+    {
+      "offset": 16958050,
+      "text": "License Manager Loading. Please wait..."
+    },
+    {
+      "offset": 16958090,
+      "text": "Login with X-Plane Identity"
+    },
+    {
+      "offset": 16958118,
+      "text": "Msg 1 frame"
+    },
+    {
+      "offset": 16958130,
+      "text": "Click on the button below to launch a web browser to login to your X-Plane Identity account. When you're done there, the installation will continue."
+    },
+    {
+      "offset": 16958279,
+      "text": "Error frame"
+    },
+    {
+      "offset": 16958291,
+      "text": "Launch Login Browser"
+    },
+    {
+      "offset": 16958312,
+      "text": "Your X-Plane Account"
+    },
+    {
+      "offset": 16958333,
+      "text": "You're logged in! The account information is listed below. If you do not wish to login with this account and wish to use a different account, click the 'Logout' button. Otherwise continue."
+    },
+    {
+      "offset": 16958522,
+      "text": "Login successful but this account does not seem to have an X-Plane purchase associated with it. You can go back and try to login to a different account or purchase X-Plane."
+    },
+    {
+      "offset": 16958695,
+      "text": "Fetching latest receipt for this account..."
+    },
+    {
+      "offset": 16958739,
+      "text": "There was an error fetching the latest receipt for this account. Please check your network connection and try again later."
+    },
+    {
+      "offset": 16958862,
+      "text": "Msg 2 frame"
+    },
+    {
+      "offset": 16958874,
+      "text": "Logout"
+    },
+    {
+      "offset": 16958881,
+      "text": "The Digital Product Key (XDD) you entered is already associated with your X-Plane Identity account. Please Login using your X-Plane Identity to continue."
+    },
+    {
+      "offset": 16959035,
+      "text": "Pick Destination"
+    },
+    {
+      "offset": 16959052,
+      "text": "Pick Installation"
+    },
+    {
+      "offset": 16959070,
+      "text": "set_installer_destination <string>"
+    },
+    {
+      "offset": 16959105,
+      "text": "Pick Install Destination for %1:install%."
+    },
+    {
+      "offset": 16959147,
+      "text": "Set installation destination to %s"
+    },
+    {
+      "offset": 16959182,
+      "text": "The folder "
+    },
+    {
+      "offset": 16959196,
+      "text": "%1:install name%"
+    },
+    {
+      "offset": 16959215,
+      "text": "already exists inside the folder "
+    },
+    {
+      "offset": 16959252,
+      "text": "%2:parent folder%."
+    },
+    {
+      "offset": 16959274,
+      "text": "Please change the install name or destination."
+    },
+    {
+      "offset": 16959321,
+      "text": "Please pick a name for your X-Plane folder that does not contain slashes or the "
+    },
+    {
+      "offset": 16959408,
+      "text": "character."
+    },
+    {
+      "offset": 16959420,
+      "text": "You do not have permission to install X-Plane to the location "
+    },
+    {
+      "offset": 16959485,
+      "text": "%1:parent folder%."
+    },
+    {
+      "offset": 16959507,
+      "text": "Please pick a new installation location."
+    },
+    {
+      "offset": 16959548,
+      "text": "The location "
+    },
+    {
+      "offset": 16959564,
+      "text": "%1:parent folder%"
+    },
+    {
+      "offset": 16959584,
+      "text": "is on a read-only DVD-ROM or drive."
+    },
+    {
+      "offset": 16959621,
+      "text": "X-Plane cannot be installed to the location "
+    },
+    {
+      "offset": 16959668,
+      "text": "%1:parent folder%."
+    },
+    {
+      "offset": 16959690,
+      "text": "X-Plane cannot be installed to the location "
+    },
+    {
+      "offset": 16959737,
+      "text": "%1:parent folder%,"
+    },
+    {
+      "offset": 16959758,
+      "text": "because this location is known to cause problems with X-Plane."
+    },
+    {
+      "offset": 16959822,
+      "text": "The installer will create the folder "
+    },
+    {
+      "offset": 16959862,
+      "text": "%1:install name%"
+    },
+    {
+      "offset": 16959881,
+      "text": "inside the folder "
+    },
+    {
+      "offset": 16959903,
+      "text": "%2:parent folder%."
+    },
+    {
+      "offset": 16959925,
+      "text": "/Applications"
+    },
+    {
+      "offset": 16959939,
+      "text": "C:\\Program Files"
+    },
+    {
+      "offset": 16959960,
+      "text": "Attempting to post-validate the install path %s returned error %s."
+    },
+    {
+      "offset": 16960028,
+      "text": "Attempting to validate the install path %s returned error %s."
+    },
+    {
+      "offset": 16960091,
+      "text": "Pick Auth"
+    },
+    {
+      "offset": 16960101,
+      "text": "Decide on DRM Method"
+    },
+    {
+      "offset": 16960122,
+      "text": "X-Plane Login"
+    },
+    {
+      "offset": 16960136,
+      "text": "Output/"
+    },
+    {
+      "offset": 16960144,
+      "text": "product_id"
+    },
+    {
+      "offset": 16960155,
+      "text": "019102a2-5d67-7220-9ff5-a1480178c04b"
+    },
+    {
+      "offset": 16960192,
+      "text": "Verify Product"
+    },
+    {
+      "offset": 16960207,
+      "text": "Authenticate DVD or Digital Download"
+    },
+    {
+      "offset": 16960244,
+      "text": "xdd-installer"
+    },
+    {
+      "offset": 16960258,
+      "text": "This DVD does not appear to be an X-Plane 12 DVD."
+    },
+    {
+      "offset": 16960308,
+      "text": "Enter Product Key or Insert DVD"
+    },
+    {
+      "offset": 16960340,
+      "text": "Enter Product Key"
+    },
+    {
+      "offset": 16960358,
+      "text": "Please enter your product key into the field below and click Continue."
+    },
+    {
+      "offset": 16960429,
+      "text": "Your product key is in the email confirming your purchase."
+    },
+    {
+      "offset": 16960488,
+      "text": "If you have an X-Plane DVD set, please insert disc 1 now."
+    },
+    {
+      "offset": 16960546,
+      "text": "Net pick dest WC"
+    },
+    {
+      "offset": 16960563,
+      "text": "Set initial target to %s"
+    },
+    {
+      "offset": 16960588,
+      "text": "Pick destination container"
+    },
+    {
+      "offset": 16960615,
+      "text": "Instructions for multiple installs"
+    },
+    {
+      "offset": 16960650,
+      "text": "You have more than one copy of X-Plane 12 installed on this computer."
+    },
+    {
+      "offset": 16960720,
+      "text": "Find other install"
+    },
+    {
+      "offset": 16960739,
+      "text": "Is the copy of X-Plane 12 you"
+    },
+    {
+      "offset": 16960771,
+      "text": "re looking for missing from this list?"
+    },
+    {
+      "offset": 16960810,
+      "text": "Are you looking for a different copy of X-Plane 12 on your computer?"
+    },
+    {
+      "offset": 16960879,
+      "text": "Radio btn packer"
+    },
+    {
+      "offset": 16960896,
+      "text": "Find It"
+    },
+    {
+      "offset": 16960904,
+      "text": "Installations available"
+    },
+    {
+      "offset": 16960928,
+      "text": "The copy of X-Plane you selected appears to have been created by Steam."
+    },
+    {
+      "offset": 16961000,
+      "text": "Only Steam's built-in updater can be used on this copy of the simulator."
+    },
+    {
+      "offset": 16961073,
+      "text": "Set target to %s"
+    },
+    {
+      "offset": 16961090,
+      "text": "Select X-Plane 12"
+    },
+    {
+      "offset": 16961108,
+      "text": "Select Your Copy of X-Plane 12."
+    },
+    {
+      "offset": 16961140,
+      "text": "You selected the folder path:"
+    },
+    {
+      "offset": 16961170,
+      "text": "But it does not appear to be an installed copy of X-Plane 12."
+    },
+    {
+      "offset": 16961232,
+      "text": "Please be sure to select the folder that contains the X-Plane application."
+    },
+    {
+      "offset": 16961307,
+      "text": "Support btn"
+    },
+    {
+      "offset": 16961319,
+      "text": "Support btn frame"
+    },
+    {
+      "offset": 16961337,
+      "text": "Contact Support"
+    },
+    {
+      "offset": 16961353,
+      "text": "Click here to go to a web page with contact information for Customer Support."
+    },
+    {
+      "offset": 16961431,
+      "text": "/_lookup_12_/installer_support_400.html"
+    },
+    {
+      "offset": 16961471,
+      "text": "Eastern United States"
+    },
+    {
+      "offset": 16961493,
+      "text": "Western United States"
+    },
+    {
+      "offset": 16961515,
+      "text": "Eastern Canada, Greenland, & Iceland"
+    },
+    {
+      "offset": 16961552,
+      "text": "Western Canada & Alaska"
+    },
+    {
+      "offset": 16961576,
+      "text": "Mexico & Northern South America"
+    },
+    {
+      "offset": 16961608,
+      "text": "Southern South America"
+    },
+    {
+      "offset": 16961631,
+      "text": "Northwestern Africa"
+    },
+    {
+      "offset": 16961651,
+      "text": "Southern Africa"
+    },
+    {
+      "offset": 16961667,
+      "text": "Middle East"
+    },
+    {
+      "offset": 16961679,
+      "text": "Western Europe"
+    },
+    {
+      "offset": 16961694,
+      "text": "Eastern Europe"
+    },
+    {
+      "offset": 16961709,
+      "text": "Scandinavia"
+    },
+    {
+      "offset": 16961721,
+      "text": "Western Russia"
+    },
+    {
+      "offset": 16961736,
+      "text": "Siberia"
+    },
+    {
+      "offset": 16961744,
+      "text": "West-Central Asia"
+    },
+    {
+      "offset": 16961762,
+      "text": "Southeast Asia"
+    },
+    {
+      "offset": 16961777,
+      "text": "Southwestern Asia"
+    },
+    {
+      "offset": 16961795,
+      "text": "China & Mongolia"
+    },
+    {
+      "offset": 16961812,
+      "text": "Australia & New Zealand"
+    },
+    {
+      "offset": 16961836,
+      "text": "Pacific Islands (Left)"
+    },
+    {
+      "offset": 16961859,
+      "text": "Pacific Islands (Right)"
+    },
+    {
+      "offset": 16961883,
+      "text": "wrl_sel[%d][%d] = true; "
+    },
+    {
+      "offset": 16961908,
+      "text": "World map WC"
+    },
+    {
+      "offset": 16961921,
+      "text": "Map scenery picker container"
+    },
+    {
+      "offset": 16961950,
+      "text": "All/none btns"
+    },
+    {
+      "offset": 16961964,
+      "text": "Select All"
+    },
+    {
+      "offset": 16961975,
+      "text": "Select None"
+    },
+    {
+      "offset": 16961991,
+      "text": "Scenery selection complete! User settled on the following regions:"
+    },
+    {
+      "offset": 16962058,
+      "text": "Found some or all of the DSFs in the following 10x10 regions:"
+    },
+    {
+      "offset": 16962120,
+      "text": "(%02d, %02d)  "
+    },
+    {
+      "offset": 16962135,
+      "text": "Mapped those DSFs to the following regions:"
+    },
+    {
+      "offset": 16962179,
+      "text": "best_region_set.size() == 9"
+    },
+    {
+      "offset": 16962207,
+      "text": "Scenery picker WC"
+    },
+    {
+      "offset": 16962225,
+      "text": "Scenery picker container"
+    },
+    {
+      "offset": 16962250,
+      "text": "%.1f GB"
+    },
+    {
+      "offset": 16962258,
+      "text": "%.0f MB"
+    },
+    {
+      "offset": 16962266,
+      "text": "%.0f KB"
+    },
+    {
+      "offset": 16962274,
+      "text": "%1:seconds% second"
+    },
+    {
+      "offset": 16962293,
+      "text": "%1:seconds% seconds"
+    },
+    {
+      "offset": 16962313,
+      "text": "%1:minutes% minute"
+    },
+    {
+      "offset": 16962332,
+      "text": "%1:minutes% minutes"
+    },
+    {
+      "offset": 16962352,
+      "text": "%1:hours% hour"
+    },
+    {
+      "offset": 16962367,
+      "text": "%1:hours% hours"
+    },
+    {
+      "offset": 16962383,
+      "text": "--staging"
+    },
+    {
+      "offset": 16962393,
+      "text": "https://lookup.staging.x-plane.com"
+    },
+    {
+      "offset": 16962428,
+      "text": "https://lookup.x-plane.com"
+    },
+    {
+      "offset": 16962455,
+      "text": "EULA WC"
+    },
+    {
+      "offset": 16962463,
+      "text": "EULA outer container"
+    },
+    {
+      "offset": 16962484,
+      "text": "If you do not have a commercial-use key, you agree to use X-Plane for non-commercial purposes only. (See www.X-Plane.com/pro for information on professional use.)"
+    },
+    {
+      "offset": 16962647,
+      "text": "You agree to not make copies of X-Plane."
+    },
+    {
+      "offset": 16962688,
+      "text": "You agree to not distribute the artwork from X-Plane, or any derivative thereof, without permission from Laminar Research."
+    },
+    {
+      "offset": 16962811,
+      "text": "I agree to the terms of the EULA"
+    },
+    {
+      "offset": 16962844,
+      "text": "Additional Terms for Jeppesen Data"
+    },
+    {
+      "offset": 16962879,
+      "text": "Analytics container"
+    },
+    {
+      "offset": 16962899,
+      "text": "Help make X-Plane better by allowing X-Plane to send us information about how you use it. We do not collect personally identifying information."
+    },
+    {
+      "offset": 16963043,
+      "text": "Checkbox and more btn"
+    },
+    {
+      "offset": 16963065,
+      "text": "Click to learn more about how Laminar Research collects diagnostic information"
+    },
+    {
+      "offset": 16963144,
+      "text": "Send diagnostic and usage data to Laminar Research"
+    },
+    {
+      "offset": 16963195,
+      "text": "If you check this, X-Plane will send usage data to Laminar Research so we can learn how you use X-Plane and make it better."
+    },
+    {
+      "offset": 16963319,
+      "text": "Jeppesen EULA body container"
+    },
+    {
+      "offset": 16963348,
+      "text": "YOU (herein also "
+    },
+    {
+      "offset": 16963368,
+      "text": "End-User"
+    },
+    {
+      "offset": 16963379,
+      "text": ") HAVE LICENSED JEPPESEN"
+    },
+    {
+      "offset": 16963406,
+      "text": "S NAVDATA ("
+    },
+    {
+      "offset": 16963420,
+      "text": "DATA"
+    },
+    {
+      "offset": 16963427,
+      "text": ") (called "
+    },
+    {
+      "offset": 16963440,
+      "text": "Products"
+    },
+    {
+      "offset": 16963451,
+      "text": "hereinafter) FROM NAVIGRAPH KB ("
+    },
+    {
+      "offset": 16963493,
+      "text": ") UNDER AN AGREEMENT (herein "
+    },
+    {
+      "offset": 16963525,
+      "text": "Agreement"
+    },
+    {
+      "offset": 16963537,
+      "text": "). PLEASE READ THE FOLLOWING ADDITIONAL TERMS ("
+    },
+    {
+      "offset": 16963587,
+      "text": "Additional Terms"
+    },
+    {
+      "offset": 16963606,
+      "text": ") PROVIDED TO YOU BY OEM CAREFULLY BEFORE USING THE PRODUCTS. THESE ADDITIONAL TERMS ARE LEGALLY BINDING UPON YOU IN ADDITION AND AS AN INTEGRAL PART OF THE AGREEMENT. BY YOUR BELOW SIGNATURE, END-USER IS AGREEING TO EACH TERM OF THESE ADDITIONAL TERMS AS PART OF THE AGREEMENT INCLUDING THE RESTRICTIONS ON USE, DISCLAIMERS AND LIMITATION OF LIABILITIES. ANY USE OF THE PRODUCTS WILL ALSO CONSTITUTE YOUR AGREEMENT WITH THESE ADDITIONAL TERMS AS PART OF THE AGREEMENT. In case of a conflict between the Agreement and anything stated in these Additional Terms, these Additional Terms shall govern and prevail."
+    },
+    {
+      "offset": 16964216,
+      "text": "1. ACKNOWLEDGEMENTS"
+    },
+    {
+      "offset": 16964236,
+      "text": "a. End-User acknowledges that the Agreement is concluded solely between OEM and End-User, and not with Jeppesen GmbH and/or Jeppesen Sanderson Inc. ("
+    },
+    {
+      "offset": 16964388,
+      "text": "Jeppesen"
+    },
+    {
+      "offset": 16964399,
+      "text": "). The parties acknowledge that OEM (and not Jeppesen) is responsible for addressing any claims of the End-User relating to the Products. End-User acknowledges and agrees that Jeppesen is in respect of these Additional Terms a third party beneficiary of the Agreement, and that upon End-User"
+    },
+    {
+      "offset": 16964693,
+      "text": "s acceptance of the Additional Terms, Jeppesen will have the right (and will be deemed to have accepted the right) to enforce the Additional Terms against End-User as a third party beneficiary of the Agreement."
+    },
+    {
+      "offset": 16964904,
+      "text": "b. End-User acknowledges and agrees that each NavData database is effective for the specific 28-day AIRAC cycle period for which it was produced. Jeppesen has no liability or responsibility of any kind for the use of NavData by End-User after the expiration of its AIRAC effectivity cycle. End-User agrees that any use of the NavData after the expiration date of the AIRAC effectivity cycle will be at the End-User's sole risk and responsibility."
+    },
+    {
+      "offset": 16965351,
+      "text": "c. Information contained in NavData is independently available from publications of the appropriate governing authority. NavData are designed for use by experienced and knowledgeable (i) pilots who must be thoroughly familiar with and competent in, among other things, the navigation of aircraft and the air navigation equipment being used, and (ii) flight dispatchers, flight planners and others who must be thoroughly familiar with and competent in, among other things, the planning of flights and the computerized flight planning programs being used. The NavData does NOT contain all information necessary to independently conduct instrument or visual flight procedures or plan all aspects of a flight. The NavData must be used in conjunction with the appropriate aeronautical charts and other information available to pilots, flight dispatchers, flight planners and others through a variety of sources. Pilots must conduct flight procedures in accordance with the information depicted on aeronautical charts."
+    },
+    {
+      "offset": 16966364,
+      "text": "d. Some information displayed by the system on which NavData is installed ("
+    },
+    {
+      "offset": 16966442,
+      "text": "System"
+    },
+    {
+      "offset": 16966451,
+      "text": ") may be solely generated by the System, and may not be information derived from Jeppesen NavData. The NavData provided hereunder may not contain all of the navigation data existing worldwide, and End-User should make no assumption otherwise. The System may not utilize all NavData available from Jeppesen, and the data contained in End-User"
+    },
+    {
+      "offset": 16966795,
+      "text": "s NavData may be only a subset of the data available from Jeppesen."
+    },
+    {
+      "offset": 16966863,
+      "text": "e. End-User is the "
+    },
+    {
+      "offset": 16966885,
+      "text": "end-user"
+    },
+    {
+      "offset": 16966896,
+      "text": "of the data that is the subject of this Agreement, and Requirements and Technical Concepts for Aviation, Inc. (RTCA) document DO-200A and European Organization for Civil Aviation Equipment (EUROCAE) document ED-76, "
+    },
+    {
+      "offset": 16967115,
+      "text": "Standards for Processing Aeronautical Data,"
+    },
+    {
+      "offset": 16967161,
+      "text": "Section 1.4, Application of Standard, state that, "
+    },
+    {
+      "offset": 16967215,
+      "text": "The ultimate responsibility of ensuring that data [i.e. NavData] meets the quality for its intended application rests with the end-user of that data."
+    },
+    {
+      "offset": 16967365,
+      "text": "f. End-User is solely responsible for (i) thoroughly and appropriately training its users on the use of the System and the contents of any reformatted data derived from NavData, including, among other things, its limitations and differences from Jeppesen NavData, and (ii) training its users to confirm that the database information the user selects in the System is the database information the user intends to select."
+    },
+    {
+      "offset": 16967785,
+      "text": "2. OWNERSHIP/COPYRIGHT. Jeppesen is the owner or authorized licensor of the Products, which is protected by copyright. Material from the Australian Aeronautical Information Publication has been used by agreement with Airservices Australia. The Products provided hereunder may contain third party data provided by the avionics manufacturer in whose system the Products will be used and Jeppesen disclaims any and all responsibility and liability whatsoever for such third party data."
+    },
+    {
+      "offset": 16968268,
+      "text": "3. RESTRICTIONS ON USE. The Products may not be used for any other purpose, nor be sold or given by End-User to any third party for any use. Use of the Data by End-User to generate aviation charts or maps, whether for reference only or actual air navigation, is expressly prohibited. The Products cannot be used for performance based navigation procedure design (RNAV-RNP). End-User will NOT: (a) copy, reproduce, reverse engineer, decompile, disassemble or publish the Data;(b) electronically transfer the Products to multiple computers over a network system; (c) distribute copies of the Products or accompanying materials to others; (d) modify, adapt, or translate the Products or create derivative works based on the Products; or (e) assign, rent, lend, sell, transfer or sublease the Products."
+    },
+    {
+      "offset": 16969067,
+      "text": "4. WARNINGS: PRODUCTS RELATED ALERTS AND NOTICES ("
+    },
+    {
+      "offset": 16969120,
+      "text": "ALERTS"
+    },
+    {
+      "offset": 16969129,
+      "text": ") ARE PUBLISHED ON JEPPESEN"
+    },
+    {
+      "offset": 16969159,
+      "text": "S NOTICES AND ALERTS WEBPAGE ACCESSIBLE VIA WWW.JEPPESEN.COM. CHANGES MAY OCCUR AT ANY TIME AND END-USER AGREES TO REGULARLY MONITOR JEPPESEN"
+    },
+    {
+      "offset": 16969303,
+      "text": "S NOTICES AND ALERTS WEBPAGE AS APPROPRIATE FOR ITS TYPE OF OPERATION."
+    },
+    {
+      "offset": 16969374,
+      "text": "5. NO WARRANTY: END-USER ACKNOWLEDGES, AGREES AND UNDERSTANDS THAT THE PRODUCTS ARE PROVIDED "
+    },
+    {
+      "offset": 16969470,
+      "text": "AS IS"
+    },
+    {
+      "offset": 16969478,
+      "text": "WITHOUT WARRANTY OF ANY KIND WHATSOEVER."
+    },
+    {
+      "offset": 16969520,
+      "text": "6. DISCLAIMER AND RELEASE: THE CONDITIONS, REPRESENTATIONS, GUARANTIES, OBLIGATIONS, LIABILITIES AND WARRANTIES (IF ANY) OF JEPPESEN AND REMEDIES OF END-USER SET FORTH HEREIN ARE EXCLUSIVE AND IN SUBSTITUTION FOR, AND END-USER HEREBY WAIVES, RELEASES AND RENOUNCES, ALL OTHER WARRANTIES, CONDITIONS, REPRESENTATIONS, GUARANTEES, OBLIGATIONS AND LIABILITIES OF JEPPESEN, AND ANY OTHER RIGHTS, CLAIMS AND REMEDIES OF END-USER AGAINST JEPPESEN, EXPRESS OR IMPLIED, ARISING BY LAW, EQUITY OR OTHERWISE, WITH RESPECT TO ANY END-USER-SUPPLIED INFORMATION, THE PRODUCTS PROVIDED HEREUNDER AND ANY NONCONFORMANCE OR DEFECT IN THE DESIGN, ADEQUACY, ACCURACY, RELIABILITY, SAFETY, OR CONFORMANCE WITH GOVERNMENT STANDARDS OR REGULATIONS OF SUCH PRODUCTS,INCLUDING BUT NOT LIMITED TO: (i) ANY IMPLIED WARRANTY OF MERCHANTABILITY, SATISFACTORY QUALITY, OR FITNESS; (ii) ANY IMPLIED WARRANTY ARISING FROM COURSE OF PERFORMANCE, COURSE OF DEALING OR USAGE OF TRADE; (iii) ANY OBLIGATION, LIABILITY, RIGHT, CLAIM OR REMEDY ARISING IN STRICT LIABILITY OR TORT, WHETHER OR NOT ARISING FROM THE NEGLIGENCE OF JEPPESEN; AND (iv) ANY OBLIGATION, LIABILITY, RIGHT, CLAIM OR REMEDY FOR LOSS OF OR DAMAGE TO ANY PROPERTY OF END-USER, INCLUDING WITHOUT LIMITATION ANY AIRCRAFT."
+    },
+    {
+      "offset": 16970774,
+      "text": "7. EXCLUSION OF SPECIFIED LOSSES AND DAMAGES: JEPPESEN WILL HAVE NO OBLIGATION OR LIABILITY WHATSOEVER, (i) WHETHER ARISING IN LAW, EQUITY, CONTRACT (INCLUDING BUT NOT LIMITED TO WARRANTY), TORT (INCLUDING BUT NOT LIMITED TO THE NEGLIGENCE OF JEPPESEN), STRICT LIABILITY OR OTHERWISE AND (ii) WHETHER SUCH LOSSES OR DAMAGES ARE DIRECT, INDIRECT OR OTHERWISE, FOR: (i) LOSS OF USE, REVENUE, PROFIT, ANTICIPATED SAVINGS, BUSINESS VALUE, OPPORTUNITY OR GOODWILL; (ii) LOSS OR DAMAGES RESULTING FROM BUSINESS INTERRUPTION; (iii) LOSS OR DAMAGES RESULTING FROM DELAY IN PERFORMANCE AND COST OF SUBSTITUTE PROCUREMENT; (iv) LOSS OR DAMAGES RESULTING FROM REPRODUCTION OR RECOVERY OF PRODUCTS OR INFORMATION WHICH IS LOST, CORRUPTED OR DAMAGED IN ANY OTHER MANNER, WHETHER IN WHOLE OR IN PART; OR (v) ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, EXEMPLARY OR PURE ECONOMIC LOSSES OR DAMAGES; IN ANY WAY ARISING OUT OF OR RELATED TO THE AGREEMENT."
+    },
+    {
+      "offset": 16971719,
+      "text": "8. INDEMNIFICATION: End-User agrees to indemnify and hold harmless Jeppesen and its subcontractors from and against all claims and liabilities (including claims by third parties), and costs and expenses (including attorneys"
+    },
+    {
+      "offset": 16971945,
+      "text": "fees), incident thereto or incident to successfully establishing the right to indemnification, for injury to or death of any person or persons, including employees of End-User but not employees of Jeppesen, or for loss of or damage to any property, including any aircraft, arising out of or in any way relating to End-User"
+    },
+    {
+      "offset": 16972271,
+      "text": "s utilization of the Products or any other things provided hereunder, whether or not arising in strict liability or tort or occasioned by the negligence of Jeppesen. End-User"
+    },
+    {
+      "offset": 16972448,
+      "text": "s obligations under this indemnity will survive the expiration, termination, completion or cancellation of the Agreement."
+    },
+    {
+      "offset": 16972570,
+      "text": "9. For purposes of Sections 6. (Disclaimer and Release), 7. (Exclusion of Specified Losses and Damages) and 8. (Indemnification), the term "
+    },
+    {
+      "offset": 16972712,
+      "text": "Jeppesen"
+    },
+    {
+      "offset": 16972723,
+      "text": "includes its parent companies (at any tier), its divisions, subsidiaries and affiliates, the assignees of each, and their respective directors, officers, employees and agents."
+    },
+    {
+      "offset": 16972900,
+      "text": "10. LIMITATION OF LIABILITY: THE MAXIMUM LIABILITY OF JEPPESEN UNDER THE AGREEMENT SHALL BE ONE THOUSAND EUROS."
+    },
+    {
+      "offset": 16973012,
+      "text": "11. If a court of competent jurisdiction determines that relevant laws in force may imply warranties and liabilities which cannot be excluded or limited or which can only partly be excluded or limited, then the limit on Jeppesen"
+    },
+    {
+      "offset": 16973243,
+      "text": "s liability set forth in this Section shall apply to the fullest extent permitted by law. If Jeppesen cannot exclude or limit a warranty or liability implied by law, these Additional Terms shall be read and construed subject to such provisions of law."
+    },
+    {
+      "offset": 16973495,
+      "text": "12. EXPORT COMPLIANCE. End-User shall be responsible for its compliance with any applicable export control restrictions, laws and regulations as may be modified from time to time, imposed by the governments of the U.S. and, if applicable, other countries. End-User shall not attempt to, or knowingly export or re-export the Products covered under the Agreement to any country, or national thereof, prohibited from obtaining Products, either directly or indirectly through affiliates, or subsidiaries of End-User. Each party shall, at its sole cost and expense, obtain and maintain in effect all permits, licenses and other consents necessary to conduct its respective activities hereunder. Nothing in this clause releases End-User from any obligation stated elsewhere in the Agreement not to disclose the Products."
+    },
+    {
+      "offset": 16974310,
+      "text": "13. GOVERNING LAW. ANY DISPUTE, CONTROVERSY OR CLAIM AGAINST JEPPESEN ARISING OUT OF OR RELATING TO THE PRODUCTS, WHETHER UNDER CONTRACT, TORT OR OTHERWISE, AND THESE ADDITIONAL TERMS ARE GOVERNED BY THE LAWS OF ENGLAND, WITHOUT RECOURSE TO CHOICE OF LAW STATUTES OR PRINCIPLES THAT WOULD OTHERWISE RESULT IN THE APPLICATION OF THE LAW OF ANY OTHER JURISDICTION."
+    },
+    {
+      "offset": 16974673,
+      "text": "14. SEVERABILITY. If any term or provision of these Additional Terms is held invalid or unenforceable, such term or provision will be replaced by a valid and enforceable provision containing as close to the original intent of the parties as possible in light of the intent of this Additional Terms. The remainder of this Additional Terms will not be affected thereby and each remaining term and provision of this Additional Terms will be valid and enforceable to the fullest extent permitted by law."
+    },
+    {
+      "offset": 16975173,
+      "text": "15. AUTHORIZED SIGNATORY. THE SIGNATORY OF THESE ADDITIONAL TERMS WARRANTS TO BE AUTHORIZED TO SIGN THEM ON BEHALF OF BELOW NAMED COMPANY OR STATE AUTHORITY."
+    },
+    {
+      "offset": 16975331,
+      "text": "Read, understood and agreed to."
+    },
+    {
+      "offset": 16975363,
+      "text": "/_lookup_12_/installer_about_analytics.html"
+    },
+    {
+      "offset": 16975407,
+      "text": "%1:rate% kilobyte/second"
+    },
+    {
+      "offset": 16975432,
+      "text": "%1:rate% kilobytes/second"
+    },
+    {
+      "offset": 16975458,
+      "text": "ERROR: destination being set but there is no live pick-destination wizard."
+    },
+    {
+      "offset": 16975534,
+      "text": "Installation location picker WC"
+    },
+    {
+      "offset": 16975566,
+      "text": "Installation location packer"
+    },
+    {
+      "offset": 16975595,
+      "text": "Installation Name"
+    },
+    {
+      "offset": 16975613,
+      "text": "Change Destination"
+    },
+    {
+      "offset": 16975632,
+      "text": "Select Destination"
+    },
+    {
+      "offset": 16975651,
+      "text": "DRM Method Picker"
+    },
+    {
+      "offset": 16975669,
+      "text": "Choose Authentication Method"
+    },
+    {
+      "offset": 16975698,
+      "text": "If you've already purchased X-Plane, please select the appropriate authentication method below."
+    },
+    {
+      "offset": 16975794,
+      "text": "I have an XDD or DVD"
+    },
+    {
+      "offset": 16975815,
+      "text": "ins_map_region_eastern_us.png"
+    },
+    {
+      "offset": 16975845,
+      "text": "ins_map_region_western_us.png"
+    },
+    {
+      "offset": 16975875,
+      "text": "ins_map_region_eastern_canada.png"
+    },
+    {
+      "offset": 16975909,
+      "text": "ins_map_region_western_canada.png"
+    },
+    {
+      "offset": 16975943,
+      "text": "ins_map_region_central_america.png"
+    },
+    {
+      "offset": 16975978,
+      "text": "ins_map_region_south_america.png"
+    },
+    {
+      "offset": 16976011,
+      "text": "ins_map_region_northwest_africa.png"
+    },
+    {
+      "offset": 16976047,
+      "text": "ins_map_region_southern_africa.png"
+    },
+    {
+      "offset": 16976082,
+      "text": "ins_map_region_middle_east.png"
+    },
+    {
+      "offset": 16976113,
+      "text": "ins_map_region_western_europe.png"
+    },
+    {
+      "offset": 16976147,
+      "text": "ins_map_region_eastern_europe.png"
+    },
+    {
+      "offset": 16976181,
+      "text": "ins_map_region_scandinavia.png"
+    },
+    {
+      "offset": 16976212,
+      "text": "ins_map_region_western_russia.png"
+    },
+    {
+      "offset": 16976246,
+      "text": "ins_map_region_siberia.png"
+    },
+    {
+      "offset": 16976273,
+      "text": "ins_map_region_west_central_asia.png"
+    },
+    {
+      "offset": 16976310,
+      "text": "ins_map_region_southeast_asia.png"
+    },
+    {
+      "offset": 16976344,
+      "text": "ins_map_region_southwestern_asia.png"
+    },
+    {
+      "offset": 16976381,
+      "text": "ins_map_region_china_mongolia.png"
+    },
+    {
+      "offset": 16976415,
+      "text": "ins_map_region_australia.png"
+    },
+    {
+      "offset": 16976444,
+      "text": "ins_map_region_islands_left.png"
+    },
+    {
+      "offset": 16976476,
+      "text": "ins_map_region_islands_right.png"
+    },
+    {
+      "offset": 16976509,
+      "text": "ins_map_political_bounds.png"
+    },
+    {
+      "offset": 16976538,
+      "text": "auth_token"
+    },
+    {
+      "offset": 16976549,
+      "text": "Login Error Domain: %d Code: %d"
+    },
+    {
+      "offset": 16976581,
+      "text": "Desc: %s"
+    },
+    {
+      "offset": 16976590,
+      "text": "Browser Error: %s"
+    },
+    {
+      "offset": 16976608,
+      "text": "Name: %s"
+    },
+    {
+      "offset": 16976617,
+      "text": "Email: %s"
+    },
+    {
+      "offset": 16976627,
+      "text": "User logged out via main menu"
+    },
+    {
+      "offset": 16976657,
+      "text": "Found branches:"
+    },
+    {
+      "offset": 16976673,
+      "text": "Repro:"
+    },
+    {
+      "offset": 16976680,
+      "text": "for(xint x = 0; x < 36; ++x) for(xint y = 0; y < 18; ++y) wrl_sel[x][y] = 0;"
+    },
+    {
+      "offset": 16977784,
+      "text": "23identity_login_delegate"
+    },
+    {
+      "offset": 16977832,
+      "text": "23xp_license_mgr_delegate"
+    },
+    {
+      "offset": 16977880,
+      "text": "14run_sim_wizard"
+    },
+    {
+      "offset": 16977928,
+      "text": "21ins_ui_scenery_picker"
+    },
+    {
+      "offset": 16978880,
+      "text": "11ins_ui_eula"
+    },
+    {
+      "offset": 16979824,
+      "text": "19ins_ui_pick_install"
+    },
+    {
+      "offset": 16980776,
+      "text": "17ins_ui_drm_picker"
+    },
+    {
+      "offset": 16980912,
+      "text": "NSt3__110__function6__funcIZN17ins_ui_drm_pickerC1E12UTL_postcardS3_EUlvE_NS_9allocatorIS4_EEFvvEEE"
+    },
+    {
+      "offset": 16981040,
+      "text": "ZN17ins_ui_drm_pickerC1E12UTL_postcardS0_EUlvE_"
+    },
+    {
+      "offset": 16981192,
+      "text": "NSt3__110__function6__funcIZN17ins_ui_drm_pickerC1E12UTL_postcardS3_EUlvE0_NS_9allocatorIS4_EEFvvEEE"
+    },
+    {
+      "offset": 16981320,
+      "text": "ZN17ins_ui_drm_pickerC1E12UTL_postcardS0_EUlvE0_"
+    },
+    {
+      "offset": 16981856,
+      "text": "21scenery_picker_widget"
+    },
+    {
+      "offset": 16981992,
+      "text": "NSt3__110__function6__funcIZN21gui_widget_controller12bind_commandE12UTL_postcardNS_8functionIFbvEEEEd_UlvE_NS_9allocatorIS7_EES5_EE"
+    },
+    {
+      "offset": 16982152,
+      "text": "ZN21gui_widget_controller12bind_commandE12UTL_postcardNSt3__18functionIFbvEEEEd_UlvE_"
+    },
+    {
+      "offset": 16982256,
+      "text": "NSt3__110__function6__baseIFvRK21xp_license_mgr_resultEEE"
+    },
+    {
+      "offset": 16982336,
+      "text": "NSt3__110__function6__baseIFN26ins_ui_identity_controller4modeEvEEE"
+    },
+    {
+      "offset": 16982424,
+      "text": "NSt3__110__function6__baseIFNS_8optionalI19xp_license_mgr_userEEvEEE"
+    },
+    {
+      "offset": 16982512,
+      "text": "NSt3__110__function6__baseIF10err_code_tvEEE"
+    },
+    {
+      "offset": 16982840,
+      "text": "19demo_install_wizard"
+    },
+    {
+      "offset": 16982888,
+      "text": "9demo_done"
+    },
+    {
+      "offset": 16983016,
+      "text": "NSt3__110__function6__funcIZN19demo_install_wizardC1EP11wizard_funcE3$_0NS_9allocatorIS5_EEF19install_method_typevEEE"
+    },
+    {
+      "offset": 16983160,
+      "text": "ZN19demo_install_wizardC1EP11wizard_funcE3$_0"
+    },
+    {
+      "offset": 16983224,
+      "text": "Contacting X-Plane.com to find a demo server."
+    },
+    {
+      "offset": 16983270,
+      "text": "Downloading demo information from %1:server name%."
+    },
+    {
+      "offset": 16983321,
+      "text": "Checking the net for the latest version of X-Plane 12 right now, and I am %1:progress%% done checking."
+    },
+    {
+      "offset": 16983424,
+      "text": "Please pick a name for your X-Plane 12 Demo installation. "
+    },
+    {
+      "offset": 16983483,
+      "text": "Pick a folder to install the X-Plane 12 Demo into."
+    },
+    {
+      "offset": 16983534,
+      "text": "You have enough free disk space to install the X-Plane 12 Demo at this location."
+    },
+    {
+      "offset": 16983615,
+      "text": "You do not have enough free disk space to install the X-Plane 12 Demo at this location. You can change the install location to a drive with more free disk space."
+    },
+    {
+      "offset": 16983777,
+      "text": "Are you sure you want to cancel the installation? This will delete the partially installed copy of the X-Plane 12 Demo."
+    },
+    {
+      "offset": 16983897,
+      "text": "the demo installation and delete partial installation."
+    },
+    {
+      "offset": 16983952,
+      "text": "the demo installation process."
+    },
+    {
+      "offset": 16983983,
+      "text": "Installing X-Plane 12 Demo"
+    },
+    {
+      "offset": 16984010,
+      "text": "An error occurred during installation:"
+    },
+    {
+      "offset": 16984049,
+      "text": "You can continue with the installation and attempt to repair the damaged files later, or you can cancel the installation."
+    },
+    {
+      "offset": 16984171,
+      "text": "the install."
+    },
+    {
+      "offset": 16984184,
+      "text": "Finished Demo Installation"
+    },
+    {
+      "offset": 16984211,
+      "text": "Finished Web Demo Install"
+    },
+    {
+      "offset": 16984237,
+      "text": "There was a problem installing the X-Plane 12 Demo. Please check your internet connection and try again, or contact Laminar Research tech support for help."
+    },
+    {
+      "offset": 16984393,
+      "text": "There was a problem installing the X-Plane 12 Demo. Please try the demo installer again later or contact Laminar Research tech support for help."
+    },
+    {
+      "offset": 16984538,
+      "text": "The X-Plane 12 Demo has finished installing at: %1:file path%."
+    },
+    {
+      "offset": 16984601,
+      "text": "Fly X-Plane 12 Now"
+    },
+    {
+      "offset": 16984808,
+      "text": "Are you sure you want to cancel the installation?  This will delete the partially installed copy of X-Plane 12."
+    },
+    {
+      "offset": 16984920,
+      "text": "the installation and delete partial installation."
+    },
+    {
+      "offset": 16984970,
+      "text": "the installation process."
+    },
+    {
+      "offset": 16984996,
+      "text": "Please pick a name for your X-Plane 12 installation."
+    },
+    {
+      "offset": 16985049,
+      "text": "Pick a folder to install X-Plane 12 into."
+    },
+    {
+      "offset": 16985091,
+      "text": "You have enough free disk space to install X-Plane 12 at this location."
+    },
+    {
+      "offset": 16985163,
+      "text": "You do not have enough free disk space to install X-Plane 12 at this location.  You can install to a different location, or save disk space by installing only some of the global scenery."
+    },
+    {
+      "offset": 16985350,
+      "text": "Main Menu - DVD"
+    },
+    {
+      "offset": 16985366,
+      "text": "X-Plane 12 Installer/Updater"
+    },
+    {
+      "offset": 16985395,
+      "text": "Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing X-Plane 12."
+    },
+    {
+      "offset": 16985508,
+      "text": "Welcome to the X-Plane 12 Installer. This installer will guide you through the process of installing %1:install name%."
+    },
+    {
+      "offset": 16985627,
+      "text": "DVD Scenery Selection"
+    },
+    {
+      "offset": 16985649,
+      "text": "Click on the world map to select the scenery you would like to install. You can use this installer to add or remove scenery later. If you fly into an area with no scenery installed, you will see only ocean."
+    },
+    {
+      "offset": 16985856,
+      "text": "You have enough free disk space to install X-Plane 12 with the selected scenery."
+    },
+    {
+      "offset": 16985937,
+      "text": "You do not have enough free disk space to install X-Plane 12 with the selected scenery; change the install location to another hard drive or select less scenery."
+    },
+    {
+      "offset": 16986099,
+      "text": "DVD Installation Complete"
+    },
+    {
+      "offset": 16986125,
+      "text": "Beginning update of %s"
+    },
+    {
+      "offset": 16986148,
+      "text": "Finished Installing X-Plane"
+    },
+    {
+      "offset": 16986176,
+      "text": "There was a problem installing X-Plane 12."
+    },
+    {
+      "offset": 16986219,
+      "text": "The simulator has been installed, but some scenery files could not be downloaded. You can attempt to download the missing scenery later by picking \"Add or Remove Scenery\" in the installer."
+    },
+    {
+      "offset": 16986408,
+      "text": "Installation was successful."
+    },
+    {
+      "offset": 16986680,
+      "text": "9dvd_start"
+    },
+    {
+      "offset": 16986720,
+      "text": "19dvd_scenery_install"
+    },
+    {
+      "offset": 16986768,
+      "text": "16dvd_done_install"
+    },
+    {
+      "offset": 16986904,
+      "text": "NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_0NS_9allocatorIS5_EEFv9auth_typeEEE"
+    },
+    {
+      "offset": 16987040,
+      "text": "ZN19full_install_wizardC1EP11wizard_funciE3$_0"
+    },
+    {
+      "offset": 16987192,
+      "text": "NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_1NS_9allocatorIS5_EEFbvEEE"
+    },
+    {
+      "offset": 16987320,
+      "text": "ZN19full_install_wizardC1EP11wizard_funciE3$_1"
+    },
+    {
+      "offset": 16987472,
+      "text": "NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_2NS_9allocatorIS5_EEF19install_method_typevEEE"
+    },
+    {
+      "offset": 16987616,
+      "text": "ZN19full_install_wizardC1EP11wizard_funciE3$_2"
+    },
+    {
+      "offset": 16987768,
+      "text": "NSt3__110__function6__funcIZN19full_install_wizardC1EP11wizard_funciE3$_3NS_9allocatorIS5_EEFS4_vEEE"
+    },
+    {
+      "offset": 16987896,
+      "text": "ZN19full_install_wizardC1EP11wizard_funciE3$_3"
+    },
+    {
+      "offset": 16987960,
+      "text": "19full_install_wizard"
+    },
+    {
+      "offset": 16988128,
+      "text": "Main Menu - Existing Full Installation"
+    },
+    {
+      "offset": 16988167,
+      "text": "You already have X-Plane 12 installed on this computer. What would you like to do?"
+    },
+    {
+      "offset": 16988250,
+      "text": "Update X-Plane"
+    },
+    {
+      "offset": 16988265,
+      "text": "Update Scenery Online"
+    },
+    {
+      "offset": 16988287,
+      "text": "Install a Second Copy of X-Plane"
+    },
+    {
+      "offset": 16988320,
+      "text": "Main Menu - No Existing Installation"
+    },
+    {
+      "offset": 16988357,
+      "text": "Welcome to X-Plane 12. This installer will guide you through the process of installing X-Plane."
+    },
+    {
+      "offset": 16988453,
+      "text": "What would you like to install?"
+    },
+    {
+      "offset": 16988485,
+      "text": "Install a Free Demo of X-Plane"
+    },
+    {
+      "offset": 16988516,
+      "text": "Install an X-Plane Product Purchase"
+    },
+    {
+      "offset": 16988552,
+      "text": "Main Menu - Existing Demo Installation"
+    },
+    {
+      "offset": 16988591,
+      "text": "You already have the X-Plane 12 Demo installed on this computer.  What would you like to do?"
+    },
+    {
+      "offset": 16988684,
+      "text": "Run the X-Plane 12 Demo"
+    },
+    {
+      "offset": 16988708,
+      "text": "Update the X-Plane 12 Demo"
+    },
+    {
+      "offset": 16988976,
+      "text": "26main_menu_existing_install"
+    },
+    {
+      "offset": 16989032,
+      "text": "19main_menu_brand_new"
+    },
+    {
+      "offset": 16989080,
+      "text": "23main_menu_existing_demo"
+    },
+    {
+      "offset": 16989376,
+      "text": "33main_menu_existing_install_wizard"
+    },
+    {
+      "offset": 16989440,
+      "text": "26main_menu_brand_new_wizard"
+    },
+    {
+      "offset": 16989496,
+      "text": "30main_menu_existing_demo_wizard"
+    },
+    {
+      "offset": 16989560,
+      "text": "[silent] %s"
+    },
+    {
+      "offset": 16989573,
+      "text": "--silent requires --path=<install-dir>"
+    },
+    {
+      "offset": 16989612,
+      "text": "--path is not an existing directory: %s"
+    },
+    {
+      "offset": 16989652,
+      "text": "--path is not a recognised X-System: %s"
+    },
+    {
+      "offset": 16989692,
+      "text": "(known installs follow)"
+    },
+    {
+      "offset": 16989716,
+      "text": "- %s"
+    },
+    {
+      "offset": 16990016,
+      "text": "14ins_url_reader"
+    },
+    {
+      "offset": 16990064,
+      "text": "14ins_url_signer"
+    },
+    {
+      "offset": 16990112,
+      "text": "14ins_dvd_reader"
+    },
+    {
+      "offset": 16990160,
+      "text": "16ins_decompressor"
+    },
+    {
+      "offset": 16990208,
+      "text": "13ins_hd_writer"
+    },
+    {
+      "offset": 16990248,
+      "text": "19ins_checksum_reader"
+    },
+    {
+      "offset": 16990296,
+      "text": "17ins_checksum_calc"
+    },
+    {
+      "offset": 16990345,
+      "text": "/builds/x-plane/design/source_code/app/Installer-f/ins_tasks.cpp"
+    },
+    {
+      "offset": 16990410,
+      "text": "(will retry, tries = %d"
+    },
+    {
+      "offset": 16990437,
+      "text": "Server %s had its last error %f seconds ago; resetting error counter."
+    },
+    {
+      "offset": 16990508,
+      "text": "Server %s hit error %s and will time out for %f seconds.  Error count is now %d."
+    },
+    {
+      "offset": 16990590,
+      "text": "fifo_processor_worker"
+    },
+    {
+      "offset": 16990612,
+      "text": "Authorization server failed.  Will wait 30 seconds and retry."
+    },
+    {
+      "offset": 16990674,
+      "text": "Error reading DVD (%d - %d): %s"
+    },
+    {
+      "offset": 16990706,
+      "text": "Reading file: %s"
+    },
+    {
+      "offset": 16990723,
+      "text": "Decompress"
+    },
+    {
+      "offset": 16990734,
+      "text": "HDD Writer"
+    },
+    {
+      "offset": 16990749,
+      "text": "Error writing to disk (%d - %d): %s"
+    },
+    {
+      "offset": 16990785,
+      "text": "Writing file: %s"
+    },
+    {
+      "offset": 16990802,
+      "text": "Checksum Reader"
+    },
+    {
+      "offset": 16990818,
+      "text": "Error checking files (%d - %d): %s"
+    },
+    {
+      "offset": 16990853,
+      "text": "Checksum calc"
+    },
+    {
+      "offset": 16990867,
+      "text": "async send server failure analytics beacon"
+    },
+    {
+      "offset": 16990910,
+      "text": "%s: Original DL blob size: %zd"
+    },
+    {
+      "offset": 16990941,
+      "text": "Raw file checksum: %s"
+    },
+    {
+      "offset": 16990964,
+      "text": "&m_penalty_box"
+    },
+    {
+      "offset": 16990979,
+      "text": "%s: %.1f%% wait input, %.1f%% work, %.1f%% wait output."
+    },
+    {
+      "offset": 16991036,
+      "text": "18UTL_fifo_processorIP12ins_req_fileP16ins_encoded_fileE"
+    },
+    {
+      "offset": 16991112,
+      "text": "18UTL_fifo_processorIP12ins_req_fileS1_E"
+    },
+    {
+      "offset": 16991176,
+      "text": "18UTL_fifo_processorIP16ins_encoded_fileP16ins_decoded_fileE"
+    },
+    {
+      "offset": 16991256,
+      "text": "18UTL_fifo_processorIP16ins_decoded_fileP15ins_file_resultE"
+    },
+    {
+      "offset": 16991336,
+      "text": "18UTL_fifo_processorIP16ins_checksum_reqP17ins_checksum_dataE"
+    },
+    {
+      "offset": 16991416,
+      "text": "18UTL_fifo_processorIP17ins_checksum_dataP19ins_checksum_resultE"
+    },
+    {
+      "offset": 16991552,
+      "text": "31send_analytics_exception_helper"
+    },
+    {
+      "offset": 16991586,
+      "text": "16UTL_runloop_task"
+    },
+    {
+      "offset": 16994736,
+      "text": "11ins_ui_main"
+    },
+    {
+      "offset": 16994808,
+      "text": "15ins_ui_settings"
+    },
+    {
+      "offset": 16994880,
+      "text": "Installer UI main"
+    },
+    {
+      "offset": 16994898,
+      "text": "ins_main_background.png"
+    },
+    {
+      "offset": 16994922,
+      "text": "Installer stack outer container"
+    },
+    {
+      "offset": 16994954,
+      "text": "Top row"
+    },
+    {
+      "offset": 16994962,
+      "text": "button_settings_gray.png"
+    },
+    {
+      "offset": 16994987,
+      "text": "Open the installer options"
+    },
+    {
+      "offset": 16995014,
+      "text": "Step inner container"
+    },
+    {
+      "offset": 16995035,
+      "text": "logo_ins.png"
+    },
+    {
+      "offset": 16995048,
+      "text": "Stack bottom"
+    },
+    {
+      "offset": 16995061,
+      "text": "Installer version"
+    },
+    {
+      "offset": 16995079,
+      "text": "Installer version frame"
+    },
+    {
+      "offset": 16995103,
+      "text": "Bottom buttons"
+    },
+    {
+      "offset": 16995118,
+      "text": "Cancel Installation"
+    },
+    {
+      "offset": 16995138,
+      "text": "Buy X-Plane Online"
+    },
+    {
+      "offset": 16995157,
+      "text": "focus_res_tertiary_glow_only.png"
+    },
+    {
+      "offset": 16995190,
+      "text": "Installer left/right columns"
+    },
+    {
+      "offset": 16995219,
+      "text": "Steps list"
+    },
+    {
+      "offset": 16995230,
+      "text": "Body container"
+    },
+    {
+      "offset": 16995245,
+      "text": "Btn frame"
+    },
+    {
+      "offset": 16995255,
+      "text": "XDD frame"
+    },
+    {
+      "offset": 16995265,
+      "text": "Hint frame"
+    },
+    {
+      "offset": 16995276,
+      "text": "Hint: You can copy your product key from your email (using %1:copy shortcut%) & paste it into the text box above (using %2:paste shortcut%)."
+    },
+    {
+      "offset": 16995417,
+      "text": "Ctrl+C"
+    },
+    {
+      "offset": 16995424,
+      "text": "Ctrl+V"
+    },
+    {
+      "offset": 16995431,
+      "text": "European law requires us to tell you: when you authorize X-Plane using a product key, Laminar Research collects your computer's IP address."
+    },
+    {
+      "offset": 16995571,
+      "text": "We use this information only to verify that your product key has not been stolen."
+    },
+    {
+      "offset": 16995653,
+      "text": "We do not sell or share this information with anyone else."
+    },
+    {
+      "offset": 16995712,
+      "text": "I authorize Laminar Research to record my IP address as part of authorizing X-Plane."
+    },
+    {
+      "offset": 16995797,
+      "text": "Progress bar"
+    },
+    {
+      "offset": 16995810,
+      "text": "slider_handle_empty.png"
+    },
+    {
+      "offset": 16995834,
+      "text": "slider_bg_graph.png"
+    },
+    {
+      "offset": 16995854,
+      "text": "slider_fg_h_hover.png"
+    },
+    {
+      "offset": 16995876,
+      "text": "Step text"
+    },
+    {
+      "offset": 16995886,
+      "text": "icon_check_sm.png"
+    },
+    {
+      "offset": 16995904,
+      "text": "Wizard step label"
+    },
+    {
+      "offset": 16995922,
+      "text": "--timeout exceeded; aborting"
+    },
+    {
+      "offset": 16995955,
+      "text": "Advancing from wizard step \"%s\" to \"%s\""
+    },
+    {
+      "offset": 16995995,
+      "text": "/_lookup_12_/buy_now_400.html"
+    },
+    {
+      "offset": 16996025,
+      "text": "INSTALLER SETTINGS"
+    },
+    {
+      "offset": 16996044,
+      "text": "Installer settings popup inner container"
+    },
+    {
+      "offset": 16996085,
+      "text": "Operating system to download X-Plane for"
+    },
+    {
+      "offset": 16996126,
+      "text": "This can be useful if you want to install X-Plane on this computer and copy the entire X-Plane folder to another computer (maybe one without a disc drive or internet access)."
+    },
+    {
+      "offset": 16996301,
+      "text": "Languages hdiv"
+    },
+    {
+      "offset": 16996316,
+      "text": "Restart the installer to apply changes."
+    },
+    {
+      "offset": 16996356,
+      "text": "Network proxy host"
+    },
+    {
+      "offset": 16996375,
+      "text": "Force IPv4 connections"
+    },
+    {
+      "offset": 16996398,
+      "text": "Use only IPv4 and skip IPv6. Try this if downloads fail on a network with broken IPv6."
+    },
+    {
+      "offset": 16996485,
+      "text": "Network diagnostics"
+    },
+    {
+      "offset": 16996505,
+      "text": "Windows"
+    },
+    {
+      "offset": 16996513,
+      "text": "macOS"
+    },
+    {
+      "offset": 16996519,
+      "text": "Linux"
+    },
+    {
+      "offset": 16996525,
+      "text": "COLLECT DIAGNOSTIC DATA?"
+    },
+    {
+      "offset": 16996550,
+      "text": "Do you want to collect network diagnostic data? This will connect to X-Plane servers and record information about any errors encountered. This process may take a few minutes depending on your network."
+    },
+    {
+      "offset": 16996751,
+      "text": "The results will be stored in \"X-Plane Network Diagnostics.txt\" file on your desktop."
+    },
+    {
+      "offset": 16996837,
+      "text": "Start"
+    },
+    {
+      "offset": 16996843,
+      "text": "Network Diagnostics window"
+    },
+    {
+      "offset": 16996870,
+      "text": "X-Plane Network Diagnostics.txt"
+    },
+    {
+      "offset": 16996902,
+      "text": "Cannot open %s for writing"
+    },
+    {
+      "offset": 16996929,
+      "text": "Network Diagnostics outer container"
+    },
+    {
+      "offset": 16996965,
+      "text": "Network Diagnostics body container"
+    },
+    {
+      "offset": 16997000,
+      "text": "Running network diagnostics. This may take a while..."
+    },
+    {
+      "offset": 16997054,
+      "text": "Network diagnostics file not created, cannot be opened"
+    },
+    {
+      "offset": 16997109,
+      "text": "NETWORK DIAGNOSTIC DATA HAS BEEN COLLECTED"
+    },
+    {
+      "offset": 16997152,
+      "text": "Diagnostic report has been saved to:"
+    },
+    {
+      "offset": 16997189,
+      "text": "%1:path%"
+    },
+    {
+      "offset": 16997198,
+      "text": "file://"
+    },
+    {
+      "offset": 16998248,
+      "text": "22ui_window_network_diag"
+    },
+    {
+      "offset": 16998392,
+      "text": "NSt3__110__function6__funcIZN22ui_window_network_diag23build_main_content_areaER14v11_ui_builderE3$_0NS_9allocatorIS5_EEFfvEEE"
+    },
+    {
+      "offset": 16998544,
+      "text": "ZN22ui_window_network_diag23build_main_content_areaER14v11_ui_builderE3$_0"
+    },
+    {
+      "offset": 16998832,
+      "text": "Search for Updates"
+    },
+    {
+      "offset": 16998851,
+      "text": "Contacting X-Plane.com to find an update server."
+    },
+    {
+      "offset": 16998900,
+      "text": "Checking the internet for the latest version of X-Plane 12. %1:progress%% done checking."
+    },
+    {
+      "offset": 16998989,
+      "text": "Checking Installed Files"
+    },
+    {
+      "offset": 16999014,
+      "text": "Scanning %1:folder path% to see what files need updating."
+    },
+    {
+      "offset": 16999072,
+      "text": "Are you sure you want to stop the update? X-Plane 12 will not be usable until the update is finished. You can resume the update later."
+    },
+    {
+      "offset": 16999207,
+      "text": "the update process."
+    },
+    {
+      "offset": 16999227,
+      "text": "An error occurred during update:"
+    },
+    {
+      "offset": 16999260,
+      "text": "You can continue with the update and attempt to repair the damaged files later, or you can stop the update and try again later."
+    },
+    {
+      "offset": 16999388,
+      "text": "Main Menu - Web Update"
+    },
+    {
+      "offset": 16999411,
+      "text": "Updater selected installation %s"
+    },
+    {
+      "offset": 16999444,
+      "text": "X-Plane 12 Web Updater"
+    },
+    {
+      "offset": 16999467,
+      "text": "This installer will guide you through the process of updating your copy of X-Plane 12 to the latest version."
+    },
+    {
+      "offset": 16999576,
+      "text": "Choose Copy of X-Plane to Update"
+    },
+    {
+      "offset": 16999609,
+      "text": "The installer found the following copy of X-Plane 12 to update."
+    },
+    {
+      "offset": 16999673,
+      "text": "Please select which copy of X-Plane 12 you would like to update."
+    },
+    {
+      "offset": 16999738,
+      "text": "Check Disk Space"
+    },
+    {
+      "offset": 16999755,
+      "text": "Check Disk Space for Update"
+    },
+    {
+      "offset": 16999783,
+      "text": "insufficient disk space for update; aborting"
+    },
+    {
+      "offset": 16999828,
+      "text": "There is a newer version of X-Plane 12 available, but you do not have enough free disk space to download and install the update."
+    },
+    {
+      "offset": 16999957,
+      "text": "Please free some space on your hard drive."
+    },
+    {
+      "offset": 17000000,
+      "text": "You are about to download %1:download size% of compressed data to update to %2:install name%."
+    },
+    {
+      "offset": 17000094,
+      "text": "You have enough free disk space to update X-Plane 12."
+    },
+    {
+      "offset": 17000148,
+      "text": "You do not have enough free disk space to update X-Plane 12."
+    },
+    {
+      "offset": 17000209,
+      "text": "Update Complete"
+    },
+    {
+      "offset": 17000225,
+      "text": "Finished Web Update"
+    },
+    {
+      "offset": 17000245,
+      "text": "update FAILED: %s"
+    },
+    {
+      "offset": 17000263,
+      "text": "no update needed: %s already up-to-date"
+    },
+    {
+      "offset": 17000303,
+      "text": "update complete: %s"
+    },
+    {
+      "offset": 17000323,
+      "text": "There was a problem updating X-Plane."
+    },
+    {
+      "offset": 17000361,
+      "text": "Please try the updater again later or contact Laminar Research tech support for help."
+    },
+    {
+      "offset": 17000447,
+      "text": "This copy of X-Plane (%1:install path%) is already up to date."
+    },
+    {
+      "offset": 17000510,
+      "text": "Fly X-Plane Now"
+    },
+    {
+      "offset": 17000526,
+      "text": "Finished updating %1:install path%."
+    },
+    {
+      "offset": 17000562,
+      "text": "Net start WC"
+    },
+    {
+      "offset": 17000575,
+      "text": "Net start outer container"
+    },
+    {
+      "offset": 17000601,
+      "text": "Betas container"
+    },
+    {
+      "offset": 17000617,
+      "text": "Warning and more info btn"
+    },
+    {
+      "offset": 17000643,
+      "text": "Check for new betas as well as updates"
+    },
+    {
+      "offset": 17000682,
+      "text": "If you check this, the latest beta version will be installed when available. Beta versions include the latest features but may contain bugs."
+    },
+    {
+      "offset": 17000823,
+      "text": "Leave this off unless you understand the risks of using X-Plane betas!"
+    },
+    {
+      "offset": 17000894,
+      "text": "/_lookup_12_/installer_betas.html"
+    },
+    {
+      "offset": 17001248,
+      "text": "9net_start"
+    },
+    {
+      "offset": 17001288,
+      "text": "13net_pick_dest"
+    },
+    {
+      "offset": 17001328,
+      "text": "14net_check_disk"
+    },
+    {
+      "offset": 17001376,
+      "text": "8net_done"
+    },
+    {
+      "offset": 17001504,
+      "text": "NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_0NS6_ISF_EEFv9auth_typeEEE"
+    },
+    {
+      "offset": 17001728,
+      "text": "ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_0"
+    },
+    {
+      "offset": 17001984,
+      "text": "NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_1NS6_ISF_EEFbvEEE"
+    },
+    {
+      "offset": 17002192,
+      "text": "ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_1"
+    },
+    {
+      "offset": 17002448,
+      "text": "NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_2NS6_ISF_EEFSC_vEEE"
+    },
+    {
+      "offset": 17002664,
+      "text": "ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_2"
+    },
+    {
+      "offset": 17002920,
+      "text": "NSt3__110__function6__funcIZN17net_update_wizardC1ERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEP11wizard_funcNS2_12install_typeENS2_11require_xddEE3$_3NS6_ISF_EEF19install_method_typevEEE"
+    },
+    {
+      "offset": 17003152,
+      "text": "ZN17net_update_wizardC1ERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEP11wizard_funcNS_12install_typeENS_11require_xddEE3$_3"
+    },
+    {
+      "offset": 17003320,
+      "text": "17net_update_wizard"
+    },
+    {
+      "offset": 17004272,
+      "text": "16ins_ui_net_start"
+    },
+    {
+      "offset": 17004408,
+      "text": "NSt3__110__function6__funcIZN21gui_widget_controller8bind_intEPiiiNS_8functionIFbvEEEEd_UlvE_NS_9allocatorIS7_EES5_EE"
+    },
+    {
+      "offset": 17004552,
+      "text": "ZN21gui_widget_controller8bind_intEPiiiNSt3__18functionIFbvEEEEd_UlvE_"
+    },
+    {
+      "offset": 17004655,
+      "text": "?dvd_version.txt"
+    },
+    {
+      "offset": 17004672,
+      "text": "os_dir_this_app       ="
+    },
+    {
+      "offset": 17004696,
+      "text": "os_dir_desktop        ="
+    },
+    {
+      "offset": 17004720,
+      "text": "os_dir_definstall     ="
+    },
+    {
+      "offset": 17004744,
+      "text": "os_dir_temp           ="
+    },
+    {
+      "offset": 17004768,
+      "text": "os_dir_prefs          ="
+    },
+    {
+      "offset": 17004792,
+      "text": "--os"
+    },
+    {
+      "offset": 17004817,
+      "text": "--beta"
+    },
+    {
+      "offset": 17004824,
+      "text": "--no-scenery"
+    },
+    {
+      "offset": 17004837,
+      "text": "--log"
+    },
+    {
+      "offset": 17004843,
+      "text": "--timeout"
+    },
+    {
+      "offset": 17004853,
+      "text": "--path"
+    },
+    {
+      "offset": 17004860,
+      "text": "preconditions failed; aborting before GUI init"
+    },
+    {
+      "offset": 17004907,
+      "text": "silent mode active: path=%s beta=%d timeout=%ds"
+    },
+    {
+      "offset": 17004955,
+      "text": "Resources/bitmaps/Earth Orbit Textures/"
+    },
+    {
+      "offset": 17004995,
+      "text": "Silent start as: sim update (--silent)"
+    },
+    {
+      "offset": 17005035,
+      "text": "Scripted start as: scenery update"
+    },
+    {
+      "offset": 17005070,
+      "text": "Scripted start as: scenery add/remove"
+    },
+    {
+      "offset": 17005109,
+      "text": "Scripted start as: sim update"
+    },
+    {
+      "offset": 17005140,
+      "text": "Unscripted start as: brand new install (no DVD, no installs"
+    },
+    {
+      "offset": 17005201,
+      "text": "Unscripted start as: add remove scenery to upgrade existing install - user probably has a product purchase"
+    },
+    {
+      "offset": 17005309,
+      "text": "Unscripted start as: update existing demo - user needs upgrade, no purchase"
+    },
+    {
+      "offset": 17005385,
+      "text": "Unscripted start as: existing install main menu"
+    },
+    {
+      "offset": 17005433,
+      "text": "Unscripted start as: full DVD install - user has DVD and no installs."
+    },
+    {
+      "offset": 17005504,
+      "text": "Unscripted start as: add remove/scenery - user needs to upgrade has a DVD"
+    },
+    {
+      "offset": 17005579,
+      "text": "Unscripted start as: main menu for user with a DVD."
+    },
+    {
+      "offset": 17005632,
+      "text": "--no_web_server"
+    },
+    {
+      "offset": 17005648,
+      "text": "Starting installer... opening wizard step \"%s\""
+    },
+    {
+      "offset": 17005695,
+      "text": "-x86_64"
+    },
+    {
+      "offset": 17005703,
+      "text": "-i386"
+    },
+    {
+      "offset": 17005800,
+      "text": "NSt3__110__function6__funcIZ4mainE3$_0NS_9allocatorIS2_EEFvvEEE"
+    },
+    {
+      "offset": 17005888,
+      "text": "Z4mainE3$_0"
+    },
+    {
+      "offset": 17006368,
+      "text": "----------------"
+    },
+    {
+      "offset": 17006656,
+      "text": "12network_diag"
+    },
+    {
+      "offset": 17006736,
+      "text": "NSt3__119__async_assoc_stateIN12network_diag14command_resultENS_12__async_funcIZNS1_17run_command_asyncERKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEE3$_1JEEEEE"
+    },
+    {
+      "offset": 17006943,
+      "text": "ANetwork diagnostics log for "
+    },
+    {
+      "offset": 17006973,
+      "text": "Compiled on Jun 24 2026 07:10:40 for "
+    },
+    {
+      "offset": 17007011,
+      "text": "Running network checks"
+    },
+    {
+      "offset": 17007034,
+      "text": "(proxy server: "
+    },
+    {
+      "offset": 17007051,
+      "text": "The command has failed"
+    },
+    {
+      "offset": 17007074,
+      "text": "URL: "
+    },
+    {
+      "offset": 17007080,
+      "text": ", IP: "
+    },
+    {
+      "offset": 17007087,
+      "text": "Server response:"
+    },
+    {
+      "offset": 17007104,
+      "text": "Error response:"
+    },
+    {
+      "offset": 17007120,
+      "text": "Request succeeded"
+    },
+    {
+      "offset": 17007138,
+      "text": "Cannot parse server list file! Server file contents:"
+    },
+    {
+      "offset": 17007191,
+      "text": "Couldn't open "
+    },
+    {
+      "offset": 17007206,
+      "text": "Cannot parse CDN urls:"
+    },
+    {
+      "offset": 17007229,
+      "text": "Connecting to X-Plane auth server"
+    },
+    {
+      "offset": 17007263,
+      "text": "Getting server list"
+    },
+    {
+      "offset": 17007283,
+      "text": "Downloading from a random server"
+    },
+    {
+      "offset": 17007316,
+      "text": "Getting CDN URLs"
+    },
+    {
+      "offset": 17007333,
+      "text": "Downloading from a random CDN"
+    },
+    {
+      "offset": 17007363,
+      "text": "Running ping command"
+    },
+    {
+      "offset": 17007384,
+      "text": "Running traceroute command"
+    },
+    {
+      "offset": 17007411,
+      "text": "Re-running the checks without proxy"
+    },
+    {
+      "offset": 17007447,
+      "text": "Proxy not set, skipping no-proxy checks"
+    },
+    {
+      "offset": 17007487,
+      "text": "Contacting X-Plane server"
+    },
+    {
+      "offset": 17007513,
+      "text": "https://clearancedelivery.x-planemobile.com/"
+    },
+    {
+      "offset": 17007558,
+      "text": "Fetching server list"
+    },
+    {
+      "offset": 17007579,
+      "text": "Fetching from a CDN"
+    },
+    {
+      "offset": 17007599,
+      "text": "Fetching "
+    },
+    {
+      "offset": 17007609,
+      "text": "Server list is empty due to earlier errors, skipping"
+    },
+    {
+      "offset": 17007662,
+      "text": "Fetching CDN urls"
+    },
+    {
+      "offset": 17007680,
+      "text": "Installer session key: "
+    },
+    {
+      "offset": 17007704,
+      "text": "No XDD, skipping"
+    },
+    {
+      "offset": 17007721,
+      "text": "No CDN urls, skipping"
+    },
+    {
+      "offset": 17007743,
+      "text": "clearancedelivery.x-planemobile.com"
+    },
+    {
+      "offset": 17007779,
+      "text": "ping -c3 -t10 -n "
+    },
+    {
+      "offset": 17007797,
+      "text": "2>&1"
+    },
+    {
+      "offset": 17007803,
+      "text": "traceroute -m15 "
+    },
+    {
+      "offset": 17007820,
+      "text": "Network diagnostics complete"
+    },
+    {
+      "offset": 17007849,
+      "text": "condition_variable timed_wait failed"
+    },
+    {
+      "offset": 17007904,
+      "text": "Cannot run command: "
+    },
+    {
+      "offset": 17007925,
+      "text": "thread constructor failed"
+    },
+    {
+      "offset": 17007951,
+      "text": "NSt3__113__assoc_stateIN12network_diag14command_resultEEE"
+    },
+    {
+      "offset": 17008095,
+      "text": "@a newer installer is available at %s; aborting"
+    },
+    {
+      "offset": 17008143,
+      "text": "There is a newer version of the X-Plane installer/updater available."
+    },
+    {
+      "offset": 17008212,
+      "text": "The installer will take you to the web page where you can download the new installer/updater."
+    },
+    {
+      "offset": 17008306,
+      "text": "/builds/x-plane/design/source_code/app/Installer-f/utils.cpp"
+    },
+    {
+      "offset": 17008367,
+      "text": "this installer is too old to understand the current directory.txt; aborting"
+    },
+    {
+      "offset": 17008443,
+      "text": "This demo installer is too old; a newer one is available for download from X-Plane.com."
+    },
+    {
+      "offset": 17008531,
+      "text": "This installer is too old; a newer one is available for download from X-Plane.com."
+    },
+    {
+      "offset": 17008614,
+      "text": "Click the button below to get the newest installer."
+    },
+    {
+      "offset": 17008666,
+      "text": "[ Download Now ]"
+    },
+    {
+      "offset": 17008683,
+      "text": "/_lookup_12_/new_full_installer_400.html"
+    },
+    {
+      "offset": 17008728,
+      "text": "The installer is unable to install or update X-Plane. An error occurred while creating new folders. Make sure the directory you are trying to install to is not set as read-only in your operating system."
+    },
+    {
+      "offset": 17008931,
+      "text": "Install Location: "
+    },
+    {
+      "offset": 17008950,
+      "text": "Install Path:"
+    },
+    {
+      "offset": 17008968,
+      "text": "Displaying alert:"
+    },
+    {
+      "offset": 17008986,
+      "text": "User decided to %s."
+    },
+    {
+      "offset": 17009007,
+      "text": "GONE"
+    },
+    {
+      "offset": 17009012,
+      "text": "File: "
+    },
+    {
+      "offset": 17009019,
+      "text": "sig_want="
+    },
+    {
+      "offset": 17009031,
+      "text": "sig_have="
+    },
+    {
+      "offset": 17009043,
+      "text": "Deleting file %s: %s"
+    },
+    {
+      "offset": 17009065,
+      "text": "Could not delete a file that is no longer needed."
+    },
+    {
+      "offset": 17009115,
+      "text": "Please ensure the directory you are trying to work with is not set to be read-only in the operating system."
+    },
+    {
+      "offset": 17009223,
+      "text": "cdn.x-plane.com"
+    },
+    {
+      "offset": 17009239,
+      "text": "Start time: %f"
+    },
+    {
+      "offset": 17009255,
+      "text": "We will retry the core sim file %s after 5xx error (retry: %d)"
+    },
+    {
+      "offset": 17009318,
+      "text": "We will retry the optional file %s after 5xx error (retry: %d)"
+    },
+    {
+      "offset": 17009381,
+      "text": "Download of %s succeeded after %d retries of HTTP 5xx error"
+    },
+    {
+      "offset": 17009442,
+      "text": "We will retry the file to see if we can get a clean download."
+    },
+    {
+      "offset": 17009504,
+      "text": "%d bad DLs out of %d total DLs."
+    },
+    {
+      "offset": 17009537,
+      "text": "Halting on our %d bad DL of %d tickets."
+    },
+    {
+      "offset": 17009578,
+      "text": "end time: %f"
+    },
+    {
+      "offset": 17009592,
+      "text": "Filesystem scan took %f seconds."
+    },
+    {
+      "offset": 17009626,
+      "text": "Global Scenery/"
+    },
+    {
+      "offset": 17009642,
+      "text": "X-Plane 12 Demo Areas"
+    },
+    {
+      "offset": 17009664,
+      "text": "Global Airports"
+    },
+    {
+      "offset": 17009680,
+      "text": "/Earth nav data/"
+    },
+    {
+      "offset": 17009697,
+      "text": "%+03d%+04d/"
+    },
+    {
+      "offset": 17009709,
+      "text": "File modified dialog"
+    },
+    {
+      "offset": 17009730,
+      "text": "The installer is about to delete the file:"
+    },
+    {
+      "offset": 17009773,
+      "text": "because we no longer use this file, but it appears you have modified it."
+    },
+    {
+      "offset": 17009846,
+      "text": "Delete the Old File"
+    },
+    {
+      "offset": 17009866,
+      "text": "The installer is about to install the file:"
+    },
+    {
+      "offset": 17009910,
+      "text": "but it appears you have modified this file."
+    },
+    {
+      "offset": 17009954,
+      "text": "Overwrite the Old File"
+    },
+    {
+      "offset": 17009977,
+      "text": "FILE CHANGES DETECTED"
+    },
+    {
+      "offset": 17009999,
+      "text": "Keep the Old File"
+    },
+    {
+      "offset": 17010017,
+      "text": "Cancel the Installation"
+    },
+    {
+      "offset": 17010041,
+      "text": "File modified dialog inner container"
+    },
+    {
+      "offset": 17010078,
+      "text": "Do this for all files in this directory"
+    },
+    {
+      "offset": 17010118,
+      "text": "Text content"
+    },
+    {
+      "offset": 17010131,
+      "text": "Abort dialog"
+    },
+    {
+      "offset": 17010144,
+      "text": "Cancel installation inner container"
+    },
+    {
+      "offset": 17010180,
+      "text": "Buttons"
+    },
+    {
+      "offset": 17010188,
+      "text": "Btn container"
+    },
+    {
+      "offset": 17010202,
+      "text": "Msg frame"
+    },
+    {
+      "offset": 17010212,
+      "text": "&m_free"
+    },
+    {
+      "offset": 17010220,
+      "text": "&m_fill"
+    },
+    {
+      "offset": 17010228,
+      "text": "Error processing %s: %s (%s:%d)"
+    },
+    {
+      "offset": 17011176,
+      "text": "20file_modified_dialog"
+    },
+    {
+      "offset": 17011199,
+      "text": "33gui_synchronous_widget_controller"
+    },
+    {
+      "offset": 17013112,
+      "text": "12abort_dialog"
+    },
+    {
+      "offset": 17013184,
+      "text": "File Count"
+    },
+    {
+      "offset": 17013195,
+      "text": "Chunk Count"
+    },
+    {
+      "offset": 17013207,
+      "text": "Total MB"
+    },
+    {
+      "offset": 17013216,
+      "text": "DL Time"
+    },
+    {
+      "offset": 17013224,
+      "text": "DL Rate"
+    },
+    {
+      "offset": 17013232,
+      "text": "DL Rate Deviation"
+    },
+    {
+      "offset": 17013250,
+      "text": "Retry Count"
+    },
+    {
+      "offset": 17013262,
+      "text": "DL Source"
+    },
+    {
+      "offset": 17013272,
+      "text": "Global Beta"
+    },
+    {
+      "offset": 17013284,
+      "text": "Global"
+    },
+    {
+      "offset": 17013291,
+      "text": "Product Type"
+    },
+    {
+      "offset": 17013304,
+      "text": "DL Complete?"
+    },
+    {
+      "offset": 17013317,
+      "text": "Fatal Error Count"
+    },
+    {
+      "offset": 17013335,
+      "text": "New Install"
+    },
+    {
+      "offset": 17013347,
+      "text": "Add/Remove Scenery"
+    },
+    {
+      "offset": 17013366,
+      "text": "Installation Type"
+    },
+    {
+      "offset": 17013384,
+      "text": "file_count"
+    },
+    {
+      "offset": 17013395,
+      "text": "file_chunk_count"
+    },
+    {
+      "offset": 17013412,
+      "text": "total_download_size_mb"
+    },
+    {
+      "offset": 17013435,
+      "text": "download_time_mins"
+    },
+    {
+      "offset": 17013454,
+      "text": "download_rate_kbps"
+    },
+    {
+      "offset": 17013473,
+      "text": "download_rate_deviation_kbps"
+    },
+    {
+      "offset": 17013502,
+      "text": "retry_count"
+    },
+    {
+      "offset": 17013514,
+      "text": "data_source"
+    },
+    {
+      "offset": 17013526,
+      "text": "product_type"
+    },
+    {
+      "offset": 17013539,
+      "text": "download_complete"
+    },
+    {
+      "offset": 17013557,
+      "text": "fatal_error_count"
+    },
+    {
+      "offset": 17013575,
+      "text": "install_type"
+    },
+    {
+      "offset": 17013648,
+      "text": "18analytics_recorder"
+    },
+    {
+      "offset": 17013688,
+      "text": "%ld NaCl"
+    },
+    {
+      "offset": 17013697,
+      "text": "user_id"
+    },
+    {
+      "offset": 17013705,
+      "text": "start_timestamp"
+    },
+    {
+      "offset": 17013721,
+      "text": "product_version"
+    },
+    {
+      "offset": 17013737,
+      "text": "session_uuid"
+    },
+    {
+      "offset": 17013750,
+      "text": "cmd_args"
+    },
+    {
+      "offset": 17013763,
+      "text": "ram_class"
+    },
+    {
+      "offset": 17013773,
+      "text": "display_devices"
+    },
+    {
+      "offset": 17013789,
+      "text": "end_timestamp"
+    },
+    {
+      "offset": 17013803,
+      "text": "last_session.anl"
+    },
+    {
+      "offset": 17013820,
+      "text": "commentStyle"
+    },
+    {
+      "offset": 17013833,
+      "text": "indentation"
+    },
+    {
+      "offset": 17013845,
+      "text": "metadata"
+    },
+    {
+      "offset": 17013854,
+      "text": "is_fatal"
+    },
+    {
+      "offset": 17013863,
+      "text": "exceptions"
+    },
+    {
+      "offset": 17013874,
+      "text": "event_string"
+    },
+    {
+      "offset": 17013944,
+      "text": "NSt3__120__shared_ptr_pointerIPNS_23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEZN5uuids27basic_uuid_random_generatorIS2_EC1ERS2_EUlT_E_NS_9allocatorIS2_EEEE"
+    },
+    {
+      "offset": 17014216,
+      "text": "ZN5uuids27basic_uuid_random_generatorINSt3__123mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEEC1ERS3_EUlT_E_"
+    },
+    {
+      "offset": 17014416,
+      "text": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "offset": 17014464,
+      "text": "0123456789abcdef"
+    },
+    {
+      "offset": 17014544,
+      "text": "22ins_analytics_recorder"
+    },
+    {
+      "offset": 17014600,
+      "text": "/_lookup_12_/analytics.html"
+    },
+    {
+      "offset": 17014628,
+      "text": "Content-Type: application/json"
+    },
+    {
+      "offset": 17014659,
+      "text": "xplane: %s"
+    },
+    {
+      "offset": 17014670,
+      "text": "install_events"
+    },
+    {
+      "offset": 17014685,
+      "text": "12.4.3-b3-905b4972"
+    },
+    {
+      "offset": 17014704,
+      "text": "12.4.3-b3"
+    },
+    {
+      "offset": 17014714,
+      "text": "12.4.3"
+    },
+    {
+      "offset": 17014721,
+      "text": "e03fa36cea10a0075f8a4e67e7f5975c3c10c4c3"
+    },
+    {
+      "offset": 17014762,
+      "text": "Aircraft/"
+    },
+    {
+      "offset": 17014772,
+      "text": "Output/screenshots/"
+    },
+    {
+      "offset": 17014792,
+      "text": "Custom Data/"
+    },
+    {
+      "offset": 17014805,
+      "text": "Resources/sounds/"
+    },
+    {
+      "offset": 17014823,
+      "text": "Resources/default data/"
+    },
+    {
+      "offset": 17014847,
+      "text": "Resources/joystick configs/"
+    },
+    {
+      "offset": 17014875,
+      "text": "Resources/keyboard presets/"
+    },
+    {
+      "offset": 17014903,
+      "text": "Output/situations/"
+    },
+    {
+      "offset": 17014922,
+      "text": "Output/replays/"
+    },
+    {
+      "offset": 17014938,
+      "text": "Output/FDR files/"
+    },
+    {
+      "offset": 17014956,
+      "text": "Output/FMS plans/"
+    },
+    {
+      "offset": 17014974,
+      "text": "Output/logbooks/"
+    },
+    {
+      "offset": 17014991,
+      "text": "Output/preferences/"
+    },
+    {
+      "offset": 17015011,
+      "text": "Output/shadercache/"
+    },
+    {
+      "offset": 17015031,
+      "text": "Output/diagnostic reports/"
+    },
+    {
+      "offset": 17015058,
+      "text": "Output/store/"
+    },
+    {
+      "offset": 17015072,
+      "text": "Output/vr/"
+    },
+    {
+      "offset": 17015083,
+      "text": "Output/Log Archive/"
+    },
+    {
+      "offset": 17015103,
+      "text": "Output/interactions/"
+    },
+    {
+      "offset": 17015124,
+      "text": "Banner Overlay Window"
+    },
+    {
+      "offset": 17015146,
+      "text": "Outer packer"
+    },
+    {
+      "offset": 17016064,
+      "text": "28sim_banner_window_controller"
+    },
+    {
+      "offset": 17016128,
+      "text": "kvs"
+    },
+    {
+      "offset": 17016920,
+      "text": "19xdd_text_box_widget"
+    },
+    {
+      "offset": 17016968,
+      "text": "Complete XDD is now: %s"
+    },
+    {
+      "offset": 17020112,
+      "text": "23popup_widget_controller"
+    },
+    {
+      "offset": 17020200,
+      "text": "29modal_popup_widget_controller"
+    },
+    {
+      "offset": 17020256,
+      "text": "36confirmation_popup_widget_controller"
+    },
+    {
+      "offset": 17020320,
+      "text": "Popup WC inner packer"
+    },
+    {
+      "offset": 17020342,
+      "text": "Top of popup window packer"
+    },
+    {
+      "offset": 17020369,
+      "text": "Popup window title frame"
+    },
+    {
+      "offset": 17020394,
+      "text": "Bottom of screen packer"
+    },
+    {
+      "offset": 17020480,
+      "text": "22identity_login_handler"
+    },
+    {
+      "offset": 17020624,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_0NS_9allocatorIS5_EEFvRKNS_8optionalINS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEEEE"
+    },
+    {
+      "offset": 17020832,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_0"
+    },
+    {
+      "offset": 17021000,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_1NS_9allocatorIS5_EEFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEERNS_8multimapISC_SC_NS_4lessISC_EENS6_INS_4pairISD_SC_EEEEEEEEE"
+    },
+    {
+      "offset": 17021248,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_1"
+    },
+    {
+      "offset": 17021416,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_2NS_9allocatorIS5_EEFvvEEE"
+    },
+    {
+      "offset": 17021560,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_2"
+    },
+    {
+      "offset": 17021728,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_3NS_9allocatorIS5_EEFvNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEE"
+    },
+    {
+      "offset": 17021920,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_3"
+    },
+    {
+      "offset": 17022088,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_4NS_9allocatorIS5_EEFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEERNS_6vectorI19xp_js_inject_structNS6_ISG_EEEERNSF_I18xp_js_event_structNS6_ISK_EEEEEEE"
+    },
+    {
+      "offset": 17022360,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_4"
+    },
+    {
+      "offset": 17022528,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_5NS_9allocatorIS5_EEFvNS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEENS8_IFN4Json5ValueERKSH_EEESF_EEEEEE"
+    },
+    {
+      "offset": 17022856,
+      "text": "NSt3__110__function6__funcIZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS6_IFN4Json5ValueERKSG_EEESE_EEEEUlSI_E_NSA_ISN_EESJ_EE"
+    },
+    {
+      "offset": 17023112,
+      "text": "ZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENSt3__18functionIFvRKNS3_12basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEENS4_IFN4Json5ValueERKSE_EEESC_EEEEUlSG_E_"
+    },
+    {
+      "offset": 17023408,
+      "text": "NSt3__110__function6__funcIZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS6_IFN4Json5ValueERKSG_EEESE_EEEEUlSI_E0_NSA_ISN_EESJ_EE"
+    },
+    {
+      "offset": 17023664,
+      "text": "ZZN22identity_login_handlerC1EO23identity_login_delegatebENK3$_5clENSt3__18functionIFvRKNS3_12basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEENS4_IFN4Json5ValueERKSE_EEESC_EEEEUlSG_E0_"
+    },
+    {
+      "offset": 17023872,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_5"
+    },
+    {
+      "offset": 17024040,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_6NS_9allocatorIS5_EEFvNS_12basic_stringIcNS_11char_traitsIcEENS6_IcEEEEEEE"
+    },
+    {
+      "offset": 17024232,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_6"
+    },
+    {
+      "offset": 17024400,
+      "text": "NSt3__110__function6__funcIZN22identity_login_handlerC1EO23identity_login_delegatebE3$_7NS_9allocatorIS5_EEFvvEEE"
+    },
+    {
+      "offset": 17024544,
+      "text": "ZN22identity_login_handlerC1EO23identity_login_delegatebE3$_7"
+    },
+    {
+      "offset": 17024656,
+      "text": "%s?client_id=%s&scope=sim&response_type=code&code_challenge=%s&code_challenge_method=S256&redirect_uri=%s&state=%s&iap=%d"
+    },
+    {
+      "offset": 17024778,
+      "text": "https://ident.x-plane.com/oauth2/authorize"
+    },
+    {
+      "offset": 17024821,
+      "text": "df130867230b4fa4a71f27bf8e045b06"
+    },
+    {
+      "offset": 17024854,
+      "text": "http://127.0.0.1:%d/login/redirect"
+    },
+    {
+      "offset": 17024889,
+      "text": "X-Plane Identity Login"
+    },
+    {
+      "offset": 17024912,
+      "text": "Native browser could not be created!"
+    },
+    {
+      "offset": 17024949,
+      "text": "https://ident.x-plane.com/oauth2/login-complete"
+    },
+    {
+      "offset": 17024997,
+      "text": "Offering XDD for adoption"
+    },
+    {
+      "offset": 17025023,
+      "text": "X-Plane-XDD"
+    },
+    {
+      "offset": 17025035,
+      "text": "X-Plane-MID"
+    },
+    {
+      "offset": 17025047,
+      "text": "Authorization"
+    },
+    {
+      "offset": 17025062,
+      "text": "if (window.xplane && window.xplane.setBrowserSize) {"
+    },
+    {
+      "offset": 17025135,
+      "text": "window.xplane.set_browser_size = function(width, height) {"
+    },
+    {
+      "offset": 17025218,
+      "text": "return window.xplane.setBrowserSize({width: width, height: height});"
+    },
+    {
+      "offset": 17025315,
+      "text": "};"
+    },
+    {
+      "offset": 17025342,
+      "text": "}"
+    },
+    {
+      "offset": 17025364,
+      "text": ""
+    },
+    {
+      "offset": 17025381,
+      "text": "setBrowserSize"
+    },
+    {
+      "offset": 17025396,
+      "text": "xddWasAdopted"
+    },
+    {
+      "offset": 17025410,
+      "text": "success"
+    },
+    {
+      "offset": 17025418,
+      "text": "Missing width or height parameters"
+    },
+    {
+      "offset": 17025453,
+      "text": "%s?title=%s"
+    },
+    {
+      "offset": 17025465,
+      "text": "X-Plane%2012%20Installer%2FUpdater"
+    },
+    {
+      "offset": 17025500,
+      "text": "23xp_oauth2_code_receiver"
+    },
+    {
+      "offset": 17025544,
+      "text": "NSt3__110__function6__baseIFvRKNS_8optionalINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEEEE"
+    },
+    {
+      "offset": 17025672,
+      "text": "NSt3__110__function6__baseIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERNS_8multimapIS7_S7_NS_4lessIS7_EENS5_INS_4pairIS8_S7_EEEEEEEEE"
+    },
+    {
+      "offset": 17025848,
+      "text": "NSt3__110__function6__baseIFvNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEE"
+    },
+    {
+      "offset": 17025960,
+      "text": "NSt3__110__function6__baseIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERNS_6vectorI19xp_js_inject_structNS5_ISB_EEEERNSA_I18xp_js_event_structNS5_ISF_EEEEEEE"
+    },
+    {
+      "offset": 17026152,
+      "text": "NSt3__110__function6__baseIFvNS_8functionIFvRKNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS2_IFN4Json5ValueERKSC_EEESA_EEEEEE"
+    },
+    {
+      "offset": 17026312,
+      "text": "NSt3__110__function6__baseIFN4Json5ValueERKS3_EEE"
+    },
+    {
+      "offset": 17026430,
+      "text": "X@Loading screen"
+    },
+    {
+      "offset": 17026447,
+      "text": "Top Layer with Content"
+    },
+    {
+      "offset": 17026470,
+      "text": "Bottom container"
+    },
+    {
+      "offset": 17026487,
+      "text": "Loading screen left/right split"
+    },
+    {
+      "offset": 17026519,
+      "text": "Loading screen bg image"
+    },
+    {
+      "offset": 17026543,
+      "text": "Loading screen bg black"
+    },
+    {
+      "offset": 17026567,
+      "text": "Loading message for pro use"
+    },
+    {
+      "offset": 17026595,
+      "text": "Please wait"
+    },
+    {
+      "offset": 17026607,
+      "text": "About section"
+    },
+    {
+      "offset": 17026621,
+      "text": "ABOUT THIS COPY"
+    },
+    {
+      "offset": 17026637,
+      "text": "Frame rate and controls tests will be done at conclusion of startup."
+    },
+    {
+      "offset": 17026706,
+      "text": "Learn more at X-Plane.com."
+    },
+    {
+      "offset": 17026733,
+      "text": "Home text"
+    },
+    {
+      "offset": 17026743,
+      "text": "This copy is not approved for commercial applications."
+    },
+    {
+      "offset": 17026798,
+      "text": "For commercial use, see x-plane.com/pro/."
+    },
+    {
+      "offset": 17026840,
+      "text": "Contact support@x-plane.com for all inquiries."
+    },
+    {
+      "offset": 17026887,
+      "text": "Advertisement and tips"
+    },
+    {
+      "offset": 17026910,
+      "text": "DID YOU KNOW..."
+    },
+    {
+      "offset": 17026926,
+      "text": "Tips packer"
+    },
+    {
+      "offset": 17026938,
+      "text": "tips_lightbulb.png"
+    },
+    {
+      "offset": 17026957,
+      "text": "Tip frame"
+    },
+    {
+      "offset": 17026967,
+      "text": "Advertisement section"
+    },
+    {
+      "offset": 17027896,
+      "text": "17ui_screen_loading"
+    },
+    {
+      "offset": 17027975,
+      "text": "Abackgrounds/"
+    },
+    {
+      "offset": 17027989,
+      "text": "ins_loading_background.png"
+    },
+    {
+      "offset": 17028056,
+      "text": "slider_handle_tight.png"
+    },
+    {
+      "offset": 17028080,
+      "text": "slider_bg_h.png"
+    },
+    {
+      "offset": 17028096,
+      "text": "slider_bg_h_hover.png"
+    },
+    {
+      "offset": 17028118,
+      "text": "slider_fg_h.png"
+    },
+    {
+      "offset": 17028134,
+      "text": "focus_res_slider.png"
+    },
+    {
+      "offset": 17028155,
+      "text": "Progress bar container"
+    },
+    {
+      "offset": 17028178,
+      "text": "button_tertiary_radio.png"
+    },
+    {
+      "offset": 17028204,
+      "text": "Checkbox frame"
+    },
+    {
+      "offset": 17028219,
+      "text": "focus_res_checkbox.png"
+    },
+    {
+      "offset": 17028242,
+      "text": "Continuous slider container"
+    },
+    {
+      "offset": 17028270,
+      "text": "Continuous slider (tighter) container"
+    },
+    {
+      "offset": 17028308,
+      "text": "continuous slider stacked container"
+    },
+    {
+      "offset": 17028344,
+      "text": "slider label packer"
+    },
+    {
+      "offset": 17028364,
+      "text": "text_box"
+    },
+    {
+      "offset": 17028374,
+      "text": "Heading and text label"
+    },
+    {
+      "offset": 17028397,
+      "text": "Editable text text box"
+    },
+    {
+      "offset": 17028420,
+      "text": "Editable text heading"
+    },
+    {
+      "offset": 17028442,
+      "text": "direction-dial.png"
+    },
+    {
+      "offset": 17028461,
+      "text": "direction-dial-needle.png"
+    },
+    {
+      "offset": 17028487,
+      "text": "Usage label"
+    },
+    {
+      "offset": 17028499,
+      "text": "button_rad_v11_dropdown.png"
+    },
+    {
+      "offset": 17028527,
+      "text": "Filtered Dropdown container"
+    },
+    {
+      "offset": 17028555,
+      "text": "Label and advanced button"
+    },
+    {
+      "offset": 17028581,
+      "text": "Label frame"
+    },
+    {
+      "offset": 17028593,
+      "text": "Advanced btn frame"
+    },
+    {
+      "offset": 17028612,
+      "text": "Info btn frame"
+    },
+    {
+      "offset": 17028627,
+      "text": "Mission Block header"
+    },
+    {
+      "offset": 17028648,
+      "text": "File name container"
+    },
+    {
+      "offset": 17028668,
+      "text": "Filename and path"
+    },
+    {
+      "offset": 17028686,
+      "text": "Change destination button frame"
+    },
+    {
+      "offset": 17028718,
+      "text": "Validation error text padding"
+    },
+    {
+      "offset": 17028748,
+      "text": "Validation error text inner, background-filled frame"
+    },
+    {
+      "offset": 17028801,
+      "text": "Data display row"
+    },
+    {
+      "offset": 17028818,
+      "text": "Right-aligned data display row"
+    },
+    {
+      "offset": 17028849,
+      "text": "Centered data display row"
+    },
+    {
+      "offset": 17028875,
+      "text": "right_tab.png"
+    },
+    {
+      "offset": 17028889,
+      "text": "focus_res_tab.png"
+    },
+    {
+      "offset": 17028907,
+      "text": "Scrolling tab contents"
+    },
+    {
+      "offset": 17028930,
+      "text": "header_section_2.png"
+    },
+    {
+      "offset": 17028951,
+      "text": "Outer hdiv"
+    },
+    {
+      "offset": 17028962,
+      "text": "Outer vdiv"
+    },
+    {
+      "offset": 17028973,
+      "text": "Centered window inner packer"
+    },
+    {
+      "offset": 17029002,
+      "text": "Bottom packer"
+    },
+    {
+      "offset": 17029016,
+      "text": "Outer v div for percent-based padding"
+    },
+    {
+      "offset": 17029054,
+      "text": "Outer h div for percent-based padding"
+    },
+    {
+      "offset": 17029092,
+      "text": "Stack packer"
+    },
+    {
+      "offset": 17029105,
+      "text": "Text btn frame"
+    },
+    {
+      "offset": 17029120,
+      "text": "button_transparent_tertiary.png"
+    },
+    {
+      "offset": 17029152,
+      "text": "Back btn frame"
+    },
+    {
+      "offset": 17029167,
+      "text": "icon_back_white.png"
+    },
+    {
+      "offset": 17029187,
+      "text": "icon_back.png"
+    },
+    {
+      "offset": 17029201,
+      "text": "14v11_ui_builder"
+    },
+    {
+      "offset": 17029248,
+      "text": "window.webkit.messageHandlers.xplane.postMessage(JSON.stringify(message));"
+    },
+    {
+      "offset": 17029324,
+      "text": "(function() {"
+    },
+    {
+      "offset": 17029338,
+      "text": "if (window.xplane && window.xplane.rpc) return;"
+    },
+    {
+      "offset": 17029391,
+      "text": "window.xplane = window.xplane || {};"
+    },
+    {
+      "offset": 17029432,
+      "text": "window.xplane.version = '"
+    },
+    {
+      "offset": 17029465,
+      "text": "window.rpcCallbacks = {};"
+    },
+    {
+      "offset": 17029495,
+      "text": "window.rpcIdCounter = 0;"
+    },
+    {
+      "offset": 17029525,
+      "text": "// Helper function for sending messages"
+    },
+    {
+      "offset": 17029569,
+      "text": "function sendMessage(message) {"
+    },
+    {
+      "offset": 17029605,
+      "text": "try {"
+    },
+    {
+      "offset": 17029619,
+      "text": ""
+    },
+    {
+      "offset": 17029633,
+      "text": "} catch (e) {"
+    },
+    {
+      "offset": 17029655,
+      "text": "console.error('Failed to send message:', e);"
+    },
+    {
+      "offset": 17029712,
+      "text": "}"
+    },
+    {
+      "offset": 17029722,
+      "text": "}"
+    },
+    {
+      "offset": 17029729,
+      "text": "window.xplane.rpc = function(method, params) {"
+    },
+    {
+      "offset": 17029780,
+      "text": "return new Promise(function(resolve, reject) {"
+    },
+    {
+      "offset": 17029835,
+      "text": "var id = 'rpc_' + (++window.rpcIdCounter) + '_' + Date.now();"
+    },
+    {
+      "offset": 17029909,
+      "text": "window.rpcCallbacks[id] = {resolve: resolve, reject: reject};"
+    },
+    {
+      "offset": 17029984,
+      "text": "var message = {"
+    },
+    {
+      "offset": 17030012,
+      "text": "type: 'rpc',"
+    },
+    {
+      "offset": 17030041,
+      "text": "id: id,"
+    },
+    {
+      "offset": 17030065,
+      "text": "method: method,"
+    },
+    {
+      "offset": 17030097,
+      "text": "params: params || {}"
+    },
+    {
+      "offset": 17030134,
+      "text": "};"
+    },
+    {
+      "offset": 17030150,
+      "text": "try {"
+    },
+    {
+      "offset": 17030168,
+      "text": ""
+    },
+    {
+      "offset": 17030186,
+      "text": "} catch (e) {"
+    },
+    {
+      "offset": 17030212,
+      "text": "delete window.rpcCallbacks[id];"
+    },
+    {
+      "offset": 17030260,
+      "text": "reject(new Error('Failed to send RPC message: ' + e.message));"
+    },
+    {
+      "offset": 17030339,
+      "text": "}"
+    },
+    {
+      "offset": 17030353,
+      "text": "});"
+    },
+    {
+      "offset": 17030365,
+      "text": "};"
+    },
+    {
+      "offset": 17030373,
+      "text": "// Built-in logging functions - bypass RPC system entirely"
+    },
+    {
+      "offset": 17030436,
+      "text": "window.xplane.LOG_E = function(text) {"
+    },
+    {
+      "offset": 17030479,
+      "text": "sendMessage({type: 'xplane_log', level: 'ERROR', message: text});"
+    },
+    {
+      "offset": 17030553,
+      "text": "};"
+    },
+    {
+      "offset": 17030561,
+      "text": "window.xplane.LOG_W = function(text) {"
+    },
+    {
+      "offset": 17030604,
+      "text": "sendMessage({type: 'xplane_log', level: 'WARNING', message: text});"
+    },
+    {
+      "offset": 17030680,
+      "text": "};"
+    },
+    {
+      "offset": 17030688,
+      "text": "window.xplane.LOG_I = function(text) {"
+    },
+    {
+      "offset": 17030731,
+      "text": "sendMessage({type: 'xplane_log', level: 'INFO', message: text});"
+    },
+    {
+      "offset": 17030804,
+      "text": "};"
+    },
+    {
+      "offset": 17030812,
+      "text": "window.xplane.LOG_D = function(text) {"
+    },
+    {
+      "offset": 17030855,
+      "text": "sendMessage({type: 'xplane_log', level: 'DEBUG', message: text});"
+    },
+    {
+      "offset": 17030929,
+      "text": "};"
+    },
+    {
+      "offset": 17030937,
+      "text": "window.handleRPCResponse = function(data) {"
+    },
+    {
+      "offset": 17030985,
+      "text": "if (data.type === 'rpc_response' && data.id && window.rpcCallbacks[data.id]) {"
+    },
+    {
+      "offset": 17031072,
+      "text": "var callback = window.rpcCallbacks[data.id];"
+    },
+    {
+      "offset": 17031129,
+      "text": "delete window.rpcCallbacks[data.id];"
+    },
+    {
+      "offset": 17031179,
+      "text": "if (data.error) {"
+    },
+    {
+      "offset": 17031209,
+      "text": "callback.reject(new Error(data.error));"
+    },
+    {
+      "offset": 17031265,
+      "text": "} else {"
+    },
+    {
+      "offset": 17031286,
+      "text": "callback.resolve(data.result);"
+    },
+    {
+      "offset": 17031333,
+      "text": "}"
+    },
+    {
+      "offset": 17031347,
+      "text": "}"
+    },
+    {
+      "offset": 17031357,
+      "text": "};"
+    },
+    {
+      "offset": 17031364,
+      "text": "})();"
+    },
+    {
+      "offset": 17031371,
+      "text": "(function() {"
+    },
+    {
+      "offset": 17031386,
+      "text": "window.xplane."
+    },
+    {
+      "offset": 17031405,
+      "text": "= async function(params) { return await window.xplane.rpc('"
+    },
+    {
+      "offset": 17031466,
+      "text": "', params); };"
+    },
+    {
+      "offset": 17031482,
+      "text": "Invalid JSON message"
+    },
+    {
+      "offset": 17031503,
+      "text": "rpc_response"
+    },
+    {
+      "offset": 17031516,
+      "text": "m_init_done"
+    },
+    {
+      "offset": 17031528,
+      "text": "/builds/x-plane/design/source_code/core/browser/xp_browser_native_common.cpp"
+    },
+    {
+      "offset": 17031605,
+      "text": "m_is_healthy"
+    },
+    {
+      "offset": 17031618,
+      "text": "!m_cancel_handle->is_cancel_requested()"
+    },
+    {
+      "offset": 17031658,
+      "text": "Method not found: "
+    },
+    {
+      "offset": 17031677,
+      "text": "Unknown RPC execution error"
+    },
+    {
+      "offset": 17031705,
+      "text": "RPC execution error: "
+    },
+    {
+      "offset": 17031727,
+      "text": "xplane_log"
+    },
+    {
+      "offset": 17031738,
+      "text": "BROWSER"
+    },
+    {
+      "offset": 17031746,
+      "text": "DEBUG"
+    },
+    {
+      "offset": 17031752,
+      "text": "WARNING"
+    },
+    {
+      "offset": 17031764,
+      "text": "Event is not valid JSON: %s"
+    },
+    {
+      "offset": 17031793,
+      "text": "Invalid RPC call: missing id or method"
+    },
+    {
+      "offset": 17031972,
+      "text": "Failed to create store directory: %s"
+    },
+    {
+      "offset": 17032009,
+      "text": "https://example.x-plane.com/api/lockbox/get_key"
+    },
+    {
+      "offset": 17032057,
+      "text": "Lockbox machine ID mismatch, removing"
+    },
+    {
+      "offset": 17032095,
+      "text": "Lockbox version mismatch, removing"
+    },
+    {
+      "offset": 17032130,
+      "text": "Failed to remove lockbox file"
+    },
+    {
+      "offset": 17032160,
+      "text": "See Log.txt for more details"
+    },
+    {
+      "offset": 17032189,
+      "text": "/builds/x-plane/design/source_code/core/drm/lockbox_mgr.cpp"
+    },
+    {
+      "offset": 17032272,
+      "text": "lbox-"
+    },
+    {
+      "offset": 17032278,
+      "text": ".bin"
+    },
+    {
+      "offset": 17032283,
+      "text": "Decryption failed: %s"
+    },
+    {
+      "offset": 17032305,
+      "text": "Encryption failed: %s"
+    },
+    {
+      "offset": 17032327,
+      "text": "lockbox file is corrupted, truncated"
+    },
+    {
+      "offset": 17032364,
+      "text": "Clone() is not implemented yet."
+    },
+    {
+      "offset": 17032400,
+      "text": "memcpy_s: buffer overflow"
+    },
+    {
+      "offset": 17032426,
+      "text": "SHA-256"
+    },
+    {
+      "offset": 17032434,
+      "text": "InputBuffer"
+    },
+    {
+      "offset": 17032446,
+      "text": "BufferedTransformation: this object doesn't allow input"
+    },
+    {
+      "offset": 17032502,
+      "text": "AlgorithmParametersBase: parameter \""
+    },
+    {
+      "offset": 17032539,
+      "text": "\" not used"
+    },
+    {
+      "offset": 17032550,
+      "text": ": this object doesn't support resynchronization"
+    },
+    {
+      "offset": 17032598,
+      "text": "AllocatorBase: requested size would cause integer overflow"
+    },
+    {
+      "offset": 17032661,
+      "text": "N8CryptoPP9ExceptionE"
+    },
+    {
+      "offset": 17032976,
+      "text": "N8CryptoPP31IteratedHashWithStaticTransformIjNS_10EnumToTypeINS_9ByteOrderELi1EEELj64ELj32ENS_6SHA256ELj32ELb1EEE"
+    },
+    {
+      "offset": 17033090,
+      "text": "N8CryptoPP12ClonableImplINS_6SHA256ENS_13AlgorithmImplINS_12IteratedHashIjNS_10EnumToTypeINS_9ByteOrderELi1EEELj64ENS_18HashTransformationEEES1_EEEE"
+    },
+    {
+      "offset": 17033239,
+      "text": "N8CryptoPP13AlgorithmImplINS_12IteratedHashIjNS_10EnumToTypeINS_9ByteOrderELi1EEELj64ENS_18HashTransformationEEENS_6SHA256EEE"
+    },
+    {
+      "offset": 17033365,
+      "text": "N8CryptoPP12IteratedHashIjNS_10EnumToTypeINS_9ByteOrderELi1EEELj64ENS_18HashTransformationEEE"
+    },
+    {
+      "offset": 17033459,
+      "text": "N8CryptoPP16IteratedHashBaseIjNS_18HashTransformationEEE"
+    },
+    {
+      "offset": 17034088,
+      "text": "N8CryptoPP14NotImplementedE"
+    },
+    {
+      "offset": 17034224,
+      "text": "N8CryptoPP15InvalidArgumentE"
+    },
+    {
+      "offset": 17034333,
+      "text": ".>N^n~"
+    },
+    {
+      "offset": 17034856,
+      "text": "N8CryptoPP12StringSourceE"
+    },
+    {
+      "offset": 17034882,
+      "text": "N8CryptoPP14SourceTemplateINS_11StringStoreEEE"
+    },
+    {
+      "offset": 17035536,
+      "text": "N8CryptoPP23AlgorithmParametersBaseE"
+    },
+    {
+      "offset": 17035592,
+      "text": "N8CryptoPP23AlgorithmParametersBase16ParameterNotUsedE"
+    },
+    {
+      "offset": 17035712,
+      "text": "N8CryptoPP14InputRejectingINS_6FilterEE13InputRejectedE"
+    },
+    {
+      "offset": 17036152,
+      "text": "N8CryptoPP16BlockCipherFinalILNS_9CipherDirE1ENS_8Rijndael3DecEEE"
+    },
+    {
+      "offset": 17036218,
+      "text": "N8CryptoPP12ClonableImplINS_16BlockCipherFinalILNS_9CipherDirE1ENS_8Rijndael3DecEEES4_EE"
+    },
+    {
+      "offset": 17036680,
+      "text": "N8CryptoPP16BlockCipherFinalILNS_9CipherDirE0ENS_8Rijndael3EncEEE"
+    },
+    {
+      "offset": 17036746,
+      "text": "N8CryptoPP12ClonableImplINS_16BlockCipherFinalILNS_9CipherDirE0ENS_8Rijndael3EncEEES4_EE"
+    },
+    {
+      "offset": 17036888,
+      "text": "Found and repaired a corrupted block"
+    },
+    {
+      "offset": 17036925,
+      "text": "Failed to remove lockbox file: %s"
+    },
+    {
+      "offset": 17036960,
+      "text": "X509"
+    },
+    {
+      "offset": 17036965,
+      "text": "Certificates could not be loaded"
+    },
+    {
+      "offset": 17036998,
+      "text": "Invalid root certificate"
+    },
+    {
+      "offset": 17037023,
+      "text": "Certificate has expired"
+    },
+    {
+      "offset": 17037047,
+      "text": "Unknown X509 Validation Error (%d) - %s"
+    },
+    {
+      "offset": 17037568,
+      "text": "/builds/x-plane/design/source_code/core/files/FILE_ops.cpp"
+    },
+    {
+      "offset": 17037627,
+      "text": "earth nav data"
+    },
+    {
+      "offset": 17037642,
+      "text": "library.txt"
+    },
+    {
+      "offset": 17037654,
+      "text": ".ACF"
+    },
+    {
+      "offset": 17037659,
+      "text": ".AFL"
+    },
+    {
+      "offset": 17037664,
+      "text": ".WPN"
+    },
+    {
+      "offset": 17037669,
+      "text": ".OBJ"
+    },
+    {
+      "offset": 17037674,
+      "text": ".WAV"
+    },
+    {
+      "offset": 17037679,
+      "text": ".CSL"
+    },
+    {
+      "offset": 17037684,
+      "text": ".SIT"
+    },
+    {
+      "offset": 17037689,
+      "text": ".REP"
+    },
+    {
+      "offset": 17037694,
+      "text": ".TXT"
+    },
+    {
+      "offset": 17037699,
+      "text": ".FMS"
+    },
+    {
+      "offset": 17037704,
+      "text": ".FML"
+    },
+    {
+      "offset": 17037709,
+      "text": ".FLP"
+    },
+    {
+      "offset": 17037714,
+      "text": ".FDR"
+    },
+    {
+      "offset": 17037719,
+      "text": ".BMP"
+    },
+    {
+      "offset": 17037724,
+      "text": ".PNG"
+    },
+    {
+      "offset": 17037729,
+      "text": ".PSS"
+    },
+    {
+      "offset": 17037734,
+      "text": ".IXN"
+    },
+    {
+      "offset": 17037739,
+      "text": ".JOY"
+    },
+    {
+      "offset": 17037744,
+      "text": ".PRF"
+    },
+    {
+      "offset": 17037749,
+      "text": ".KEYS"
+    },
+    {
+      "offset": 17037755,
+      "text": ".inst"
+    },
+    {
+      "offset": 17037761,
+      "text": "Global Scenery"
+    },
+    {
+      "offset": 17037776,
+      "text": "custom scenery"
+    },
+    {
+      "offset": 17037791,
+      "text": "plugins"
+    },
+    {
+      "offset": 17037799,
+      "text": "liveries"
+    },
+    {
+      "offset": 17037808,
+      "text": "cockpit"
+    },
+    {
+      "offset": 17037816,
+      "text": "airfoils"
+    },
+    {
+      "offset": 17037825,
+      "text": "weapons"
+    },
+    {
+      "offset": 17037833,
+      "text": "Working path does not appear to be a directory!"
+    },
+    {
+      "offset": 17037881,
+      "text": "This is not consistent with my labelling practices!"
+    },
+    {
+      "offset": 17037933,
+      "text": "I need to end all paths with the directory indicator!"
+    },
+    {
+      "offset": 17037987,
+      "text": "Found file or folder with a dirchar in filename: %s. I'm ignoring this file or folder and wont list it in the file listing"
+    },
+    {
+      "offset": 17038110,
+      "text": "Launching: "
+    },
+    {
+      "offset": 17038122,
+      "text": "Bad ouf_open type!"
+    },
+    {
+      "offset": 17038144,
+      "text": "The file could not be saved. Check that the directory still exists and is not flagged read-only."
+    },
+    {
+      "offset": 17038241,
+      "text": "The file may be flagged as read-only."
+    },
+    {
+      "offset": 17038279,
+      "text": "Change the permission on the file so it's not read-only, or create the folder listed in the file path."
+    },
+    {
+      "offset": 17038432,
+      "text": "Trying to scan beyond the end of the file!"
+    },
+    {
+      "offset": 17038475,
+      "text": "Be sure to include the file you were trying to read."
+    },
+    {
+      "offset": 17038528,
+      "text": "/builds/x-plane/design/source_code/core/files/xmap.cpp"
+    },
+    {
+      "offset": 17038583,
+      "text": "Bad check_file type!"
+    },
+    {
+      "offset": 17038604,
+      "text": "Invalid read_n_rev read!"
+    },
+    {
+      "offset": 17038629,
+      "text": "X-Plane received a bad directory character. X-Plane only uses '/'!"
+    },
+    {
+      "offset": 17038696,
+      "text": "The path in question is:"
+    },
+    {
+      "offset": 17038721,
+      "text": "Warning: Cannot map '"
+    },
+    {
+      "offset": 17038743,
+      "text": "': requested range "
+    },
+    {
+      "offset": 17038766,
+      "text": "is outside the file"
+    },
+    {
+      "offset": 17038788,
+      "text": "Failed to map file %s"
+    },
+    {
+      "offset": 17038815,
+      "text": "ELSE"
+    },
+    {
+      "offset": 17038820,
+      "text": "WARNING: ELSE statement is not inside an IF statement."
+    },
+    {
+      "offset": 17038876,
+      "text": "WARNING: more than one ELSE statement for an IF statement."
+    },
+    {
+      "offset": 17038936,
+      "text": "ENDIF"
+    },
+    {
+      "offset": 17038942,
+      "text": "WARNING: ENDIF in file is not matched by an IF statement."
+    },
+    {
+      "offset": 17039001,
+      "text": "ERROR: unknown variable for IF statement."
+    },
+    {
+      "offset": 17039044,
+      "text": "io_opr == IO_write"
+    },
+    {
+      "offset": 17040632,
+      "text": "9pnl_table"
+    },
+    {
+      "offset": 17043136,
+      "text": "16pnl_table_header"
+    },
+    {
+      "offset": 17043184,
+      "text": "17pnl_table_content"
+    },
+    {
+      "offset": 17043224,
+      "text": "13dynamic_table"
+    },
+    {
+      "offset": 17043264,
+      "text": "15scrolling_table"
+    },
+    {
+      "offset": 17043400,
+      "text": "NSt3__110__function6__funcIZN9pnl_table4drawEP16OGL_draw_contextPKiS6_E3$_0NS_9allocatorIS7_EEFifEEE"
+    },
+    {
+      "offset": 17043528,
+      "text": "ZN9pnl_table4drawEP16OGL_draw_contextPKiS3_E3$_0"
+    },
+    {
+      "offset": 17043688,
+      "text": "NSt3__110__function6__funcIZN9pnl_table4drawEP16OGL_draw_contextPKiS6_E3$_1NS_9allocatorIS7_EEFifEEE"
+    },
+    {
+      "offset": 17043816,
+      "text": "ZN9pnl_table4drawEP16OGL_draw_contextPKiS3_E3$_1"
+    },
+    {
+      "offset": 17043976,
+      "text": "NSt3__110__function6__funcIZN9pnl_table4drawEP16OGL_draw_contextPKiS6_E3$_2NS_9allocatorIS7_EEFviiS6_PfEEE"
+    },
+    {
+      "offset": 17044112,
+      "text": "ZN9pnl_table4drawEP16OGL_draw_contextPKiS3_E3$_2"
+    },
+    {
+      "offset": 17044272,
+      "text": "NSt3__110__function6__funcIZN9pnl_table4drawEP16OGL_draw_contextPKiS6_E3$_3NS_9allocatorIS7_EEFNS_12basic_stringIcNS_11char_traitsIcEENS8_IcEEEERK16pnl_cell_contentEEE"
+    },
+    {
+      "offset": 17044464,
+      "text": "ZN9pnl_table4drawEP16OGL_draw_contextPKiS3_E3$_3"
+    },
+    {
+      "offset": 17044624,
+      "text": "NSt3__110__function6__funcIZN9pnl_table4drawEP16OGL_draw_contextPKiS6_E3$_4NS_9allocatorIS7_EEFvS4_EEE"
+    },
+    {
+      "offset": 17044752,
+      "text": "ZN9pnl_table4drawEP16OGL_draw_contextPKiS3_E3$_4"
+    },
+    {
+      "offset": 17044840,
+      "text": "333?"
+    },
+    {
+      "offset": 17044854,
+      "text": "@@%%.%df"
+    },
+    {
+      "offset": 17044863,
+      "text": "fill_box_popup.png"
+    },
+    {
+      "offset": 17044882,
+      "text": "show_hide.png"
+    },
+    {
+      "offset": 17044896,
+      "text": "lock.png"
+    },
+    {
+      "offset": 17044905,
+      "text": "link.png"
+    },
+    {
+      "offset": 17044914,
+      "text": "option_button.png"
+    },
+    {
+      "offset": 17044932,
+      "text": "pop_list_surface.png"
+    },
+    {
+      "offset": 17044953,
+      "text": "button_sort_descending.png"
+    },
+    {
+      "offset": 17044980,
+      "text": "button_sort_ascending.png"
+    },
+    {
+      "offset": 17045006,
+      "text": "13gui_drag_data"
+    },
+    {
+      "offset": 17045104,
+      "text": "NSt3__110__function6__baseIFifEEE"
+    },
+    {
+      "offset": 17045160,
+      "text": "NSt3__110__function6__baseIFviiPKiPfEEE"
+    },
+    {
+      "offset": 17045216,
+      "text": "NSt3__110__function6__baseIFNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERK16pnl_cell_contentEEE"
+    },
+    {
+      "offset": 17045344,
+      "text": "NSt3__110__function6__baseIFvP16OGL_draw_contextEEE"
+    },
+    {
+      "offset": 17045429,
+      "text": "}INww"
+    },
+    {
+      "offset": 17046760,
+      "text": "tower_receipt"
+    },
+    {
+      "offset": 17046774,
+      "text": "user_x509_certificates"
+    },
+    {
+      "offset": 17046797,
+      "text": "ident_token.prf"
+    },
+    {
+      "offset": 17046813,
+      "text": "ajuwtkhs.prf"
+    },
+    {
+      "offset": 17046826,
+      "text": "IDENT"
+    },
+    {
+      "offset": 17046832,
+      "text": "%s(%d): error %d - %s"
+    },
+    {
+      "offset": 17046855,
+      "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+    },
+    {
+      "offset": 17046922,
+      "text": "m_session_running_EXTERNAL"
+    },
+    {
+      "offset": 17046949,
+      "text": "/builds/x-plane/design/source_code/core/installer/license_mgr.cpp"
+    },
+    {
+      "offset": 17047015,
+      "text": "--debug_license_mgr"
+    },
+    {
+      "offset": 17047035,
+      "text": "Calling for session START"
+    },
+    {
+      "offset": 17047061,
+      "text": "!session_was_running"
+    },
+    {
+      "offset": 17047082,
+      "text": "!m_session_running_INTERNAL"
+    },
+    {
+      "offset": 17047110,
+      "text": "Getting auth credentials from disk..."
+    },
+    {
+      "offset": 17047148,
+      "text": "No login credentials found"
+    },
+    {
+      "offset": 17047175,
+      "text": "Unexpected user error"
+    },
+    {
+      "offset": 17047197,
+      "text": "%s credentials for user %s found on disk"
+    },
+    {
+      "offset": 17047238,
+      "text": "Expired"
+    },
+    {
+      "offset": 17047246,
+      "text": "Good"
+    },
+    {
+      "offset": 17047251,
+      "text": "Attempting to refresh credentials"
+    },
+    {
+      "offset": 17047285,
+      "text": "async OAUTH2 token refresh succeeded"
+    },
+    {
+      "offset": 17047322,
+      "text": "async OAUTH2 token refresh cancelled"
+    },
+    {
+      "offset": 17047359,
+      "text": "async OAUTH2 token refresh failed: %s"
+    },
+    {
+      "offset": 17047397,
+      "text": "startup"
+    },
+    {
+      "offset": 17047405,
+      "text": "Successfully fetched receipt"
+    },
+    {
+      "offset": 17047434,
+      "text": "Receipt fetch failed: %s"
+    },
+    {
+      "offset": 17047459,
+      "text": "Receipt fetch cancelled"
+    },
+    {
+      "offset": 17047483,
+      "text": "Calling for session END"
+    },
+    {
+      "offset": 17047507,
+      "text": "Session Ended"
+    },
+    {
+      "offset": 17047521,
+      "text": "Scheduling %s AUTH refresh (%s) in %f seconds"
+    },
+    {
+      "offset": 17047567,
+      "text": "one-time"
+    },
+    {
+      "offset": 17047576,
+      "text": "Scheduled AUTH refresh (%s) was cancelled"
+    },
+    {
+      "offset": 17047618,
+      "text": "Periodic AUTH refresh (%s) beginning"
+    },
+    {
+      "offset": 17047655,
+      "text": "Scheduled AUTH refresh (%s) was cancelled while waiting for scheduled interval"
+    },
+    {
+      "offset": 17047734,
+      "text": "Periodic AUTH refresh (%s) succeeded"
+    },
+    {
+      "offset": 17047771,
+      "text": "Periodic AUTH refresh (%s) cancelled"
+    },
+    {
+      "offset": 17047808,
+      "text": "Scheduled AUTH refresh (%s) failed with: %s. Not asked to retry."
+    },
+    {
+      "offset": 17047873,
+      "text": "Periodic AUTH refresh failed with: %s. Trying again in %f seconds"
+    },
+    {
+      "offset": 17047939,
+      "text": "Scheduling %s RECEIPT refresh (%s) in %f seconds"
+    },
+    {
+      "offset": 17047988,
+      "text": "Scheduled RECEIPT refresh (%s) was cancelled"
+    },
+    {
+      "offset": 17048033,
+      "text": "Periodic RECEIPT refresh (%s) beginning"
+    },
+    {
+      "offset": 17048073,
+      "text": "Scheduled RECEIPT refresh (%s) was cancelled while waiting for scheduled interval"
+    },
+    {
+      "offset": 17048155,
+      "text": "Periodic RECEIPT refresh (%s) succeeded"
+    },
+    {
+      "offset": 17048195,
+      "text": "Periodic RECEIPT refresh (%s) cancelled"
+    },
+    {
+      "offset": 17048235,
+      "text": "Scheduled RECEIPT refresh (%s) failed with: %s. Not asked to retry."
+    },
+    {
+      "offset": 17048303,
+      "text": "Periodic RECEIPT refresh failed with: %s. Trying again in %f seconds"
+    },
+    {
+      "offset": 17048372,
+      "text": "Logging user out"
+    },
+    {
+      "offset": 17048389,
+      "text": "Getting receipt manifest from disk..."
+    },
+    {
+      "offset": 17048427,
+      "text": "Got valid receipt from disk"
+    },
+    {
+      "offset": 17048455,
+      "text": "Receipt not found on disk"
+    },
+    {
+      "offset": 17048481,
+      "text": "Expired receipt found on disk"
+    },
+    {
+      "offset": 17048511,
+      "text": "Unexpected receipt error. Removing from disk."
+    },
+    {
+      "offset": 17048557,
+      "text": "Starting async receipt refresh"
+    },
+    {
+      "offset": 17048588,
+      "text": "Got valid receipt from network"
+    },
+    {
+      "offset": 17048619,
+      "text": "Unexpected receipt error trying to get one from the network."
+    },
+    {
+      "offset": 17048680,
+      "text": "https://ident.x-plane.com/oauth2/token"
+    },
+    {
+      "offset": 17048719,
+      "text": "Content-Type: application/x-www-form-urlencoded"
+    },
+    {
+      "offset": 17048767,
+      "text": "grant_type=authorization_code&client_id=%s&code_verifier=%s&redirect_uri=%s&code=%s"
+    },
+    {
+      "offset": 17048851,
+      "text": "reason_code"
+    },
+    {
+      "offset": 17048863,
+      "text": "Failed to get Access Token. Access Code is expired!"
+    },
+    {
+      "offset": 17048915,
+      "text": "Failed to get Access Token. Access Code is invalid!"
+    },
+    {
+      "offset": 17048967,
+      "text": "Failed to get Access Token. Http Code is: %d"
+    },
+    {
+      "offset": 17049012,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17049032,
+      "text": "access_token"
+    },
+    {
+      "offset": 17049045,
+      "text": "refresh_token"
+    },
+    {
+      "offset": 17049059,
+      "text": "Access or Refresh Token failed validity check!"
+    },
+    {
+      "offset": 17049106,
+      "text": "grant_type=refresh_token&client_id=%s&refresh_token=%s"
+    },
+    {
+      "offset": 17049161,
+      "text": "Refresh Error Code is: %d"
+    },
+    {
+      "offset": 17049187,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17049207,
+      "text": "%s?mid=%lld"
+    },
+    {
+      "offset": 17049219,
+      "text": "https://tower.x-plane.com/v1/inventory"
+    },
+    {
+      "offset": 17049258,
+      "text": "Authorization: Bearer %s"
+    },
+    {
+      "offset": 17049283,
+      "text": "Manifest Error Code is: %d"
+    },
+    {
+      "offset": 17049310,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17049330,
+      "text": "Manifest Token failed validity check!"
+    },
+    {
+      "offset": 17049368,
+      "text": "Could not retrieve product claim from addon manifest token"
+    },
+    {
+      "offset": 17049427,
+      "text": "Could not retrieve x5u from addon manifest token for product_id: %s"
+    },
+    {
+      "offset": 17049495,
+      "text": "Getting certificate from disk for product_id: %s..."
+    },
+    {
+      "offset": 17049547,
+      "text": "Certificate not found on disk for product_id: %s"
+    },
+    {
+      "offset": 17049596,
+      "text": "17be7e4f013a12b9c12efa2f03da2473fcbe130046867107cf1a8bdc5ab69511"
+    },
+    {
+      "offset": 17049661,
+      "text": "Disk cache certificates for product_id: %s are invalid."
+    },
+    {
+      "offset": 17049717,
+      "text": "Updating certificate cache for product_id: %s from network..."
+    },
+    {
+      "offset": 17049779,
+      "text": "Certificate for product_id: %s could not be fetched from network. Unable to verify receipt!"
+    },
+    {
+      "offset": 17049871,
+      "text": "JWT signature verification failed for product_id: %s, attempting certificate refresh..."
+    },
+    {
+      "offset": 17049959,
+      "text": "Addon manifest token is invalid for product_id: %s"
+    },
+    {
+      "offset": 17050010,
+      "text": "JWT signature verification failed, attempting certificate refresh..."
+    },
+    {
+      "offset": 17050079,
+      "text": "Fresh certificate chain validation failed!"
+    },
+    {
+      "offset": 17050122,
+      "text": "JWT verification failed even with fresh certificate!"
+    },
+    {
+      "offset": 17050175,
+      "text": "JWT verification succeeded with fresh certificate"
+    },
+    {
+      "offset": 17050225,
+      "text": "Failed to retrieve fresh certificate from network"
+    },
+    {
+      "offset": 17050275,
+      "text": "Inventory JWT is missing x5u"
+    },
+    {
+      "offset": 17050304,
+      "text": "Getting certificate from disk..."
+    },
+    {
+      "offset": 17050337,
+      "text": "Certificate not found on disk!"
+    },
+    {
+      "offset": 17050368,
+      "text": "Disk cache certificates are invalid."
+    },
+    {
+      "offset": 17050405,
+      "text": "Updating certificate cache from network..."
+    },
+    {
+      "offset": 17050448,
+      "text": "Certificate could not be fetched from network. Unable to verify receipt!"
+    },
+    {
+      "offset": 17050521,
+      "text": "Inventory is invalid!"
+    },
+    {
+      "offset": 17050543,
+      "text": "Accepting user"
+    },
+    {
+      "offset": 17050558,
+      "text": "long-term"
+    },
+    {
+      "offset": 17050568,
+      "text": "Accepting receipt"
+    },
+    {
+      "offset": 17050586,
+      "text": "Failed to parse receipt claims for delegate notification"
+    },
+    {
+      "offset": 17050643,
+      "text": "Starting an avatar fetch..."
+    },
+    {
+      "offset": 17050671,
+      "text": "No avatar URL set, skipping avatar fetch"
+    },
+    {
+      "offset": 17050712,
+      "text": "Avatar fetch cancelled"
+    },
+    {
+      "offset": 17050735,
+      "text": "Content-Type:"
+    },
+    {
+      "offset": 17050749,
+      "text": "image/jpeg"
+    },
+    {
+      "offset": 17050760,
+      "text": "image/png"
+    },
+    {
+      "offset": 17050770,
+      "text": "Loading JPG image type..."
+    },
+    {
+      "offset": 17050796,
+      "text": "Loading PNG image type..."
+    },
+    {
+      "offset": 17050822,
+      "text": "user_avatar.png"
+    },
+    {
+      "offset": 17050838,
+      "text": "Avatar fetch returned %s which is an unsupported type. Using a default image instead."
+    },
+    {
+      "offset": 17050924,
+      "text": "Avatar image data failed to load. Maybe it's not a valid image"
+    },
+    {
+      "offset": 17050987,
+      "text": "Avatar fetch Error Code is: %d"
+    },
+    {
+      "offset": 17051018,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17051038,
+      "text": "Error getting AUTH expiration date! This should not happen!"
+    },
+    {
+      "offset": 17051098,
+      "text": "Unable to write user's TOKEN to disk at %s."
+    },
+    {
+      "offset": 17051142,
+      "text": "Unable to write user's TOKEN file to disk at %s."
+    },
+    {
+      "offset": 17051191,
+      "text": "Getting keystore from disk..."
+    },
+    {
+      "offset": 17051221,
+      "text": "Keystore not found on disk!"
+    },
+    {
+      "offset": 17051249,
+      "text": "Updating keystore cache from network..."
+    },
+    {
+      "offset": 17051289,
+      "text": "Keystore could not be fetched from network. Unable to verify AUTH JWT!"
+    },
+    {
+      "offset": 17051360,
+      "text": "Couldn't verify JWT signature. Trying new keystore."
+    },
+    {
+      "offset": 17051412,
+      "text": "laminar"
+    },
+    {
+      "offset": 17051420,
+      "text": "https://ident.x-plane.com/.well-known/jwks.json"
+    },
+    {
+      "offset": 17051468,
+      "text": "JWKS Error Code is: %d"
+    },
+    {
+      "offset": 17051491,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17051511,
+      "text": "x509 Error Code is: %d"
+    },
+    {
+      "offset": 17051534,
+      "text": "Response is: %.*s"
+    },
+    {
+      "offset": 17051554,
+      "text": "x509 certificate not found"
+    },
+    {
+      "offset": 17051581,
+      "text": "Unable to write auth JWKS to disk at %s."
+    },
+    {
+      "offset": 17051622,
+      "text": "Unable to write auth JWKS file to disk at %s."
+    },
+    {
+      "offset": 17051668,
+      "text": "nickname"
+    },
+    {
+      "offset": 17051677,
+      "text": "avatar"
+    },
+    {
+      "offset": 17051684,
+      "text": "Session Started"
+    },
+    {
+      "offset": 17051768,
+      "text": "X-Plane_drm_12.prf"
+    },
+    {
+      "offset": 17051787,
+      "text": "X-Plane_xdd_12.prf"
+    },
+    {
+      "offset": 17051806,
+      "text": "Unable to write user's XDD to disk at %s."
+    },
+    {
+      "offset": 17051848,
+      "text": "ERROR: Digital download file cannot be written!"
+    },
+    {
+      "offset": 17051896,
+      "text": "Please report this message in the X-Plane bug reporter, available by clicking More Info button below."
+    },
+    {
+      "offset": 17051998,
+      "text": "/_lookup_12_/bugreport.html"
+    },
+    {
+      "offset": 17052026,
+      "text": "/builds/x-plane/design/source_code/core/installer/UTL_drm.cpp"
+    },
+    {
+      "offset": 17052088,
+      "text": "GDPR "
+    },
+    {
+      "offset": 17052094,
+      "text": "Unable to write user's XDD file to disk at %s."
+    },
+    {
+      "offset": 17052141,
+      "text": "--xdd"
+    },
+    {
+      "offset": 17052147,
+      "text": "--gdpr"
+    },
+    {
+      "offset": 17052154,
+      "text": "GDPR"
+    },
+    {
+      "offset": 17052159,
+      "text": "Warning: the user's product key is on disk but cannot be decoded.  It is either from another computer or the DRM system is not working."
+    },
+    {
+      "offset": 17052295,
+      "text": "00:FF"
+    },
+    {
+      "offset": 17052301,
+      "text": "UTL_drm: Linux failed to create a socket: %d"
+    },
+    {
+      "offset": 17052347,
+      "text": "UTL_drm: Linux failed to create a socket"
+    },
+    {
+      "offset": 17052389,
+      "text": "Failed to get if_nameindex: %d"
+    },
+    {
+      "offset": 17052421,
+      "text": "%02X:%02X:%02X:%02X:%02X:%02X"
+    },
+    {
+      "offset": 17052451,
+      "text": "UTL_drm: Linux failed with unknown error"
+    },
+    {
+      "offset": 17052493,
+      "text": "Could not get machine id"
+    },
+    {
+      "offset": 17052518,
+      "text": "N%s:A%s:C%s:L%s"
+    },
+    {
+      "offset": 17052534,
+      "text": "Unable to write user's DRM file to disk at %s."
+    },
+    {
+      "offset": 17052581,
+      "text": "%d%s%s:%s:%s:%s"
+    },
+    {
+      "offset": 17052598,
+      "text": "%x:%x:%x:%x:%x:%x%n"
+    },
+    {
+      "offset": 17052640,
+      "text": "\\\\\\\\\\\\\\\\"
+    },
+    {
+      "offset": 17052656,
+      "text": "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\xdd_auth.log"
+    },
+    {
+      "offset": 17052685,
+      "text": "SERVERS"
+    },
+    {
+      "offset": 17052693,
+      "text": "BETA"
+    },
+    {
+      "offset": 17052698,
+      "text": "BETA_INSTALLER_LIN"
+    },
+    {
+      "offset": 17052717,
+      "text": "FINAL_INSTALLER_LIN"
+    },
+    {
+      "offset": 17052737,
+      "text": "SCENERY_BETA_VERSION"
+    },
+    {
+      "offset": 17052758,
+      "text": "SCENERY_FINAL_VERSION"
+    },
+    {
+      "offset": 17052780,
+      "text": "ENDOFLIST"
+    },
+    {
+      "offset": 17052790,
+      "text": "MANIFEST"
+    },
+    {
+      "offset": 17052799,
+      "text": "BRANCH"
+    },
+    {
+      "offset": 17052806,
+      "text": "BRANCH_BUILD_NUMBER"
+    },
+    {
+      "offset": 17052826,
+      "text": "BRANCH_NAME"
+    },
+    {
+      "offset": 17052838,
+      "text": "BRANCH_PATH"
+    },
+    {
+      "offset": 17052850,
+      "text": "--server"
+    },
+    {
+      "offset": 17052859,
+      "text": "--add_server"
+    },
+    {
+      "offset": 17052872,
+      "text": "--server_clone"
+    },
+    {
+      "offset": 17052887,
+      "text": "/etc/mtab"
+    },
+    {
+      "offset": 17052897,
+      "text": "fopen"
+    },
+    {
+      "offset": 17052903,
+      "text": "I could not open /etc/mtab!"
+    },
+    {
+      "offset": 17052931,
+      "text": "I cannot scan for CDs without knowing about /etc/mtab! I will try some predefined places, but I will not guarantee that I can find your DVD!"
+    },
+    {
+      "offset": 17053072,
+      "text": "Make sure I can read /etc/mtab next time!"
+    },
+    {
+      "offset": 17053114,
+      "text": "Contact linux@x-plane.com if you have further questions."
+    },
+    {
+      "offset": 17053171,
+      "text": "/builds/x-plane/design/source_code/core/installer/UTL_installer.cpp"
+    },
+    {
+      "offset": 17053239,
+      "text": "/dev/"
+    },
+    {
+      "offset": 17053245,
+      "text": "/mnt/cdrom/"
+    },
+    {
+      "offset": 17053257,
+      "text": "/media/cdrom/"
+    },
+    {
+      "offset": 17053271,
+      "text": "/mnt/dvd/"
+    },
+    {
+      "offset": 17053281,
+      "text": "/media/dvd/"
+    },
+    {
+      "offset": 17053293,
+      "text": "/mnt/x-plane/"
+    },
+    {
+      "offset": 17053307,
+      "text": "/mnt/xplane/"
+    },
+    {
+      "offset": 17053320,
+      "text": "Error during DVD scan: The installer cannot extract a file. Please report this to X-Plane technical support via https://x-plane.com/support, and include the information below:"
+    },
+    {
+      "offset": 17053496,
+      "text": "Error: %1:message%."
+    },
+    {
+      "offset": 17053516,
+      "text": "Compressed File: %1:file%."
+    },
+    {
+      "offset": 17053543,
+      "text": "Destination Path: %1:file%."
+    },
+    {
+      "offset": 17053571,
+      "text": "checksum_id"
+    },
+    {
+      "offset": 17053583,
+      "text": "https://clearancedelivery.x-planemobile.com/v1/authenticate"
+    },
+    {
+      "offset": 17053643,
+      "text": "Error contacting the authorization server: %s"
+    },
+    {
+      "offset": 17053689,
+      "text": "Server response: %s"
+    },
+    {
+      "offset": 17053710,
+      "text": "Authentication error: %s"
+    },
+    {
+      "offset": 17053735,
+      "text": ". Check your Internet connection and try again"
+    },
+    {
+      "offset": 17053782,
+      "text": "can_sign"
+    },
+    {
+      "offset": 17053791,
+      "text": "Got %d valid products."
+    },
+    {
+      "offset": 17053815,
+      "text": "DRM server returned the unknown product ID %s"
+    },
+    {
+      "offset": 17053861,
+      "text": "expired_products"
+    },
+    {
+      "offset": 17053878,
+      "text": "Got %d expired products."
+    },
+    {
+      "offset": 17053904,
+      "text": "Parsing error: %s"
+    },
+    {
+      "offset": 17053922,
+      "text": "Full response saved to %s"
+    },
+    {
+      "offset": 17053948,
+      "text": "Cannot save full response to %s"
+    },
+    {
+      "offset": 17053980,
+      "text": "Received empty auth response"
+    },
+    {
+      "offset": 17054009,
+      "text": "Unable to parse server JSON response."
+    },
+    {
+      "offset": 17054047,
+      "text": "https://clearancedelivery.x-planemobile.com/v1/download"
+    },
+    {
+      "offset": 17054103,
+      "text": "https://tower.x-plane.com/v1/sim-download"
+    },
+    {
+      "offset": 17054145,
+      "text": "--no_known_installs"
+    },
+    {
+      "offset": 17054165,
+      "text": "WARNING: The installer was unable to register this copy of X-Plane; the X-Plane updater may not be able to find and update X-Plane! (The installer could not locate the user's preferences folder.)"
+    },
+    {
+      "offset": 17054362,
+      "text": "x-plane_install_12.txt"
+    },
+    {
+      "offset": 17054385,
+      "text": "Registration of X-Plane path skipped "
+    },
+    {
+      "offset": 17054425,
+      "text": "existing entry only differs in slash/case form (new: %s, old: %s)"
+    },
+    {
+      "offset": 17054492,
+      "text": "WARNING: The installer could not write to the file "
+    },
+    {
+      "offset": 17054544,
+      "text": "to register this copy of X-Plane for the X-Plane updater."
+    },
+    {
+      "offset": 17054604,
+      "text": "WARNING: registration of this x-system folder failed!"
+    },
+    {
+      "offset": 17054659,
+      "text": "Found duplicated paths in the installer registry: %s, %s"
+    },
+    {
+      "offset": 17054716,
+      "text": "The installer could not write to the file %s to rewrite the list of X-Plane installations"
+    },
+    {
+      "offset": 17054992,
+      "text": "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+    }
   ]
 }
