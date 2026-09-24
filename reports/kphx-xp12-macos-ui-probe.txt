@@ -1,6 +1,6 @@
-pid=1134
+pid=1963
   PID  PPID STAT ELAPSED COMMAND
- 1134  1126 S<     00:19 /tmp/xp12-installer/X-Plane 12 Installer.app/Contents/MacOS/X-Plane 12 Installer --lang=en --install_numeric=121212 --install_name=X-Plane 12.1.2-r4-0f2fea01 --no_web_server
+ 1963  1955 S<     00:23 /tmp/xp12-installer/X-Plane 12 Installer.app/Contents/MacOS/X-Plane 12 Installer --lang=en --install_numeric=121212 --install_name=X-Plane 12.1.2-r4-0f2fea01 --no_web_server
 === stdout ===
 === stderr ===
 === installer log tail ===
