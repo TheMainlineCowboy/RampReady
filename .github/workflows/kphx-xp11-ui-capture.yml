@@ -62,10 +62,18 @@ jobs:
           chmod +x "$BIN"
           LD_PRELOAD=/tmp/libglxcompat.so LIBGL_ALWAYS_SOFTWARE=1 "$BIN"             --install_numeric=115501 --install_name="X-Plane 11.55r2" --no_web_server             >/tmp/stdout 2>/tmp/stderr &
           PID=$!
-          sleep 10
+          sleep 5
+          # Captured first-run window is exactly 800x600 at +240,+100.
+          # Set Language button bounds are approximately root x=785..904, y=507..535.
+          xdotool mousemove --sync 844 521
+          xdotool mousedown 1
+          sleep 0.2
+          xdotool mouseup 1
+          sleep 3
           import -display :99 -window root /tmp/evidence/xp11-ui.png
           {
             echo "pid=$PID"
+            echo "clicked_root=844,521"
             echo "=== windows ==="
             xwininfo -root -tree || true
             echo "=== names/geometry ==="
