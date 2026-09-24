@@ -1,0 +1,205 @@
+name: Verify A1 AutoGate Departure
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - reports/trigger-a1-autogate-departure.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app and browser
+        run: |
+          npm ci
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start RampReady
+        run: |
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/a1-autogate-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/RampReady/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/a1-autogate-vite.log
+          exit 1
+
+      - name: Drive actual A1 departure step
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+          const pageErrors = [];
+          const consoleErrors = [];
+          page.on("pageerror", (error) => pageErrors.push(String(error)));
+          page.on("console", (message) => {
+            if (message.type() === "error") consoleErrors.push(message.text());
+          });
+
+          await page.goto("http://127.0.0.1:4173/RampReady/", {
+            waitUntil: "domcontentloaded",
+            timeout: 60000,
+          });
+
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return d.kphxExactLiveT4 === "ready"
+              && d.a1JetwayAnimationAuthority === "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1"
+              && d.a1JetwayState === "attached-to-aircraft-door";
+          }, null, { timeout: 60000 });
+
+          const read = () => page.evaluate(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return {
+              deployment: Number(d.a1JetwayDeployment),
+              state: d.a1JetwayState || null,
+              history: d.a1JetwayStateHistory || null,
+              authority: d.a1JetwayAnimationAuthority || null,
+              latMeters: Number(d.a1JetwayLatMeters),
+              retractedMeters: Number(d.a1JetwayRetractedMeters),
+              bridgeYawDeltaDegrees: Number(d.a1JetwayBridgeYawDeltaDegrees),
+              cabinCounterYawDeltaDegrees: Number(d.a1JetwayCabinCounterYawDeltaDegrees),
+              fixedWallMotionMaxMeters: Number(d.a1JetwayFixedWallMotionMaxMeters),
+              fixedWallRotationMaxRadians: Number(d.a1JetwayFixedWallRotationMaxRadians),
+              retractionAuthority: d.terminal4A1RetractionAuthority || null,
+              retractionClearanceMeters: Number(d.terminal4A1RetractionClearanceMeters),
+              retractionRatio: Number(d.terminal4A1RetractionRatio),
+              motionDurationMs: Number(d.terminal4A1MotionDurationMs),
+              verticalResolved: d.terminal4A1VerticalResolved || null,
+            };
+          });
+
+          const attached = await read();
+          await page.screenshot({ path: "reports/a1-autogate-attached.jpg", type: "jpeg", quality: 92, fullPage: true });
+
+          const ready = page.getByRole("button", { name: "Ready", exact: true });
+          await ready.waitFor({ state: "visible", timeout: 10000 });
+          await ready.click();
+
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            const deployment = Number(d.a1JetwayDeployment);
+            return deployment < 0.58 && deployment > 0.42;
+          }, null, { timeout: 12000 });
+
+          const midpoint = await read();
+          await page.screenshot({ path: "reports/a1-autogate-mid-disengage.jpg", type: "jpeg", quality: 92, fullPage: true });
+
+          await page.waitForFunction(() => {
+            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
+            return d.a1JetwayState === "parked-clear-of-aircraft"
+              && Number(d.a1JetwayDeployment) <= 0.005;
+          }, null, { timeout: 12000 });
+
+          const parked = await read();
+          await page.screenshot({ path: "reports/a1-autogate-parked.jpg", type: "jpeg", quality: 92, fullPage: true });
+
+          const stageAdvanced = await page.getByText("Align the capture head with the nose gear", { exact: true }).isVisible().catch(() => false);
+
+          const failures = [];
+          const near = (actual, expected, tolerance, label) => {
+            if (!Number.isFinite(actual) || Math.abs(actual - expected) > tolerance) {
+              failures.push(`${label}=${actual}, expected ${expected} ± ${tolerance}`);
+            }
+          };
+
+          near(attached.deployment, 1, 0.002, "attached deployment");
+          near(attached.latMeters, 6.16, 0.01, "attached AutoGate lat");
+          near(attached.retractedMeters, 0, 0.01, "attached retraction");
+          near(attached.fixedWallMotionMaxMeters, 0, 0.000001, "attached fixed-wall motion");
+          near(attached.fixedWallRotationMaxRadians, 0, 0.000001, "attached fixed-wall rotation");
+          if (attached.motionDurationMs !== 15000) failures.push(`motionDurationMs=${attached.motionDurationMs}`);
+          if (attached.retractionRatio !== 1) failures.push(`retractionRatio=${attached.retractionRatio}`);
+          if (attached.verticalResolved !== "false") failures.push(`verticalResolved=${attached.verticalResolved}`);
+
+          if (!(midpoint.deployment < 0.58 && midpoint.deployment > 0.42)) failures.push(`midpoint deployment=${midpoint.deployment}`);
+          if (midpoint.state !== "autogate-disengaging") failures.push(`midpoint state=${midpoint.state}`);
+          if (!(midpoint.retractedMeters > 2.5 && midpoint.retractedMeters < 3.7)) failures.push(`midpoint retraction=${midpoint.retractedMeters}`);
+          near(midpoint.fixedWallMotionMaxMeters, 0, 0.000001, "midpoint fixed-wall motion");
+          near(midpoint.fixedWallRotationMaxRadians, 0, 0.000001, "midpoint fixed-wall rotation");
+
+          near(parked.deployment, 0, 0.005, "parked deployment");
+          near(parked.latMeters, 0, 0.01, "parked AutoGate lat");
+          near(parked.retractedMeters, 6.16, 0.02, "parked retraction");
+          near(parked.bridgeYawDeltaDegrees, -6.245, 0.03, "parked bridge yaw delta");
+          near(parked.cabinCounterYawDeltaDegrees, 5.585, 0.03, "parked cabin counter-yaw");
+          near(parked.fixedWallMotionMaxMeters, 0, 0.000001, "parked fixed-wall motion");
+          near(parked.fixedWallRotationMaxRadians, 0, 0.000001, "parked fixed-wall rotation");
+          if (!String(parked.history).includes("attached-to-aircraft-door")
+            || !String(parked.history).includes("autogate-disengaging")
+            || !String(parked.history).includes("parked-clear-of-aircraft")) {
+            failures.push(`state history=${parked.history}`);
+          }
+          if (!stageAdvanced) failures.push("training state did not advance to nose-gear alignment");
+          if (pageErrors.length) failures.push(`page errors: ${pageErrors.join(" | ")}`);
+          if (consoleErrors.length) failures.push(`console errors: ${consoleErrors.join(" | ")}`);
+
+          const report = {
+            schemaVersion: 1,
+            status: failures.length ? "FAIL" : "PASS",
+            sourceGeometry: "KPHX WED facade 104804 + XP11 Jetway_1_solid.fac",
+            motionAuthority: "MisterX AutoGate-26m horizontal lat curve + Marginal AutoGate DISENGAGE timing",
+            aircraftDoorAuthority: {
+              aircraftType: "CRJ700",
+              aftOfNoseGearMeters: 7.32,
+              leftOfCenterlineMeters: 1.34,
+              attachedLatMeters: 6.16,
+              verticalResolved: false,
+            },
+            attached,
+            midpoint,
+            parked,
+            stageAdvanced,
+            pageErrors,
+            consoleErrors,
+            failures,
+          };
+          fs.writeFileSync("reports/a1-autogate-departure-live.json", JSON.stringify(report, null, 2) + "\n");
+          await browser.close();
+
+          console.log(JSON.stringify(report, null, 2));
+          if (failures.length) throw new Error(failures.join("; "));
+          NODE
+
+      - name: Upload A1 departure evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a1-autogate-departure-${{ github.sha }}
+          path: |
+            reports/a1-autogate-departure-live.json
+            reports/a1-autogate-attached.jpg
+            reports/a1-autogate-mid-disengage.jpg
+            reports/a1-autogate-parked.jpg
+
+      - name: Commit passing evidence
+        if: success()
+        run: |
+          git restore -- package.json package-lock.json 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/a1-autogate-departure-live.json reports/a1-autogate-attached.jpg reports/a1-autogate-mid-disengage.jpg reports/a1-autogate-parked.jpg
+          git commit -m "Verify exact A1 AutoGate departure"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
