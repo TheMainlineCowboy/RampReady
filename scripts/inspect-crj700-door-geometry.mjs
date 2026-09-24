@@ -20,6 +20,7 @@ if(!json) throw new Error("Missing GLB JSON chunk");
 const nodes=json.nodes||[];
 const meshes=json.meshes||[];
 const accessors=json.accessors||[];
+const materials=json.materials||[];
 const parents=new Map();
 nodes.forEach((n,i)=>(n.children||[]).forEach(c=>parents.set(c,i)));
 
@@ -56,53 +57,70 @@ function transformPoint(m,p){
     m[2]*x+m[6]*y+m[10]*z+m[14],
   ];
 }
-function boundsForNode(i){
-  const n=nodes[i];
-  if(!Number.isInteger(n?.mesh)) return null;
-  const mesh=meshes[n.mesh];
-  const m=worldMatrix(i);
+function accessorBounds(ai,m){
+  const a=Number.isInteger(ai)?accessors[ai]:null;
+  if(!a?.min||!a?.max) return null;
   const mins=[Infinity,Infinity,Infinity], maxs=[-Infinity,-Infinity,-Infinity];
-  let primitiveCount=0;
-  for(const prim of mesh?.primitives||[]){
-    const ai=prim.attributes?.POSITION;
-    const a=Number.isInteger(ai)?accessors[ai]:null;
-    if(!a?.min||!a?.max) continue;
-    primitiveCount++;
-    for(const x of [a.min[0],a.max[0]]) for(const y of [a.min[1],a.max[1]]) for(const z of [a.min[2],a.max[2]]){
-      const p=transformPoint(m,[x,y,z]);
-      for(let k=0;k<3;k++){mins[k]=Math.min(mins[k],p[k]);maxs[k]=Math.max(maxs[k],p[k]);}
-    }
+  for(const x of [a.min[0],a.max[0]]) for(const y of [a.min[1],a.max[1]]) for(const z of [a.min[2],a.max[2]]){
+    const p=transformPoint(m,[x,y,z]);
+    for(let k=0;k<3;k++){mins[k]=Math.min(mins[k],p[k]);maxs[k]=Math.max(maxs[k],p[k]);}
   }
-  if(!primitiveCount) return null;
-  return {min:mins,max:maxs,center:mins.map((v,k)=>(v+maxs[k])/2),size:mins.map((v,k)=>maxs[k]-v),primitiveCount};
+  return {min:mins,max:maxs,center:mins.map((v,k)=>(v+maxs[k])/2),size:mins.map((v,k)=>maxs[k]-v)};
 }
 
-const rx=/(door|entry|passenger|stair|step|exit|cabin)/i;
-const candidates=[];
-nodes.forEach((n,i)=>{
-  const meshName=Number.isInteger(n.mesh)?(meshes[n.mesh]?.name||""):"";
-  if(rx.test(n.name||"")||rx.test(meshName)){
-    candidates.push({
-      nodeIndex:i,
+const primitives=[];
+nodes.forEach((n,nodeIndex)=>{
+  if(!Number.isInteger(n.mesh)) return;
+  const mesh=meshes[n.mesh];
+  const m=worldMatrix(nodeIndex);
+  (mesh?.primitives||[]).forEach((prim,primitiveIndex)=>{
+    const bounds=accessorBounds(prim.attributes?.POSITION,m);
+    const materialIndex=Number.isInteger(prim.material)?prim.material:null;
+    const materialName=materialIndex===null?"":(materials[materialIndex]?.name||"");
+    primitives.push({
+      nodeIndex,
       nodeName:n.name||"",
-      meshIndex:Number.isInteger(n.mesh)?n.mesh:null,
-      meshName,
-      parent:parents.get(i)??null,
-      bounds:boundsForNode(i),
+      meshIndex:n.mesh,
+      meshName:mesh?.name||"",
+      primitiveIndex,
+      materialIndex,
+      materialName,
+      bounds
     });
-  }
+  });
 });
-const allNamed=nodes.map((n,i)=>({nodeIndex:i,nodeName:n.name||"",meshIndex:Number.isInteger(n.mesh)?n.mesh:null,meshName:Number.isInteger(n.mesh)?(meshes[n.mesh]?.name||""):""}));
+const rx=/(door|entry|passenger|stair|step|exit|cabin|fwd|forward|l1)/i;
+const namedCandidates=primitives.filter((p)=>rx.test(p.materialName)||rx.test(p.nodeName)||rx.test(p.meshName));
+const forwardLeftCandidates=primitives.filter((p)=>{
+  const b=p.bounds;
+  if(!b) return false;
+  // Exact GLB uses +Y up / -Z forward. Retain primitives overlapping the
+  // measured forward-left L1 neighborhood without inventing a door height.
+  return b.max[0] <= 0.15 && b.min[0] < -0.55
+    && b.max[2] >= -1.75 && b.min[2] <= 1.25
+    && b.max[1] >= 1.5 && b.min[1] <= 4.5;
+});
+const materialsSummary=materials.map((m,i)=>({index:i,name:m.name||""}));
 
 const report={
-  schemaVersion:1,
+  schemaVersion:2,
   glbPath,
   bytes:buffer.length,
   nodeCount:nodes.length,
   meshCount:meshes.length,
-  candidates,
-  allNamed,
+  materialCount:materials.length,
+  primitiveCount:primitives.length,
+  namedCandidates,
+  forwardLeftCandidates,
+  materials:materialsSummary,
 };
 fs.mkdirSync("reports",{recursive:true});
 fs.writeFileSync(outPath,JSON.stringify(report,null,2)+"\n");
-console.log(JSON.stringify({nodeCount:report.nodeCount,meshCount:report.meshCount,candidates},null,2));
+console.log(JSON.stringify({
+  nodeCount:report.nodeCount,
+  meshCount:report.meshCount,
+  materialCount:report.materialCount,
+  primitiveCount:report.primitiveCount,
+  namedCandidates:report.namedCandidates,
+  forwardLeftCandidates:report.forwardLeftCandidates
+},null,2));
