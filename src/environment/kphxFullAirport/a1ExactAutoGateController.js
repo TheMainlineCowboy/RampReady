@@ -17,11 +17,22 @@ const AUTOGATE_26M = Object.freeze({
   bridgeYawDegrees: Object.freeze([58.87485095, 66.4785727]),
   cabinRelativeYawDegrees: Object.freeze([-60.6997204, -67.50015727]),
   sourceTranslationZMeters: Object.freeze([1, -6.5]),
+  vertRangeMeters: Object.freeze([-2, 0]),
+  sourceBridgePitchDegreesAtMinus2: 3.99981854,
 });
 
 function linearCurve([a, b], valueMeters) {
   const t = clamp(valueMeters / AUTOGATE_26M.latRangeMeters[1], 0, 1);
   return lerp(a, b, t);
+}
+
+function sourceVerticalPitchRadians(vertMeters) {
+  const t = clamp((-Number(vertMeters || 0)) / 2, 0, 1);
+  // MisterX AutoGate-26m.obj:
+  // marginal.org.uk/autogate/vert 0 -> -2 rotates the bridge +3.99981854°
+  // in OBJ8 source space. In the RampReady facade frame, negative local-X
+  // pitch lowers the aircraft end while preserving the terminal pivot.
+  return radians(-AUTOGATE_26M.sourceBridgePitchDegreesAtMinus2 * t);
 }
 
 function rotate2(x, z, angle) {
@@ -98,6 +109,7 @@ export function installA1ExactAutoGateController({
   }));
 
   const originals = Object.freeze({
+    tunnelRotationX: tunnelWall.rotation.x,
     tunnelRotationY: tunnelWall.rotation.y,
     cabinPosition: cabinWall.position.clone(),
     cabinRotationY: cabinWall.rotation.y,
@@ -114,7 +126,9 @@ export function installA1ExactAutoGateController({
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
   let connectedLatMeters = attachedLatMeters;
+  let connectedVertMeters = 0;
   let dockingCorrectionMeters = 0;
+  let dockingVerticalCorrectionMeters = 0;
   let doorContactGapMeters = Number.NaN;
   let doorContactHitObject = "unregistered";
   let doorContactReady = false;
@@ -127,6 +141,7 @@ export function installA1ExactAutoGateController({
     // against that real door. Deployment 0 still returns to the source rest
     // dataref value rather than bypassing the visible departure motion.
     const currentLatMeters = connectedLatMeters * deployment;
+    const currentVertMeters = connectedVertMeters * deployment;
     const retractMeters = attachedLatMeters - currentLatMeters;
 
     // AutoGate's top-level lat translation is exactly one metre of entrance
@@ -140,6 +155,8 @@ export function installA1ExactAutoGateController({
     );
     const cabinCounterYawDelta = radians(cabinRelativeYaw - attachedCabinRelativeYaw);
 
+    const bridgePitchDelta = sourceVerticalPitchRadians(currentVertMeters);
+    tunnelWall.rotation.x = originals.tunnelRotationX + bridgePitchDelta;
     tunnelWall.rotation.y = originals.tunnelRotationY + bridgeYawDelta;
 
     // Exact XP11 spelling [10,11]: Segment 10 is the 9.5 m terminal-side
@@ -150,14 +167,16 @@ export function installA1ExactAutoGateController({
       + retractMeters / tunnelWall.scale.z;
 
     const currentTunnelLength = attachedTunnelLength - retractMeters;
+    const horizontalTunnelLength = currentTunnelLength * Math.cos(bridgePitchDelta);
+    const jointVerticalDelta = currentTunnelLength * Math.sin(bridgePitchDelta);
     const unrotatedJoint = {
-      x: tunnelUnit.x * currentTunnelLength,
-      z: tunnelUnit.z * currentTunnelLength,
+      x: tunnelUnit.x * horizontalTunnelLength,
+      z: tunnelUnit.z * horizontalTunnelLength,
     };
     const rotatedJoint = rotate2(unrotatedJoint.x, unrotatedJoint.z, bridgeYawDelta);
     cabinWall.position.set(
       pivot.x + rotatedJoint.x,
-      originals.cabinPosition.y,
+      originals.cabinPosition.y + jointVerticalDelta,
       pivot.y + rotatedJoint.z,
     );
     cabinWall.rotation.y = originals.cabinRotationY + bridgeYawDelta + cabinCounterYawDelta;
@@ -190,6 +209,9 @@ export function installA1ExactAutoGateController({
 
     root.userData.a1AutoGateDeployment = deployment;
     root.userData.a1AutoGateLatMeters = currentLatMeters;
+    root.userData.a1AutoGateVertMeters = currentVertMeters;
+    root.userData.a1AutoGateBridgePitchDegrees = THREE.MathUtils.radToDeg(bridgePitchDelta);
+    root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - attachedBridgeYaw;
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - attachedCabinRelativeYaw;
@@ -224,25 +246,49 @@ export function installA1ExactAutoGateController({
     }
     root.updateMatrixWorld(true);
     const direction = outwardWorldDirection.clone().normalize();
-    const raycaster = new THREE.Raycaster(targetWorld, direction, 0, 4.5);
-    const hits = raycaster.intersectObjects([cabinHalfA, cabinHalfB], true)
-      .filter((hit) => Number.isFinite(hit.distance) && hit.distance >= 0);
-    if (!hits.length) {
+    const candidates = [];
+    for (const sign of [1, -1]) {
+      const raycaster = new THREE.Raycaster(
+        targetWorld,
+        direction.clone().multiplyScalar(sign),
+        0,
+        4.5,
+      );
+      const hits = raycaster.intersectObjects([cabinHalfA, cabinHalfB], true)
+        .filter((hit) => Number.isFinite(hit.distance) && hit.distance >= 0);
+      if (hits.length) candidates.push(hits[0]);
+    }
+    candidates.sort((a, b) => a.distance - b.distance);
+    if (!candidates.length) {
       return { distance: Number.POSITIVE_INFINITY, objectName: "no-visible-cabin-hit" };
     }
     return {
-      distance: hits[0].distance,
-      objectName: hits[0].object?.name || hits[0].object?.parent?.name || "cabin-mesh",
+      distance: candidates[0].distance,
+      objectName: candidates[0].object?.name
+        || candidates[0].object?.parent?.name
+        || "cabin-mesh",
     };
   }
 
-  function evaluateConnectedLat(candidateLatMeters, targetWorld, outwardWorldDirection) {
+  function evaluateConnectedPose(
+    candidateLatMeters,
+    candidateVertMeters,
+    targetWorld,
+    outwardWorldDirection,
+  ) {
     connectedLatMeters = clamp(candidateLatMeters, 0.05, AUTOGATE_26M.latRangeMeters[1]);
+    connectedVertMeters = clamp(
+      candidateVertMeters,
+      AUTOGATE_26M.vertRangeMeters[0],
+      AUTOGATE_26M.vertRangeMeters[1],
+    );
     setDeployment(1);
     const hit = measureDoorContactGap(targetWorld, outwardWorldDirection);
     return {
       connectedLatMeters,
+      connectedVertMeters,
       correctionMeters: connectedLatMeters - attachedLatMeters,
+      verticalCorrectionMeters: connectedVertMeters,
       gapMeters: hit.distance,
       objectName: hit.objectName,
     };
@@ -253,36 +299,45 @@ export function installA1ExactAutoGateController({
       throw new Error("A1 rendered aircraft door contact requires exact world point and outward direction");
     }
 
-    // Search only the real AutoGate horizontal dataref range. Coarse pass first,
-    // then a fine local pass so mobile startup is not burdened with hundreds of
-    // full-scene raycasts.
+    // Solve only within the real supplied AutoGate-26m lat/vert dataref ranges.
+    // Coarse pass first; then refine around the best visible cabin hit.
     let best = null;
-    const test = (candidate) => {
-      const result = evaluateConnectedLat(candidate, targetWorld, outwardWorldDirection);
+    const test = (lat, vert) => {
+      const result = evaluateConnectedPose(lat, vert, targetWorld, outwardWorldDirection);
       if (!Number.isFinite(result.gapMeters)) return;
       if (!best || result.gapMeters < best.gapMeters) best = result;
     };
 
     const low = Math.max(0.05, attachedLatMeters - 0.8);
     const high = AUTOGATE_26M.latRangeMeters[1];
-    for (let value = low; value <= high + 1e-9; value += 0.05) test(value);
+    for (let vert = AUTOGATE_26M.vertRangeMeters[0]; vert <= 1e-9; vert += 0.1) {
+      for (let lat = low; lat <= high + 1e-9; lat += 0.1) test(lat, vert);
+    }
 
     if (best) {
-      const fineLow = Math.max(low, best.connectedLatMeters - 0.08);
-      const fineHigh = Math.min(high, best.connectedLatMeters + 0.08);
-      for (let value = fineLow; value <= fineHigh + 1e-9; value += 0.005) test(value);
+      const fineLatLow = Math.max(low, best.connectedLatMeters - 0.12);
+      const fineLatHigh = Math.min(high, best.connectedLatMeters + 0.12);
+      const fineVertLow = Math.max(AUTOGATE_26M.vertRangeMeters[0], best.connectedVertMeters - 0.12);
+      const fineVertHigh = Math.min(0, best.connectedVertMeters + 0.12);
+      for (let vert = fineVertLow; vert <= fineVertHigh + 1e-9; vert += 0.01) {
+        for (let lat = fineLatLow; lat <= fineLatHigh + 1e-9; lat += 0.01) test(lat, vert);
+      }
     }
 
     if (!best) {
       connectedLatMeters = attachedLatMeters;
+      connectedVertMeters = 0;
       dockingCorrectionMeters = 0;
+      dockingVerticalCorrectionMeters = 0;
       setDeployment(1);
       doorContactGapMeters = Number.NaN;
       doorContactHitObject = "no-visible-cabin-hit";
       doorContactReady = false;
     } else {
       connectedLatMeters = best.connectedLatMeters;
+      connectedVertMeters = best.connectedVertMeters;
       dockingCorrectionMeters = best.correctionMeters;
+      dockingVerticalCorrectionMeters = best.verticalCorrectionMeters;
       setDeployment(1);
       const finalHit = measureDoorContactGap(targetWorld, outwardWorldDirection);
       doorContactGapMeters = finalHit.distance;
@@ -291,16 +346,20 @@ export function installA1ExactAutoGateController({
     }
 
     root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
+    root.userData.a1AutoGateConnectedVertMeters = connectedVertMeters;
     root.userData.a1AutoGateDockingCorrectionMeters = dockingCorrectionMeters;
+    root.userData.a1AutoGateDockingVerticalCorrectionMeters = dockingVerticalCorrectionMeters;
     root.userData.a1AutoGateDoorContactGapMeters = doorContactGapMeters;
     root.userData.a1AutoGateDoorContactHitObject = doorContactHitObject;
     root.userData.a1AutoGateDoorContactReady = doorContactReady;
     root.userData.a1AutoGateDoorContactAuthority =
-      "exact-rendered-CRJ-L1-marker-raycast-to-exact-XP11-stock-cabin-geometry-v1";
+      "visible-rendered-CRJ-L1-plus-MisterX-AutoGate-26m-lat-vert-to-XP11-stock-cabin-v2";
 
     return Object.freeze({
       connectedLatMeters,
+      connectedVertMeters,
       correctionMeters: dockingCorrectionMeters,
+      verticalCorrectionMeters: dockingVerticalCorrectionMeters,
       gapMeters: doorContactGapMeters,
       hitObject: doorContactHitObject,
       ready: doorContactReady,
@@ -314,6 +373,9 @@ export function installA1ExactAutoGateController({
     getState: () => root.userData.a1AutoGateState,
     getStateHistory: () => [...history],
     getLatMeters: () => root.userData.a1AutoGateLatMeters,
+    getVertMeters: () => root.userData.a1AutoGateVertMeters,
+    getBridgePitchDegrees: () => root.userData.a1AutoGateBridgePitchDegrees,
+    getCabinVerticalDeltaMeters: () => root.userData.a1AutoGateCabinVerticalDeltaMeters,
     getRetractedMeters: () => root.userData.a1AutoGateRetractedMeters,
     getBridgeYawDeltaDegrees: () => root.userData.a1AutoGateBridgeYawDeltaDegrees,
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
@@ -323,7 +385,9 @@ export function installA1ExactAutoGateController({
     getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
     getConnectedLatMeters: () => connectedLatMeters,
+    getConnectedVertMeters: () => connectedVertMeters,
     getDockingCorrectionMeters: () => dockingCorrectionMeters,
+    getDockingVerticalCorrectionMeters: () => dockingVerticalCorrectionMeters,
     getDoorContactGapMeters: () => doorContactGapMeters,
     getDoorContactHitObject: () => doorContactHitObject,
     isDoorContactReady: () => doorContactReady,
@@ -332,7 +396,7 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1";
+    "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-lat-vert-kinematics-v2";
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
@@ -340,7 +404,9 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateVerticalDataref = AUTOGATE_REFERENCE.verticalDataref;
   root.userData.a1AutoGateAttachedLatMeters = attachedLatMeters;
   root.userData.a1AutoGateConnectedLatMeters = connectedLatMeters;
+  root.userData.a1AutoGateConnectedVertMeters = connectedVertMeters;
   root.userData.a1AutoGateDockingCorrectionMeters = 0;
+  root.userData.a1AutoGateDockingVerticalCorrectionMeters = 0;
   root.userData.a1AutoGateDoorContactGapMeters = Number.NaN;
   root.userData.a1AutoGateDoorContactHitObject = "unregistered";
   root.userData.a1AutoGateDoorContactReady = false;
