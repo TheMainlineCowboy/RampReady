@@ -1,0 +1,54 @@
+name: KPHX XP12.1.2 Demo Script Dry Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-demo-script-dryrun.yml"
+
+concurrency:
+  group: kphx-xp12-demo-script-dryrun
+  cancel-in-progress: true
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Script the official installer through its first screen
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y xvfb >/dev/null
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/installer.zip
+          rm -rf /tmp/installer
+          mkdir -p /tmp/installer /tmp/xp12-demo
+          unzip -q /tmp/installer.zip -d /tmp/installer
+          BIN="$(find /tmp/installer -maxdepth 2 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+
+          cat > /tmp/installer.qa <<'QA'
+          echo "RAMPREADY_QA_STARTED"
+          wait 2
+          dump buttons
+          wait 3
+          dump buttons
+          echo "RAMPREADY_QA_DONE"
+          QA
+
+          cd /tmp/installer
+          set +e
+          timeout 25s xvfb-run -a "$BIN"             --qa_script=/tmp/installer.qa             --install_numeric=121212             --install_name="X-Plane 12.1.2-r4-0f2fea01"             --no_web_server             2>&1 | tee /tmp/installer-stdout.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "installer_rc=$rc"
+          echo
+          echo "=== QA / BUTTON / BUILD LINES ==="
+          grep -Ei 'RAMPREADY|Executing:|button|Install a Free Demo|install_numeric|Build number|12\.1\.2|demo server|Downloading demo|Command not found|parse|failed'             /tmp/installer-stdout.txt | head -500 || true
+          echo
+          echo "=== installer logs ==="
+          find /tmp/installer /tmp/xp12-demo -maxdepth 3 -type f -iname '*log*.txt' -print -exec tail -200 {} \; || true
