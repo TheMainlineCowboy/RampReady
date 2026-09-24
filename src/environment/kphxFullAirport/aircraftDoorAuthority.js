@@ -8,19 +8,76 @@ export const AUTOGATE_REFERENCE = Object.freeze({
   verticalDataref: "marginal.org.uk/autogate/vert",
 });
 
-export const RAMPREADY_AIRCRAFT_DOOR_PROFILES = Object.freeze({
-  CRJ700: Object.freeze({
-    aircraftType: "CRJ700",
+const FEET_TO_METERS = 0.3048;
+const SOURCE_ARCHIVE = "20200329_CRJSeries_Xplane11_v1.zip";
+
+function createXPlaneCrjDoorProfile({
+  aircraftType,
+  acfPath,
+  boardingDoorFeet,
+  cgFeet,
+  noseGearFeet,
+  equilibriumHeightFeet,
+}) {
+  const doorLateralFromCgMeters = boardingDoorFeet[0] * FEET_TO_METERS;
+  const doorVerticalFromCgMeters = (boardingDoorFeet[1] - cgFeet.y) * FEET_TO_METERS;
+  const doorAxialFromCgMeters = (boardingDoorFeet[2] - cgFeet.z) * FEET_TO_METERS;
+  const doorFromNoseGearMeters = Object.freeze({
+    lateral: (boardingDoorFeet[0] - noseGearFeet.x) * FEET_TO_METERS,
+    axial: (boardingDoorFeet[2] - noseGearFeet.z) * FEET_TO_METERS,
+  });
+  const equilibriumCgHeightMeters = equilibriumHeightFeet * FEET_TO_METERS;
+  const doorHeightMeters = equilibriumCgHeightMeters + doorVerticalFromCgMeters;
+  const autoGateLatMeters =
+    doorLateralFromCgMeters - AUTOGATE_REFERENCE.restEntranceLateralMeters;
+  const autoGateVertMeters =
+    doorHeightMeters - AUTOGATE_REFERENCE.restEntranceHeightMeters;
+
+  return Object.freeze({
+    aircraftType,
     doorId: "L1-forward-passenger",
     modelForwardAxis: "-Z",
-    noseGearReference: true,
-    aftOfVisibleNoseMeters: 7.32,
-    leftOfVisibleCenterlineMeters: 1.34,
-    authoredDoorHeightLocalPointMeters: Object.freeze([-1.262, 3.0, 3.90]),
-    horizontalAuthority: "visible-rendered-airframe-bounds-7p32m-aft-1p34m-left-v1",
-    verticalAuthority: "grounded-authored-forward-left-door-y-v1",
+    sourceArchive: SOURCE_ARCHIVE,
+    sourceAcf: acfPath,
+    sourceAuthority:
+      "RobertSV X-Plane 11 ACF boarding-door + gear/equilibrium metadata interpreted with Marginal AutoGate semantics",
+    rawAcf: Object.freeze({
+      boardingDoorFeet: Object.freeze([...boardingDoorFeet]),
+      cgFeet: Object.freeze({ ...cgFeet }),
+      noseGearFeet: Object.freeze({ ...noseGearFeet }),
+      equilibriumHeightFeet,
+    }),
+    doorOffsetFromCgMeters: Object.freeze({
+      lateral: doorLateralFromCgMeters,
+      vertical: doorVerticalFromCgMeters,
+      axial: doorAxialFromCgMeters,
+    }),
+    doorFromNoseGearMeters,
+    equilibriumCgHeightMeters,
+    doorHeightMeters,
+    autoGateLatMeters,
+    autoGateVertMeters,
     renderedDoorMarkerAuthority:
-      "historical-final-A1-visible-mesh-door-method; commits 2cc9fe3/eaa5983/e54b273; current user-authored CRJ GLB at authored world dimensions",
+      "X-Plane ACF L1 dock-port transformed from RampReady nose-gear ground origin; no visible-mesh guess",
+  });
+}
+
+export const RAMPREADY_AIRCRAFT_DOOR_PROFILES = Object.freeze({
+  CRJ700: createXPlaneCrjDoorProfile({
+    aircraftType: "CRJ700",
+    acfPath: "CRJ7NG/crj700NG.acf",
+    boardingDoorFeet: [-4.5, -2.200000048, 16.299999237],
+    cgFeet: { y: -2.0, z: 60.0 },
+    noseGearFeet: { x: 0.0, y: -2.650000095, z: 16.899999619 },
+    equilibriumHeightFeet: 7.027759075,
+  }),
+  CRJ900: createXPlaneCrjDoorProfile({
+    aircraftType: "CRJ900",
+    acfPath: "CRJ9NG/crj900NG.acf",
+    boardingDoorFeet: [-4.5, -2.200000048, 16.299999237],
+    cgFeet: { y: -2.0, z: 60.0 },
+    noseGearFeet: { x: 0.0, y: -2.650000095, z: 8.899999619 },
+    equilibriumHeightFeet: 7.037753105,
   }),
 });
 
@@ -28,11 +85,14 @@ export function getRampReadyAircraftDoorProfile(aircraftType) {
   return RAMPREADY_AIRCRAFT_DOOR_PROFILES[String(aircraftType || "").toUpperCase()] || null;
 }
 
-export function getAutoGateDoorTargets(profile, { doorHeightMeters = null } = {}) {
+export function getAutoGateDoorTargets(
+  profile,
+  { doorHeightMeters = profile?.doorHeightMeters } = {},
+) {
   if (!profile) throw new Error("Aircraft door profile is required");
-  const lateralDoorMeters = -Number(profile.leftOfVisibleCenterlineMeters);
+  const lateralDoorMeters = Number(profile.doorOffsetFromCgMeters?.lateral);
   if (!Number.isFinite(lateralDoorMeters)) {
-    throw new Error(`Aircraft door profile ${profile.aircraftType} has no finite lateral door station`);
+    throw new Error(`Aircraft door profile ${profile.aircraftType} has no finite ACF lateral door station`);
   }
 
   const latMeters = lateralDoorMeters - AUTOGATE_REFERENCE.restEntranceLateralMeters;
@@ -47,21 +107,34 @@ export function getAutoGateDoorTargets(profile, { doorHeightMeters = null } = {}
     latMeters,
     vertMeters,
     verticalResolved: hasVertical,
-    authority: "autogate-meter-space-aircraft-door-target-v1",
+    sourceAcf: profile.sourceAcf,
+    authority: "xplane-acf-autogate-meter-space-aircraft-door-target-v1",
   });
 }
 
 export function measureRenderedAircraftDoorWorld(THREE, aircraft, profile) {
   if (!THREE || !aircraft || !profile) {
-    throw new Error("THREE, aircraft, and door profile are required");
+    throw new Error("THREE, aircraft, and aircraft ACF door profile are required");
   }
-  const realModel = aircraft.userData?.realAircraftObject;
-  if (!realModel?.isObject3D) return null;
+  const offset = profile.doorFromNoseGearMeters;
+  if (!offset || ![offset.lateral, offset.axial, profile.doorHeightMeters].every(Number.isFinite)) {
+    throw new Error(`Aircraft door profile ${profile.aircraftType} has incomplete nose-gear-relative ACF geometry`);
+  }
 
   aircraft.updateMatrixWorld(true);
-  realModel.updateMatrixWorld(true);
-
+  const rootWorld = aircraft.getWorldPosition(new THREE.Vector3());
   const aircraftWorldQuaternion = aircraft.getWorldQuaternion(new THREE.Quaternion());
+
+  // RampReady's aircraft simulation origin is the nose-gear ground/tow point.
+  // X-Plane ACF coordinates are real-world feet; convert to real-world meters
+  // and rotate without applying the display-model scale.
+  const physicalDoorOffset = new THREE.Vector3(
+    offset.lateral,
+    profile.doorHeightMeters,
+    offset.axial,
+  ).applyQuaternion(aircraftWorldQuaternion);
+
+  const point = rootWorld.clone().add(physicalDoorOffset);
   const forwardAxis = new THREE.Vector3(0, 0, -1)
     .applyQuaternion(aircraftWorldQuaternion)
     .setY(0)
@@ -71,68 +144,11 @@ export function measureRenderedAircraftDoorWorld(THREE, aircraft, profile) {
     .setY(0)
     .normalize();
 
-  let maximumForwardProjection = Number.NEGATIVE_INFINITY;
-  let minimumLeftProjection = Number.POSITIVE_INFINITY;
-  let maximumLeftProjection = Number.NEGATIVE_INFINITY;
-  let sampleCount = 0;
-  const samplePoint = new THREE.Vector3();
-
-  realModel.traverse((child) => {
-    if (!child?.isMesh || child.visible === false || !child.geometry) return;
-    if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
-    const box = child.geometry.boundingBox;
-    if (!box || box.isEmpty()) return;
-    child.updateWorldMatrix(true, false);
-    for (const x of [box.min.x, box.max.x]) {
-      for (const y of [box.min.y, box.max.y]) {
-        for (const z of [box.min.z, box.max.z]) {
-          samplePoint.set(x, y, z).applyMatrix4(child.matrixWorld);
-          const forwardProjection =
-            samplePoint.x * forwardAxis.x + samplePoint.z * forwardAxis.z;
-          const leftProjection =
-            samplePoint.x * leftAxis.x + samplePoint.z * leftAxis.z;
-          maximumForwardProjection = Math.max(maximumForwardProjection, forwardProjection);
-          minimumLeftProjection = Math.min(minimumLeftProjection, leftProjection);
-          maximumLeftProjection = Math.max(maximumLeftProjection, leftProjection);
-          sampleCount += 1;
-        }
-      }
-    }
-  });
-
-  if (sampleCount < 8 || ![
-    maximumForwardProjection,
-    minimumLeftProjection,
-    maximumLeftProjection,
-  ].every(Number.isFinite)) {
-    throw new Error("A1 visible-airframe door registration could not measure the rendered CRJ mesh");
-  }
-
-  const centerlineLeftProjection = (minimumLeftProjection + maximumLeftProjection) * 0.5;
-  const doorForwardProjection =
-    maximumForwardProjection - Number(profile.aftOfVisibleNoseMeters);
-  const doorLeftProjection =
-    centerlineLeftProjection + Number(profile.leftOfVisibleCenterlineMeters);
-
-  const localHeight = profile.authoredDoorHeightLocalPointMeters;
-  if (!Array.isArray(localHeight) || localHeight.length !== 3 || !localHeight.every(Number.isFinite)) {
-    throw new Error(`Aircraft door profile ${profile.aircraftType} has no grounded authored door-height point`);
-  }
-  const doorY = realModel.localToWorld(
-    new THREE.Vector3(localHeight[0], localHeight[1], localHeight[2]),
-  ).y;
-
   return Object.freeze({
-    point: new THREE.Vector3(
-      forwardAxis.x * doorForwardProjection + leftAxis.x * doorLeftProjection,
-      doorY,
-      forwardAxis.z * doorForwardProjection + leftAxis.z * doorLeftProjection,
-    ),
+    point,
     forwardAxis,
     leftAxis,
-    sampleCount,
-    maximumForwardProjection,
-    centerlineLeftProjection,
+    sourceAcf: profile.sourceAcf,
     authority: profile.renderedDoorMarkerAuthority,
   });
 }
