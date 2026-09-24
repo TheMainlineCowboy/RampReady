@@ -1,0 +1,69 @@
+name: KPHX XP12.1.2 Historical Unsecured Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-historical-unsecured-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Probe pinned XP12.1.2 unsecured branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports /tmp/xp12-historical
+          BASE="https://desktop.x-plane.com/unsecured/X-Plane%2012.1.2-r4-0f2fea01"
+          {
+            echo "base=$BASE"
+            echo
+            for rel in               "directory.txt.zip"               "Resources/default%20scenery/airport%20scenery/library.txt.zip"               "Resources/default%20scenery/900%20us%20objects/library.txt.zip"               "Resources/default%20scenery/1000%20roads/library.txt.zip"
+            do
+              echo "=== $rel ==="
+              url="$BASE/$rel"
+              code="$(curl -L -sS -o /tmp/xp12-historical/body.bin -w '%{http_code}' "$url" || true)"
+              echo "http=$code"
+              echo "bytes=$(wc -c </tmp/xp12-historical/body.bin | tr -d ' ')"
+              echo "sha256=$(sha256sum /tmp/xp12-historical/body.bin | awk '{print $1}')"
+              echo "content_type=$(curl -L -sSI "$url" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}' | tail -1)"
+              if [ "$code" = "200" ]; then
+                file /tmp/xp12-historical/body.bin || true
+                unzip -l /tmp/xp12-historical/body.bin 2>/dev/null | head -40 || true
+              else
+                head -c 500 /tmp/xp12-historical/body.bin | strings || true
+              fi
+              echo
+            done
+          } > reports/kphx-xp12-historical-unsecured-probe.txt
+          cat reports/kphx-xp12-historical-unsecured-probe.txt
+
+      - name: Commit probe result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-historical-unsecured-probe.txt
+          if git diff --cached --quiet; then
+            echo "Probe unchanged."
+          else
+            git commit -m "Probe pinned XP12.1.2 unsecured content branch"
+            git pull --rebase origin kphx-full-airport-import
+            git push origin HEAD:kphx-full-airport-import
+          fi
