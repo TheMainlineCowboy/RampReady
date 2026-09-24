@@ -1,0 +1,83 @@
+name: KPHX XP12 Installer Request Field Audit
+
+on:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp12-request-field-audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+          sparse-checkout: |
+            reports
+          sparse-checkout-cone-mode: false
+
+      - name: Download official installer and extract request field candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/xp12 reports
+          curl -L --fail --retry 4 --show-error             "https://lookup.x-plane.com/_lookup_12_/download/X-Plane12InstallerLinux.zip"             -o /tmp/xp12.zip
+          unzip -q /tmp/xp12.zip -d /tmp/xp12
+          BIN="$(find /tmp/xp12 -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+
+          strings -a -t d "$BIN" > /tmp/strings.txt
+
+          python3 - <<'PY'
+          import json,re
+          lines=open("/tmp/strings.txt",errors="replace").read().splitlines()
+          parsed=[]
+          for line in lines:
+              m=re.match(r"^\s*(\d+)\s+(.*)$",line)
+              if m:
+                  parsed.append((int(m.group(1)),m.group(2)))
+
+          needles=[
+              "https://clearancedelivery.x-planemobile.com/v1/authenticate",
+              "https://clearancedelivery.x-planemobile.com/v1/download",
+              "https://tower.x-plane.com/v1/sim-download",
+              "checksum_id","can_sign","Installer session key:",
+          ]
+          contexts={}
+          for needle in needles:
+              idx=next((i for i,(_,s) in enumerate(parsed) if needle in s),None)
+              if idx is None: continue
+              contexts[needle]=[
+                  {"offset":o,"text":s}
+                  for o,s in parsed[max(0,idx-180):min(len(parsed),idx+220)]
+              ]
+
+          candidate=[]
+          key_re=re.compile(r'^[A-Za-z][A-Za-z0-9_\-]{1,48}$')
+          interesting=re.compile(r'(auth|token|session|download|server|build|branch|version|platform|product|installer|checksum|sign|demo|os|linux|client|machine|uuid|manifest|file|path|url|cdn)',re.I)
+          for o,s in parsed:
+              if key_re.fullmatch(s) and interesting.search(s):
+                  candidate.append({"offset":o,"text":s})
+
+          out={"contexts":contexts,"fieldCandidates":candidate}
+          open("reports/kphx-xp12-request-field-audit.json","w").write(json.dumps(out,indent=2)+"\n")
+          print(json.dumps(out,indent=2))
+          PY
+
+      - name: Commit request field audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/kphx-xp12-request-field-audit.json
+          git commit -m "Audit XP12 installer request field candidates"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
