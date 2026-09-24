@@ -1,0 +1,86 @@
+name: KPHX XP11.55r2 Stock Source Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kphx-full-airport-import
+    paths:
+      - ".github/workflows/kphx-xp11-stock-source-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kphx-full-airport-import
+          fetch-depth: 1
+
+      - name: Download official X-Plane 11 Linux installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .xp11-installer reports
+          curl -L --fail --retry 5 --show-error             "https://www.x-plane.com/update/installers11/X-Plane11InstallerLinux.zip"             -o .xp11-installer/X-Plane11InstallerLinux.zip
+          sha256sum .xp11-installer/X-Plane11InstallerLinux.zip             > reports/kphx-xp11-installer-sha256.txt
+          unzip -q .xp11-installer/X-Plane11InstallerLinux.zip -d .xp11-installer/unpacked
+          BIN="$(find .xp11-installer/unpacked -maxdepth 3 -type f -iname '*Installer*Linux*' -print -quit)"
+          test -n "$BIN"
+          chmod +x "$BIN"
+          echo "$BIN" > .xp11-installer/bin-path.txt
+
+      - name: Inspect exact XP11 installer capabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="$(cat .xp11-installer/bin-path.txt)"
+          {
+            echo "=== binary ==="
+            file "$BIN"
+            sha256sum "$BIN"
+            echo
+            echo "=== help ==="
+            timeout 10s "$BIN" --help 2>&1 || true
+            echo
+            echo "=== exact build/version/QA strings ==="
+            strings -a "$BIN" | grep -Ei               '11\.55|115501|c22f0eb|qa_script|install_numeric|install_name|set_installer_destination|Install a Free Demo|X-Plane 11 Demo|server_list|directory\.txt|unsecured'               | sort -u | head -1000 || true
+          } > reports/kphx-xp11-installer-capability.txt
+
+      - name: Script installer UI dry run
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y xvfb xfonts-base xfonts-75dpi xfonts-100dpi fontconfig libgl1-mesa-dri mesa-utils >/dev/null
+          sudo fc-cache -f >/dev/null
+          BIN="$(cat .xp11-installer/bin-path.txt)"
+          cat > /tmp/xp11.qa <<'QA'
+          echo "RAMPREADY_XP11_QA_STARTED"
+          wait 2
+          dump buttons
+          wait 3
+          dump buttons
+          echo "RAMPREADY_XP11_QA_DONE"
+          QA
+          set +e
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 30s xvfb-run -a -s "-screen 0 1280x800x24 -dpi 96" "$BIN"             --qa_script=/tmp/xp11.qa             --install_numeric=115501             --install_name="X-Plane 11.55r2"             --no_web_server             2>&1 | tee reports/kphx-xp11-installer-dryrun.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "installer_rc=$rc" >> reports/kphx-xp11-installer-dryrun.txt
+          grep -Eq 'RAMPREADY_XP11_QA_STARTED|Install a Free Demo|X-Plane 11' reports/kphx-xp11-installer-dryrun.txt
+
+      - name: Commit XP11 source probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             reports/kphx-xp11-installer-sha256.txt             reports/kphx-xp11-installer-capability.txt             reports/kphx-xp11-installer-dryrun.txt
+          git commit -m "Probe official XP11.55r2 stock source for KPHX"
+          git pull --rebase origin kphx-full-airport-import
+          git push origin HEAD:kphx-full-airport-import
