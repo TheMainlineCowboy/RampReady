@@ -1,0 +1,5 @@
+Trigger lightweight A1 AutoGate static verification.
+Expected CRJ AutoGate lat: 6.160 m
+Expected parked bridge yaw delta: about -6.245 deg
+Expected cabin counter-yaw delta: about +5.585 deg
+Expected duration: 15000 ms
