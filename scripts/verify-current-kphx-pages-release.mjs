@@ -132,7 +132,7 @@ const trainer = fs.readFileSync("src/components/RampReadyStandupTrainerTerminal4
 assert(trainer.includes("KPHX_INVISIBLE_CONCRETE_SOURCE_UNDERLAY"), "Transparent concrete source-compatible underlay missing");
 assert(trainer.includes("ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol"), "Exact A1 source concrete underlay authority missing");
 assert(trainer.includes('A1_AIRCRAFT_HEADING_AUTHORITY = "KPHX-1.75.1-earth.wed.xml-WED_RampPosition-27855"'), "Exact A1 WED ramp-position heading authority missing");
-assert(trainer.includes('const A1_AIRCRAFT_TYPE = "CRJ700"'), "A1 current aircraft profile is not explicitly CRJ700");
+assert(trainer.includes('const A1_AIRCRAFT_TYPE = "CRJ900"'), "A1 current aircraft profile is not explicitly CRJ900");
 assert(trainer.includes("const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose"), "A1 does not use the X-Plane ACF/WED docking resolver");
 assert(trainer.includes("A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees"), "A1 aircraft heading is not derived from the source WED docking pose");
 assert(trainer.includes("A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw"), "A1 runtime yaw is not derived from the source WED docking pose");
