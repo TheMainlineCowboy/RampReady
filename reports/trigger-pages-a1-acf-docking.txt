@@ -45,3 +45,7 @@ Authority: CRJ900 ACF boarding-door + KPHX WED 104804/104811 + AutoGate lat/vert
 - original bridge yaw, pitch, vertical, Segment-11 telescope, and cabin motion retained unchanged
 - no substitute geometry, no scaling, no reparenting of bridge/cabin
 - live verification requires attached + midpoint + parked support height stability
+
+2026-09-24 verifier-only rerun:
+- no jetway geometry/controller change from 07c7bfc candidate
+- live verifier now unhides HUD and physically clicks Ready before midpoint/parked checks
