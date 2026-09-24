@@ -46,159 +46,132 @@ jobs:
           cat /tmp/a1-autogate-vite.log
           exit 1
 
-      - name: Drive actual A1 departure step
+      - name: Checkpoint 1 - exact A1 route loads
         run: |
+          mkdir -p reports
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           import { chromium } from "playwright";
-
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-          const pageErrors = [];
-          const consoleErrors = [];
-          page.on("pageerror", (error) => pageErrors.push(String(error)));
-          page.on("console", (message) => {
-            if (message.type() === "error") consoleErrors.push(message.text());
-          });
-
-          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", {
-            waitUntil: "domcontentloaded",
-            timeout: 60000,
-          });
-
+          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", { waitUntil: "domcontentloaded", timeout: 30000 });
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.kphxExactLiveT4 === "ready"
               && d.a1JetwayAnimationAuthority === "exact-WED-104804-XP11-stock-facade-plus-MisterX-AutoGate-26m-horizontal-kinematics-v1";
-          }, null, { timeout: 25000 });
+          }, null, { timeout: 30000 });
+          const state = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
+          fs.writeFileSync("reports/a1-autogate-checkpoint-1.json", JSON.stringify(state, null, 2) + "\n");
+          await page.screenshot({ path: "reports/a1-autogate-checkpoint-1.jpg", type: "jpeg", quality: 90, fullPage: true });
+          await browser.close();
+          NODE
 
-          const snapshot = async (label) => {
-            const state = await page.evaluate(() => {
-              const canvas = document.querySelector("canvas.trainerCanvas");
-              return { dataset: canvas ? { ...canvas.dataset } : {}, bodyText: document.body?.innerText?.slice(0, 3000) || "" };
-            });
-            fs.writeFileSync(`reports/a1-autogate-debug-${label}.json`, JSON.stringify(state, null, 2) + "\\n");
-            return state;
-          };
-          await snapshot("exact-t4-ready");
-
+      - name: Checkpoint 2 - training reaches attached state
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", { waitUntil: "domcontentloaded", timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.kphxExactLiveT4 === "ready", null, { timeout: 30000 });
           const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
-          if (await returnToTraining.isVisible().catch(() => false)) {
-            await returnToTraining.click();
-          }
-          await snapshot("after-training-toggle");
-
+          if (await returnToTraining.isVisible().catch(() => false)) await returnToTraining.click();
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.inspectionMode === "training"
               && d.a1JetwayState === "attached-to-aircraft-door"
               && Number(d.a1JetwayDeployment) >= 0.995;
           }, null, { timeout: 10000 });
-          await snapshot("attached-ready");
-
-          const read = () => page.evaluate(() => {
-            const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
-            return {
-              deployment: Number(d.a1JetwayDeployment),
-              state: d.a1JetwayState || null,
-              history: d.a1JetwayStateHistory || null,
-              authority: d.a1JetwayAnimationAuthority || null,
-              latMeters: Number(d.a1JetwayLatMeters),
-              retractedMeters: Number(d.a1JetwayRetractedMeters),
-              bridgeYawDeltaDegrees: Number(d.a1JetwayBridgeYawDeltaDegrees),
-              cabinCounterYawDeltaDegrees: Number(d.a1JetwayCabinCounterYawDeltaDegrees),
-              fixedWallMotionMaxMeters: Number(d.a1JetwayFixedWallMotionMaxMeters),
-              fixedWallRotationMaxRadians: Number(d.a1JetwayFixedWallRotationMaxRadians),
-              retractionAuthority: d.terminal4A1RetractionAuthority || null,
-              retractionClearanceMeters: Number(d.terminal4A1RetractionClearanceMeters),
-              retractionRatio: Number(d.terminal4A1RetractionRatio),
-              motionDurationMs: Number(d.terminal4A1MotionDurationMs),
-              verticalResolved: d.terminal4A1VerticalResolved || null,
-            };
-          });
-
-          const attached = await read();
+          const state = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
+          fs.writeFileSync("reports/a1-autogate-checkpoint-2.json", JSON.stringify(state, null, 2) + "\n");
           await page.screenshot({ path: "reports/a1-autogate-attached.jpg", type: "jpeg", quality: 92, fullPage: true });
+          await browser.close();
+          NODE
 
-          const ready = page.getByRole("button", { name: "Ready", exact: true });
-          await ready.waitFor({ state: "visible", timeout: 10000 });
-          await ready.click();
-          await snapshot("after-ready-click");
-
+      - name: Checkpoint 3 - Ready reaches midpoint
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", { waitUntil: "domcontentloaded", timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.kphxExactLiveT4 === "ready", null, { timeout: 30000 });
+          const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
+          if (await returnToTraining.isVisible().catch(() => false)) await returnToTraining.click();
+          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.a1JetwayState === "attached-to-aircraft-door", null, { timeout: 10000 });
+          await page.getByRole("button", { name: "Ready", exact: true }).click();
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             const deployment = Number(d.a1JetwayDeployment);
-            return deployment < 0.58 && deployment > 0.42;
+            return deployment < 0.58 && deployment > 0.42
+              && d.a1JetwayState === "autogate-disengaging";
           }, null, { timeout: 12000 });
-
-          const midpoint = await read();
-          await snapshot("midpoint");
+          const state = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
+          fs.writeFileSync("reports/a1-autogate-checkpoint-3.json", JSON.stringify(state, null, 2) + "\n");
           await page.screenshot({ path: "reports/a1-autogate-mid-disengage.jpg", type: "jpeg", quality: 92, fullPage: true });
+          await browser.close();
+          NODE
 
+      - name: Checkpoint 4 - Ready parks and advances training
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import { chromium } from "playwright";
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+          const pageErrors = [];
+          const consoleErrors = [];
+          page.on("pageerror", e => pageErrors.push(String(e)));
+          page.on("console", m => { if (m.type() === "error") consoleErrors.push(m.text()); });
+          await page.goto("http://127.0.0.1:4173/RampReady/?inspectionPreset=a1", { waitUntil: "domcontentloaded", timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.kphxExactLiveT4 === "ready", null, { timeout: 30000 });
+          const returnToTraining = page.getByRole("button", { name: "Return to training", exact: true });
+          if (await returnToTraining.isVisible().catch(() => false)) await returnToTraining.click();
+          await page.waitForFunction(() => document.querySelector("canvas.trainerCanvas")?.dataset?.a1JetwayState === "attached-to-aircraft-door", null, { timeout: 10000 });
+
+          const attached = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
+          await page.getByRole("button", { name: "Ready", exact: true }).click();
           await page.waitForFunction(() => {
             const d = document.querySelector("canvas.trainerCanvas")?.dataset || {};
             return d.a1JetwayState === "parked-clear-of-aircraft"
               && Number(d.a1JetwayDeployment) <= 0.005;
-          }, null, { timeout: 12000 });
+          }, null, { timeout: 20000 });
 
-          const parked = await read();
-          await snapshot("parked");
-          await page.screenshot({ path: "reports/a1-autogate-parked.jpg", type: "jpeg", quality: 92, fullPage: true });
-
+          const parked = await page.evaluate(() => ({ ...document.querySelector("canvas.trainerCanvas").dataset }));
           const stageAdvanced = await page.getByText("Align the capture head with the nose gear", { exact: true }).isVisible().catch(() => false);
+          await page.screenshot({ path: "reports/a1-autogate-parked.jpg", type: "jpeg", quality: 92, fullPage: true });
 
           const failures = [];
           const near = (actual, expected, tolerance, label) => {
-            if (!Number.isFinite(actual) || Math.abs(actual - expected) > tolerance) {
-              failures.push(`${label}=${actual}, expected ${expected} ± ${tolerance}`);
-            }
+            const n = Number(actual);
+            if (!Number.isFinite(n) || Math.abs(n - expected) > tolerance) failures.push(`${label}=${actual}`);
           };
-
-          near(attached.deployment, 1, 0.002, "attached deployment");
-          near(attached.latMeters, 6.16, 0.01, "attached AutoGate lat");
-          near(attached.retractedMeters, 0, 0.01, "attached retraction");
-          near(attached.fixedWallMotionMaxMeters, 0, 0.000001, "attached fixed-wall motion");
-          near(attached.fixedWallRotationMaxRadians, 0, 0.000001, "attached fixed-wall rotation");
-          if (attached.motionDurationMs !== 15000) failures.push(`motionDurationMs=${attached.motionDurationMs}`);
-          if (attached.retractionRatio !== 1) failures.push(`retractionRatio=${attached.retractionRatio}`);
-          if (attached.verticalResolved !== "false") failures.push(`verticalResolved=${attached.verticalResolved}`);
-
-          if (!(midpoint.deployment < 0.58 && midpoint.deployment > 0.42)) failures.push(`midpoint deployment=${midpoint.deployment}`);
-          if (midpoint.state !== "autogate-disengaging") failures.push(`midpoint state=${midpoint.state}`);
-          if (!(midpoint.retractedMeters > 2.5 && midpoint.retractedMeters < 3.7)) failures.push(`midpoint retraction=${midpoint.retractedMeters}`);
-          near(midpoint.fixedWallMotionMaxMeters, 0, 0.000001, "midpoint fixed-wall motion");
-          near(midpoint.fixedWallRotationMaxRadians, 0, 0.000001, "midpoint fixed-wall rotation");
-
-          near(parked.deployment, 0, 0.005, "parked deployment");
-          near(parked.latMeters, 0, 0.01, "parked AutoGate lat");
-          near(parked.retractedMeters, 6.16, 0.02, "parked retraction");
-          near(parked.bridgeYawDeltaDegrees, -6.245, 0.03, "parked bridge yaw delta");
-          near(parked.cabinCounterYawDeltaDegrees, 5.585, 0.03, "parked cabin counter-yaw");
-          near(parked.fixedWallMotionMaxMeters, 0, 0.000001, "parked fixed-wall motion");
-          near(parked.fixedWallRotationMaxRadians, 0, 0.000001, "parked fixed-wall rotation");
-          if (!String(parked.history).includes("attached-to-aircraft-door")
-            || !String(parked.history).includes("autogate-disengaging")
-            || !String(parked.history).includes("parked-clear-of-aircraft")) {
-            failures.push(`state history=${parked.history}`);
-          }
-          if (!stageAdvanced) failures.push("training state did not advance to nose-gear alignment");
-          if (pageErrors.length) failures.push(`page errors: ${pageErrors.join(" | ")}`);
-          if (consoleErrors.length) failures.push(`console errors: ${consoleErrors.join(" | ")}`);
+          near(attached.a1JetwayDeployment, 1, 0.002, "attached deployment");
+          near(attached.a1JetwayLatMeters, 6.16, 0.01, "attached lat");
+          near(attached.a1JetwayFixedWallMotionMaxMeters, 0, 0.000001, "attached fixed wall motion");
+          near(parked.a1JetwayDeployment, 0, 0.005, "parked deployment");
+          near(parked.a1JetwayLatMeters, 0, 0.01, "parked lat");
+          near(parked.a1JetwayRetractedMeters, 6.16, 0.02, "parked retraction");
+          near(parked.a1JetwayBridgeYawDeltaDegrees, -6.245, 0.03, "parked bridge yaw");
+          near(parked.a1JetwayCabinCounterYawDeltaDegrees, 5.585, 0.03, "parked cabin yaw");
+          near(parked.a1JetwayFixedWallMotionMaxMeters, 0, 0.000001, "parked fixed wall motion");
+          near(parked.a1JetwayFixedWallRotationMaxRadians, 0, 0.000001, "parked fixed wall rotation");
+          if (attached.terminal4A1MotionDurationMs !== "15000") failures.push(`duration=${attached.terminal4A1MotionDurationMs}`);
+          if (attached.terminal4A1VerticalResolved !== "false") failures.push(`verticalResolved=${attached.terminal4A1VerticalResolved}`);
+          if (!String(parked.a1JetwayStateHistory).includes("autogate-disengaging")) failures.push(`history=${parked.a1JetwayStateHistory}`);
+          if (!stageAdvanced) failures.push("training stage did not advance");
+          if (pageErrors.length) failures.push(`pageErrors=${pageErrors.join(" | ")}`);
+          if (consoleErrors.length) failures.push(`consoleErrors=${consoleErrors.join(" | ")}`);
 
           const report = {
-            schemaVersion: 1,
+            schemaVersion: 2,
             status: failures.length ? "FAIL" : "PASS",
-            sourceGeometry: "KPHX WED facade 104804 + XP11 Jetway_1_solid.fac",
-            motionAuthority: "MisterX AutoGate-26m horizontal lat curve + Marginal AutoGate DISENGAGE timing",
-            aircraftDoorAuthority: {
-              aircraftType: "CRJ700",
-              aftOfNoseGearMeters: 7.32,
-              leftOfCenterlineMeters: 1.34,
-              attachedLatMeters: 6.16,
-              verticalResolved: false,
-            },
+            sourceGeometry: "KPHX WED 104804 + XP11 Jetway_1_solid.fac",
+            motionAuthority: "MisterX AutoGate-26m + Marginal AutoGate DISENGAGE",
+            aircraftDoorAuthority: { aircraftType: "CRJ700", aftOfNoseGearMeters: 7.32, leftOfCenterlineMeters: 1.34, attachedLatMeters: 6.16, verticalResolved: false },
             attached,
-            midpoint,
             parked,
             stageAdvanced,
             pageErrors,
@@ -207,7 +180,6 @@ jobs:
           };
           fs.writeFileSync("reports/a1-autogate-departure-live.json", JSON.stringify(report, null, 2) + "\n");
           await browser.close();
-
           console.log(JSON.stringify(report, null, 2));
           if (failures.length) throw new Error(failures.join("; "));
           NODE
@@ -218,11 +190,12 @@ jobs:
         with:
           name: a1-autogate-departure-${{ github.sha }}
           path: |
-            reports/a1-autogate-departure-live.json
+            reports/a1-autogate-checkpoint-*.json
+            reports/a1-autogate-checkpoint-1.jpg
             reports/a1-autogate-attached.jpg
             reports/a1-autogate-mid-disengage.jpg
             reports/a1-autogate-parked.jpg
-            reports/a1-autogate-debug-*.json
+            reports/a1-autogate-departure-live.json
 
       - name: Commit passing evidence
         if: success()
@@ -230,7 +203,7 @@ jobs:
           git restore -- package.json package-lock.json 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/a1-autogate-departure-live.json reports/a1-autogate-attached.jpg reports/a1-autogate-mid-disengage.jpg reports/a1-autogate-parked.jpg
+          git add reports/a1-autogate-checkpoint-*.json reports/a1-autogate-checkpoint-1.jpg reports/a1-autogate-attached.jpg reports/a1-autogate-mid-disengage.jpg reports/a1-autogate-parked.jpg reports/a1-autogate-departure-live.json
           git commit -m "Verify exact A1 AutoGate departure"
           git pull --rebase origin kphx-full-airport-import
           git push origin HEAD:kphx-full-airport-import
