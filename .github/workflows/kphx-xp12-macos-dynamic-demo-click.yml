@@ -157,8 +157,13 @@ jobs:
               let layer = (w[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
               if p == pid && layer == 0 {
                   let id = CGWindowID((w[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
-                  if let dict = w[kCGWindowBounds as String] as? CFDictionary,
-                     let rect = CGRect(dictionaryRepresentation: dict) { found=(id,rect); break }
+                  if let b = w[kCGWindowBounds as String] as? [String: Any],
+                     let x = (b["X"] as? NSNumber)?.doubleValue,
+                     let y = (b["Y"] as? NSNumber)?.doubleValue,
+                     let width = (b["Width"] as? NSNumber)?.doubleValue,
+                     let height = (b["Height"] as? NSNumber)?.doubleValue {
+                  found=(id,CGRect(x:x,y:y,width:width,height:height)); break
+              }
               }
           }
           guard let (id,bounds)=found,
