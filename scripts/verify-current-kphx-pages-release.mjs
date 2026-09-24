@@ -155,7 +155,11 @@ assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft
 assert(trainer.includes("dataset.lektroAuthoredRearSteerBinding"), "LEKTRO authored rear-steer binding runtime evidence missing");
 assert(trainer.includes("dataset.lektroAuthoredRearSteerDegrees"), "LEKTRO authored rear-steer angle runtime evidence missing");
 assert(trainer.includes("camera.position.copy(operatorEyeWorld)"), "LEKTRO Operator View does not snap to calibrated driver eye");
-assert(trainer.includes('dataset.lektroOperatorViewAuthority = "r187a-driver-seat-after-180deg-model-forward-correction"'), "LEKTRO Operator View runtime authority missing");
+assert(trainer.includes('dataset.lektroOperatorLookUnlocked = "true"'), "LEKTRO Operator View look-around runtime evidence missing");
+assert(trainer.includes('dataset.lektroOperatorViewAuthority = "user-verified-driver-side-r187a-unlocked-local-look-v2"'), "LEKTRO Operator View runtime authority missing");
+const lektroRigSource = fs.readFileSync("src/tug/lektroRig.js", "utf8");
+assert(lektroRigSource.includes("operatorEye: Object.freeze([-0.45, 1.35, -2.15])"), "LEKTRO Operator View eye is not on the user-verified driver side");
+assert(lektroRigSource.includes("operatorLook: Object.freeze([-0.45, 1.2, 8])"), "LEKTRO Operator View forward anchor is not on the user-verified driver side");
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
