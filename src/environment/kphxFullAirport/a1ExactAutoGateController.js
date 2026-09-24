@@ -48,6 +48,179 @@ function requireObject(root, name) {
   return object;
 }
 
+function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
+  const sourceMeshes = [];
+  aircraftTunnelVisual.traverse((node) => {
+    if (node.isMesh && node.geometry?.getAttribute?.("position") && node.geometry?.getIndex?.()) {
+      sourceMeshes.push(node);
+    }
+  });
+
+  const supportBranches = [];
+  let originalIndexCount = 0;
+  let supportIndexCount = 0;
+  let bridgeIndexCount = 0;
+
+  const coordinateKey = (position, index) => {
+    const q = (value) => Math.round(value * 10000);
+    return `${q(position.getX(index))},${q(position.getY(index))},${q(position.getZ(index))}`;
+  };
+
+  for (const mesh of sourceMeshes) {
+    const geometry = mesh.geometry;
+    const position = geometry.getAttribute("position");
+    const sourceIndex = geometry.getIndex();
+    const source = Array.from(sourceIndex.array);
+    if (source.length % 3 !== 0) {
+      throw new Error("A1 exact stock tunnel index buffer is not triangular");
+    }
+
+    const triangleCount = source.length / 3;
+    const parent = Array.from({ length: triangleCount }, (_, index) => index);
+    const find = (value) => {
+      let cursor = value;
+      while (parent[cursor] !== cursor) {
+        parent[cursor] = parent[parent[cursor]];
+        cursor = parent[cursor];
+      }
+      return cursor;
+    };
+    const union = (left, right) => {
+      const a = find(left);
+      const b = find(right);
+      if (a !== b) parent[b] = a;
+    };
+
+    const vertexToTriangles = new Map();
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const cursor = triangle * 3;
+      for (const vertexIndex of [
+        source[cursor],
+        source[cursor + 1],
+        source[cursor + 2],
+      ]) {
+        const key = coordinateKey(position, vertexIndex);
+        const list = vertexToTriangles.get(key) || [];
+        list.push(triangle);
+        vertexToTriangles.set(key, list);
+      }
+    }
+    for (const triangles of vertexToTriangles.values()) {
+      for (let index = 1; index < triangles.length; index += 1) {
+        union(triangles[0], triangles[index]);
+      }
+    }
+
+    const components = new Map();
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const root = find(triangle);
+      const list = components.get(root) || [];
+      list.push(triangle);
+      components.set(root, list);
+    }
+
+    const lowerSupportTriangles = new Set();
+    for (const triangles of components.values()) {
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+      let minZ = Number.POSITIVE_INFINITY;
+      let maxZ = Number.NEGATIVE_INFINITY;
+      const vertices = new Set();
+
+      for (const triangle of triangles) {
+        const cursor = triangle * 3;
+        vertices.add(source[cursor]);
+        vertices.add(source[cursor + 1]);
+        vertices.add(source[cursor + 2]);
+      }
+      for (const vertexIndex of vertices) {
+        const y = position.getY(vertexIndex);
+        const z = position.getZ(vertexIndex);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+        minZ = Math.min(minZ, z);
+        maxZ = Math.max(maxZ, z);
+      }
+
+      // Exact jw_tunnel_2_5b topology: the lower telescoping support/wheel
+      // carriage is the connected source geometry centered on the support
+      // station at local Z=3 m and ending at/below the lower-post top.
+      // The upper posts extend to Y=3.4 m and therefore remain with the bridge.
+      const isLowerSupport =
+        minZ >= 2.35
+        && maxZ <= 3.65
+        && maxY <= 1.05;
+
+      if (isLowerSupport) {
+        for (const triangle of triangles) lowerSupportTriangles.add(triangle);
+      }
+    }
+
+    if (!lowerSupportTriangles.size) continue;
+
+    const bridgeIndices = [];
+    const supportIndices = [];
+    for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+      const target = lowerSupportTriangles.has(triangle)
+        ? supportIndices
+        : bridgeIndices;
+      const cursor = triangle * 3;
+      target.push(source[cursor], source[cursor + 1], source[cursor + 2]);
+    }
+
+    const IndexArray = sourceIndex.array.constructor;
+    const bridgeGeometry = geometry.clone();
+    bridgeGeometry.setIndex(
+      new THREE.BufferAttribute(new IndexArray(bridgeIndices), 1),
+    );
+    bridgeGeometry.computeBoundingBox();
+    bridgeGeometry.computeBoundingSphere();
+
+    const supportGeometry = geometry.clone();
+    supportGeometry.setIndex(
+      new THREE.BufferAttribute(new IndexArray(supportIndices), 1),
+    );
+    supportGeometry.computeBoundingBox();
+    supportGeometry.computeBoundingSphere();
+
+    const supportMesh = mesh.clone(false);
+    supportMesh.name = `${mesh.name}_A1ExactLowerSupport`;
+    supportMesh.geometry = supportGeometry;
+    supportMesh.material = mesh.material;
+    supportMesh.updateMatrix();
+    supportMesh.matrixAutoUpdate = false;
+    const baselineLocalMatrix = supportMesh.matrix.clone();
+
+    mesh.geometry = bridgeGeometry;
+    mesh.parent.add(supportMesh);
+
+    supportBranches.push({
+      mesh: supportMesh,
+      baselineLocalMatrix,
+    });
+
+    originalIndexCount += source.length;
+    supportIndexCount += supportIndices.length;
+    bridgeIndexCount += bridgeIndices.length;
+  }
+
+  if (!supportBranches.length) {
+    throw new Error("A1 exact stock lower support components were not found");
+  }
+  if (supportIndexCount + bridgeIndexCount !== originalIndexCount) {
+    throw new Error("A1 exact support split did not preserve every source index");
+  }
+
+  return Object.freeze({
+    branches: supportBranches,
+    originalIndexCount,
+    supportIndexCount,
+    bridgeIndexCount,
+    authority:
+      "XP11-jw_tunnel_2_5b-connected-source-components-lower-support-v1",
+  });
+}
+
 export function installA1ExactAutoGateController({
   THREE,
   root,
@@ -83,8 +256,25 @@ export function installA1ExactAutoGateController({
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
-  requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
+  const aircraftTunnelVisual = requireObject(
+    aircraftTunnelSegment,
+    "Attached_jw_tunnel_2_5b.obj",
+  );
+  const lowerSupport = splitExactLowerSupportComponents(
+    THREE,
+    aircraftTunnelVisual,
+  );
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
+  root.updateMatrixWorld(true);
+  const measureLowerSupportBottom = () => {
+    let minimum = Number.POSITIVE_INFINITY;
+    for (const branch of lowerSupport.branches) {
+      const box = new THREE.Box3().setFromObject(branch.mesh);
+      minimum = Math.min(minimum, box.min.y);
+    }
+    return minimum;
+  };
+  const sourceLowerSupportBottomMeters = measureLowerSupportBottom();
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -184,6 +374,43 @@ export function installA1ExactAutoGateController({
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
+    // Preserve the original intact bridge/cabin animation exactly. Only the
+    // lower support/wheel source components cancel the inherited vertical
+    // translation + pitch. They still inherit the current horizontal yaw and
+    // telescope position, so the upper posts slide inside the lower posts at
+    // the support station instead of dragging the wheels below pavement.
+    for (const branch of lowerSupport.branches) {
+      branch.mesh.matrix.copy(branch.baselineLocalMatrix);
+      branch.mesh.matrixWorldNeedsUpdate = true;
+    }
+
+    const animatedTunnelY = tunnelWall.position.y;
+    const animatedTunnelPitch = tunnelWall.rotation.x;
+    const animatedTunnelYaw = tunnelWall.rotation.y;
+
+    tunnelWall.position.y = originals.tunnelPositionY;
+    tunnelWall.rotation.x = originals.tunnelRotationX;
+    tunnelWall.rotation.y = animatedTunnelYaw;
+    root.updateMatrixWorld(true);
+
+    const desiredSupportWorldMatrices = lowerSupport.branches.map(
+      (branch) => branch.mesh.matrixWorld.clone(),
+    );
+
+    tunnelWall.position.y = animatedTunnelY;
+    tunnelWall.rotation.x = animatedTunnelPitch;
+    tunnelWall.rotation.y = animatedTunnelYaw;
+    root.updateMatrixWorld(true);
+
+    lowerSupport.branches.forEach((branch, index) => {
+      const parentInverse = branch.mesh.parent.matrixWorld.clone().invert();
+      branch.mesh.matrix.copy(
+        parentInverse.multiply(desiredSupportWorldMatrices[index]),
+      );
+      branch.mesh.matrixWorldNeedsUpdate = true;
+    });
+    root.updateMatrixWorld(true);
+
     // Segment 11 owns the exact stock cabin-half-B attachment pivot. After
     // telescope/yaw/pitch, use that transformed source joint directly instead
     // of estimating the Cabin-wall origin with trigonometry. This keeps the
@@ -235,6 +462,19 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - restCabinRelativeYaw;
     root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
     root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
+    const lowerSupportBottomMeters = measureLowerSupportBottom();
+    root.userData.a1AutoGateSupportBottomMeters = lowerSupportBottomMeters;
+    root.userData.a1AutoGateSupportBottomDeltaMeters =
+      lowerSupportBottomMeters - sourceLowerSupportBottomMeters;
+    root.userData.a1AutoGateSupportOriginalIndexCount =
+      lowerSupport.originalIndexCount;
+    root.userData.a1AutoGateSupportSplitIndexCount =
+      lowerSupport.supportIndexCount;
+    root.userData.a1AutoGateBridgeSplitIndexCount =
+      lowerSupport.bridgeIndexCount;
+    root.userData.a1AutoGateSupportTrianglePartitionExact =
+      lowerSupport.supportIndexCount + lowerSupport.bridgeIndexCount
+        === lowerSupport.originalIndexCount;
     root.userData.a1AutoGateState = state;
 
     let fixedWallMotionMaxMeters = 0;
@@ -440,6 +680,10 @@ export function installA1ExactAutoGateController({
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
     getCabinJointGapMeters: () => root.userData.a1AutoGateCabinJointGapMeters,
     getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
+    getSupportBottomMeters: () => root.userData.a1AutoGateSupportBottomMeters,
+    getSupportBottomDeltaMeters: () => root.userData.a1AutoGateSupportBottomDeltaMeters,
+    isSupportTrianglePartitionExact: () =>
+      root.userData.a1AutoGateSupportTrianglePartitionExact === true,
     getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
     getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
@@ -462,7 +706,8 @@ export function installA1ExactAutoGateController({
   });
 
   root.userData.a1AutoGateControllerAuthority =
-    "exact-WED-rest-plus-XPlane-ACF-and-MisterX-AutoGate-26m-engage-disengage-v5";
+    "first-intact-A1-animation-plus-exact-stock-lower-support-telescope-v10";
+  root.userData.a1AutoGateLowerSupportAuthority = lowerSupport.authority;
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
   root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
