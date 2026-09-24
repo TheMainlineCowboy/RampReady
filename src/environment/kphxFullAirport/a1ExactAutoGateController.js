@@ -69,9 +69,10 @@ export function installA1ExactAutoGateController({
   const terminalTunnelSegment = requireObject(tunnelWall, "Segment_10_0");
   const aircraftTunnelSegment = requireObject(tunnelWall, "Segment_11_1");
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
+  const cabinHalfBAttachmentPivot = cabinHalfB.parent;
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
   requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
-  requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
+  const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
 
   const pivot = footprint[4];
   const attachedCabinJoint = footprint[5];
@@ -102,6 +103,7 @@ export function installA1ExactAutoGateController({
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
     cabinHalfBRotationY: cabinHalfB.rotation.y,
+    cabinHalfARotationY: cabinHalfA.rotation.y,
   });
 
   const attachedBridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, attachedLatMeters);
@@ -155,6 +157,20 @@ export function installA1ExactAutoGateController({
     // both exact source halves remain aligned.
     cabinHalfB.rotation.y = originals.cabinHalfBRotationY + cabinCounterYawDelta;
 
+    // The two stock cabin source objects meet at the same authored joint:
+    // Segment 11 places jw_cabin_1b at its far endpoint and Cabin Segment 20
+    // begins jw_cabin_1a at that exact WED node. Verify that articulation keeps
+    // the joint closed and preserves the source relative yaw.
+    root.updateMatrixWorld(true);
+    const cabinHalfBJointWorld = cabinHalfBAttachmentPivot.getWorldPosition(new THREE.Vector3());
+    const cabinWallJointWorld = cabinWall.getWorldPosition(new THREE.Vector3());
+    const cabinJointGapMeters = cabinHalfBJointWorld.distanceTo(cabinWallJointWorld);
+    const cabinAWorldYawDelta = cabinWall.rotation.y - originals.cabinRotationY;
+    const cabinBWorldYawDelta =
+      (tunnelWall.rotation.y - originals.tunnelRotationY)
+      + (cabinHalfB.rotation.y - originals.cabinHalfBRotationY);
+    const cabinRelativeYawDriftRadians = cabinBWorldYawDelta - cabinAWorldYawDelta;
+
     const state = deployment >= 0.995
       ? "attached-to-aircraft-door"
       : deployment <= 0.005
@@ -167,6 +183,8 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - attachedBridgeYaw;
     root.userData.a1AutoGateCabinCounterYawDeltaDegrees = cabinRelativeYaw - attachedCabinRelativeYaw;
+    root.userData.a1AutoGateCabinJointGapMeters = cabinJointGapMeters;
+    root.userData.a1AutoGateCabinRelativeYawDriftRadians = cabinRelativeYawDriftRadians;
     root.userData.a1AutoGateState = state;
 
     let fixedWallMotionMaxMeters = 0;
@@ -199,6 +217,8 @@ export function installA1ExactAutoGateController({
     getRetractedMeters: () => root.userData.a1AutoGateRetractedMeters,
     getBridgeYawDeltaDegrees: () => root.userData.a1AutoGateBridgeYawDeltaDegrees,
     getCabinCounterYawDeltaDegrees: () => root.userData.a1AutoGateCabinCounterYawDeltaDegrees,
+    getCabinJointGapMeters: () => root.userData.a1AutoGateCabinJointGapMeters,
+    getCabinRelativeYawDriftRadians: () => root.userData.a1AutoGateCabinRelativeYawDriftRadians,
     getFixedWallMotionMaxMeters: () => root.userData.a1AutoGateFixedWallMotionMaxMeters,
     getFixedWallRotationMaxRadians: () => root.userData.a1AutoGateFixedWallRotationMaxRadians,
     getAttachedLatMeters: () => attachedLatMeters,
@@ -218,6 +238,9 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateFixedWalls = fixedWalls.map((wall) => wall.name).join("|");
   root.userData.a1AutoGateMovingWall = tunnelWall.name;
   root.userData.a1AutoGateCabinWall = cabinWall.name;
+  root.userData.a1AutoGateCabinHalfA = cabinHalfA.name;
+  root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
+  root.userData.a1AutoGateCabinJointAuthority = "Segment-11-endpoint-equals-Cabin-Segment-20-start";
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
