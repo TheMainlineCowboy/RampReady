@@ -1,0 +1,6 @@
+Trigger independent A1 AutoGate checkpoint verification.
+Workflow commit: 3f9e3e64733a850b5077161cd23466dca91040da
+Checkpoints: route -> attached -> midpoint -> parked/stage advance
+Expected attached lat: 6.160 m
+Expected parked lat: 0.000 m
+Expected duration: 15000 ms
