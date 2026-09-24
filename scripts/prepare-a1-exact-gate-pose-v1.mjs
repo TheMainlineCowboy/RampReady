@@ -28,7 +28,7 @@ if (!source.includes(dockingImport)) {
   source = source.replace(gatePoseImport, `${gatePoseImport}\n${dockingImport}`);
 }
 
-const exactScenarioBlock = `const A1_AIRCRAFT_TYPE = "CRJ700";
+const exactScenarioBlock = `const A1_AIRCRAFT_TYPE = "CRJ900";
 const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose(
   A1_AIRCRAFT_TYPE,
   { equipmentApproachOffsetMeters: 6.2 },
@@ -166,7 +166,7 @@ if (source.includes(canvasAnchor) && !source.includes("dataset.a1AircraftDocking
 for (const required of [
   dockingImport,
   exactMarker,
-  'const A1_AIRCRAFT_TYPE = "CRJ700"',
+  'const A1_AIRCRAFT_TYPE = "CRJ900"',
   "const A1_SCENARIO_POSE = createA1AircraftDockingScenarioPose",
   "const A1_SOURCE_HEADING_DEGREES = A1_SCENARIO_POSE.sourceHeadingDegrees",
   "const A1_AIRCRAFT_YAW_RADIANS = A1_SCENARIO_POSE.aircraft.yaw",
