@@ -83,7 +83,11 @@ export function installA1ExactAutoGateController({
   const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
   const cabinHalfBAttachmentPivot = cabinHalfB.parent;
   requireObject(terminalTunnelSegment, "Attached_jw_tunnel_2_5a.obj");
-  requireObject(aircraftTunnelSegment, "Attached_jw_tunnel_2_5b.obj");
+  const aircraftTunnelSupport = requireObject(
+    aircraftTunnelSegment,
+    "Attached_jw_tunnel_2_5b.obj",
+  );
+  const aircraftTunnelSupportPivot = aircraftTunnelSupport.parent;
   const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
 
   const pivot = footprint[4];
@@ -116,6 +120,9 @@ export function installA1ExactAutoGateController({
     cabinPosition: cabinWall.position.clone(),
     cabinRotationY: cabinWall.rotation.y,
     aircraftTunnelSegmentZ: aircraftTunnelSegment.position.z,
+    aircraftTunnelSupportPivotPosition: aircraftTunnelSupportPivot.position.clone(),
+    aircraftTunnelSupportPivotQuaternion: aircraftTunnelSupportPivot.quaternion.clone(),
+    aircraftTunnelSupportPivotScale: aircraftTunnelSupportPivot.scale.clone(),
     cabinHalfBRotationY: cabinHalfB.rotation.y,
     cabinHalfARotationY: cabinHalfA.rotation.y,
   });
@@ -184,6 +191,43 @@ export function installA1ExactAutoGateController({
     aircraftTunnelSegment.position.z = originals.aircraftTunnelSegmentZ
       - innerTunnelExtensionMeters / tunnelWall.scale.z;
 
+    // The exact stock FAC attaches jw_tunnel_2_5b at Y=4.000 m and that
+    // object's source geometry reaches to Y=-4.000 m, so its support/wheel
+    // carriage is authored to sit exactly on pavement at Y=0. MisterX's
+    // AutoGate hierarchy keeps this support grounded while nested bridge
+    // geometry follows the vert/pitch dataref. Reproduce that hierarchy
+    // without deforming any stock vertices: calculate where the support pivot
+    // would be with the current horizontal articulation but with no vertical
+    // bridge motion, then counter-transform the existing exact support pivot
+    // against the animated parent.
+    aircraftTunnelSupportPivot.position.copy(
+      originals.aircraftTunnelSupportPivotPosition,
+    );
+    aircraftTunnelSupportPivot.quaternion.copy(
+      originals.aircraftTunnelSupportPivotQuaternion,
+    );
+    aircraftTunnelSupportPivot.scale.copy(
+      originals.aircraftTunnelSupportPivotScale,
+    );
+    const animatedTunnelY = tunnelWall.position.y;
+    const animatedTunnelPitch = tunnelWall.rotation.x;
+    tunnelWall.position.y = originals.tunnelPositionY;
+    tunnelWall.rotation.x = originals.tunnelRotationX;
+    root.updateMatrixWorld(true);
+    const groundedSupportWorld = aircraftTunnelSupportPivot.matrixWorld.clone();
+    tunnelWall.position.y = animatedTunnelY;
+    tunnelWall.rotation.x = animatedTunnelPitch;
+    root.updateMatrixWorld(true);
+    const supportParentInverse = aircraftTunnelSupportPivot.parent.matrixWorld
+      .clone()
+      .invert();
+    const groundedSupportLocal = supportParentInverse.multiply(groundedSupportWorld);
+    groundedSupportLocal.decompose(
+      aircraftTunnelSupportPivot.position,
+      aircraftTunnelSupportPivot.quaternion,
+      aircraftTunnelSupportPivot.scale,
+    );
+
     // Segment 11 owns the exact stock cabin-half-B attachment pivot. After
     // telescope/yaw/pitch, use that transformed source joint directly instead
     // of estimating the Cabin-wall origin with trigonometry. This keeps the
@@ -229,6 +273,11 @@ export function installA1ExactAutoGateController({
     root.userData.a1AutoGateVertMeters = currentVertMeters;
     root.userData.a1AutoGateBridgePitchDegrees = THREE.MathUtils.radToDeg(bridgePitchDelta);
     root.userData.a1AutoGateCabinVerticalDeltaMeters = jointVerticalDelta;
+    root.updateMatrixWorld(true);
+    root.userData.a1AutoGateSupportBottomYMeters =
+      aircraftTunnelSupportPivot.getWorldPosition(new THREE.Vector3()).y - 4;
+    root.userData.a1AutoGateSupportGroundingAuthority =
+      "XP11-Jetway_1_solid-fac-Attach_graded-Y4-plus-jw_tunnel_2_5b-minY-minus4-v1";
     root.userData.a1AutoGateRetractedMeters = retractMeters;
     root.userData.a1AutoGateInnerTunnelExtensionMeters = innerTunnelExtensionMeters;
     root.userData.a1AutoGateBridgeYawDeltaDegrees = bridgeYaw - restBridgeYaw;
