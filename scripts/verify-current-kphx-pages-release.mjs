@@ -150,6 +150,8 @@ assert(!trainer.includes("sim.rig.root.rotation.y = 0;"), "Hard-coded zero A1 eq
 assert(trainer.includes('dataset.a1AircraftHeadingReady = "true"'), "A1 aircraft heading runtime evidence missing");
 assert(trainer.includes("dataset.lektroAuthoredRearSteerBinding"), "LEKTRO authored rear-steer binding runtime evidence missing");
 assert(trainer.includes("dataset.lektroAuthoredRearSteerDegrees"), "LEKTRO authored rear-steer angle runtime evidence missing");
+assert(trainer.includes("camera.position.copy(operatorEyeWorld)"), "LEKTRO Operator View does not snap to calibrated driver eye");
+assert(trainer.includes('dataset.lektroOperatorViewAuthority = "r187a-driver-seat-after-180deg-model-forward-correction"'), "LEKTRO Operator View runtime authority missing");
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
@@ -195,6 +197,13 @@ assert(lektroRearSteerEvidence.binding === "AP88_STEER_L_STEER|AP88_STEER_R_STEE
 assert(Math.abs(lektroRearSteerEvidence.leftSteer?.degrees) >= 80, "Committed LEKTRO rear-steering evidence does not show full visual articulation");
 assert(Math.abs(lektroRearSteerEvidence.centeredAfter?.degrees) < 0.5, "Committed LEKTRO rear-steering evidence does not recenter");
 
+const lektroOperatorViewEvidence = JSON.parse(fs.readFileSync("reports/lektro-r187a-operator-view-live.json", "utf8"));
+assert(lektroOperatorViewEvidence.status === "PASS", "Committed LEKTRO Operator View evidence is not PASS");
+assert(lektroOperatorViewEvidence.state?.operatorSide === "right", "Committed LEKTRO Operator View is not on the driver side");
+assert(Math.abs(lektroOperatorViewEvidence.state?.localEye?.[0] - 0.45) < 0.001, "Committed LEKTRO driver-eye X drifted");
+assert(lektroOperatorViewEvidence.state?.cameraToEyeMeters < 0.05, "Committed LEKTRO Operator View camera does not land on driver eye");
+assert(lektroOperatorViewEvidence.state?.modelForwardCorrectionDegrees === 180, "Committed LEKTRO Operator View lost model-forward correction");
+
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxA1ZdpMarkingsReady"), "Preload screen does not wait for exact A1 markings");
@@ -208,6 +217,8 @@ assert(equipmentProfiles.includes("trainingAvailable: false"), "Manager Kubota m
 assert(equipmentProfiles.includes("inspectionAvailable: true"), "Manager Kubota inspection availability missing");
 
 const tugRig = fs.readFileSync("src/tug/lektroRig.js", "utf8");
+assert(tugRig.includes("operatorEye: Object.freeze([0.45, 1.35, -2.15])"), "LEKTRO operator eye is not on the corrected R187A driver seat");
+assert(tugRig.includes("operatorLook: Object.freeze([0.45, 1.2, 8])"), "LEKTRO operator look target is not aligned with the corrected driver seat");
 assert(tugRig.includes('id: "manager-kubota-exact"'), "Manager Kubota exact rig profile missing");
 assert(tugRig.includes('steeringMode: "front"'), "Manager Kubota front-steer authority missing");
 assert(tugRig.includes("wheelbase: 1.94"), "Manager Kubota wheelbase authority missing");
@@ -233,5 +244,6 @@ console.log(JSON.stringify({
   managerKubotaSha256: kubota.sha256,
   managerKubotaInspectionOnly: true,
   lektroAuthoredRearSteerVisual: true,
+  lektroOperatorViewDriverSeat: true,
   browserErrors: 0,
 }, null, 2));
