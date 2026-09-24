@@ -673,7 +673,7 @@
         "opensceneryx/objects/airport/vehicles/stairs/3.obj": 4,
         "opensceneryx/polygons/surfaces/dirt/1.pol": 1
       },
-      "status": "unresolved-external"
+      "status": "materialized-external"
     },
     "GroundPolys": {
       "placements": 4,
@@ -896,19 +896,6 @@
       },
       "resources": {
         "RA_Library/Ground/objects/zRock03_A.obj": 12
-      },
-      "status": "unresolved-external"
-    },
-    "opensceneryx": {
-      "placements": 5,
-      "uniqueResourceCount": 2,
-      "extensions": {
-        ".obj": 4,
-        ".pol": 1
-      },
-      "resources": {
-        "opensceneryx/objects/airport/vehicles/stairs/3.obj": 4,
-        "opensceneryx/polygons/surfaces/dirt/1.pol": 1
       },
       "status": "unresolved-external"
     },
