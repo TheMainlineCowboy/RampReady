@@ -359,14 +359,29 @@ function splitExactCabinStairComponents(THREE, cabinHalfB) {
 
       // Exact XP11 jw_cabin_1b stair envelope. These connected source
       // components are the 19 treads, both long side/hand rails, lower feet,
-      // and upper stair hardware visible in the user's real A1 reference.
+      // upper stair hardware, and the two long under-stair strips visible in
+      // the user's real A1 reference. The strips are four planar source
+      // components (two faces per strip) whose min Z is 1.431 m, just below
+      // the rest of the stair envelope.
       // The simplified LOD contains no geometry in this envelope.
-      const isExactExteriorStair =
+      const isUnderStairLongStrip =
         minX >= 1.50
         && maxX <= 2.40
-        && minZ >= 1.45
-        && maxZ <= 8.50
-        && maxY <= 5.25;
+        && (maxX - minX) <= 0.01
+        && minZ >= 1.42
+        && minZ < 1.45
+        && (maxZ - minZ) >= 5.50
+        && maxY <= 4.10;
+
+      const isExactExteriorStair =
+        (
+          minX >= 1.50
+          && maxX <= 2.40
+          && minZ >= 1.45
+          && maxZ <= 8.50
+          && maxY <= 5.25
+        )
+        || isUnderStairLongStrip;
 
       if (isExactExteriorStair) {
         for (const triangle of triangles) stairTriangles.add(triangle);
