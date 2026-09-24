@@ -486,11 +486,14 @@ export function installA1ExactAutoGateController({
       );
     }
 
-    for (let iteration = 0; iteration < 32; iteration += 1) {
+    // Twelve bisection steps over a 60-degree bracket resolve pitch to
+    // roughly 0.015 degrees, comfortably inside the 2 cm live vertical-error
+    // gate while avoiding dozens of full hierarchy matrix updates every frame.
+    for (let iteration = 0; iteration < 12; iteration += 1) {
       const midPitch = (lowPitch + highPitch) / 2;
       const midError =
         applyPitchAtFixedHinge(midPitch) - targetEntranceWorldY;
-      if (Math.abs(midError) <= 0.0001) {
+      if (Math.abs(midError) <= 0.001) {
         lowPitch = midPitch;
         highPitch = midPitch;
         break;
