@@ -63,7 +63,13 @@ export function preparePlacementRoot(root, placement) {
   const yaw = kphxXPlaneHeadingToRampReadyYawRadians(placement.headingDegrees);
 
   root.name = `KPHX_FULL_${placement.name || placement.resource}`;
-  root.position.set(position[0], position[1], position[2]);
+  const exactDrapedMarkingResource = (
+    placement.resource?.startsWith("MisterX_Library/Airport/Ramps/")
+    || placement.resource?.startsWith("ZDP_Library/markings/")
+    || placement.resource?.startsWith("GroundMarkings/")
+  );
+  const markingRenderLiftMeters = exactDrapedMarkingResource ? 0.006 : 0;
+  root.position.set(position[0], position[1] + markingRenderLiftMeters, position[2]);
   root.rotation.set(0, yaw, 0);
   root.updateMatrixWorld(true);
   root.userData = {
@@ -78,6 +84,10 @@ export function preparePlacementRoot(root, placement) {
     wedHeadingDegrees: placement.headingDegrees,
     runtimePosition: position,
     runtimeYawRadians: yaw,
+    kphxRenderLiftMeters: markingRenderLiftMeters,
+    kphxRenderLiftPolicy: exactDrapedMarkingResource
+      ? "xplane-draped-mobile-depth-compatibility"
+      : "none",
   };
 
   let xPlaneGlobalNoShadow = false;
