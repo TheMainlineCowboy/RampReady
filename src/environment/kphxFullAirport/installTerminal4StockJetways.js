@@ -370,6 +370,154 @@ export async function installKphxTerminal4StockJetways(
     return getControllerByFacadeWedObjectId(controllerKey, options);
   };
 
+  const runRepresentativeControllerAudit = () => {
+    const representatives = new Map();
+    for (const entry of evidence) {
+      if (!representatives.has(entry.motionSourceProfileId)) {
+        representatives.set(entry.motionSourceProfileId, entry);
+      }
+    }
+
+    const expectedProfiles = [
+      "standard-26m",
+      "standard-18m",
+      "straight-18m",
+      "straight-26m",
+      "perpendicular-18m",
+      "straight-32m",
+    ];
+    for (const profileId of expectedProfiles) {
+      if (!representatives.has(profileId)) {
+        throw new Error(
+          `Representative T4 jetway audit is missing motion profile ${profileId}`,
+        );
+      }
+    }
+
+    const assertFiniteWithin = (value, limit, label) => {
+      if (!Number.isFinite(value) || Math.abs(value) > limit) {
+        throw new Error(
+          `Representative T4 jetway audit failed ${label}: ${value}`,
+        );
+      }
+    };
+
+    const snapshotController = (controller) => ({
+      deployment: controller.getDeployment(),
+      state: controller.getState(),
+      bridgePitchDegrees: controller.getBridgePitchDegrees(),
+      bridgeYawDeltaDegrees: controller.getBridgeYawDeltaDegrees(),
+      cabinJointGapMeters: controller.getCabinJointGapMeters(),
+      supportBottomDeltaMeters: controller.getSupportBottomDeltaMeters(),
+      stairFootDeltaMeters: controller.getStairFootDeltaMeters(),
+      stairHingeGapMeters: controller.getStairHingeGapMeters(),
+      terminalPivotGapMeters: controller.getTerminalPivotGapMeters(),
+      fixedWallMotionMaxMeters: controller.getFixedWallMotionMaxMeters(),
+      fixedWallRotationMaxRadians: controller.getFixedWallRotationMaxRadians(),
+      supportTrianglePartitionExact:
+        controller.isSupportTrianglePartitionExact(),
+      stairTrianglePartitionExact:
+        controller.isStairTrianglePartitionExact(),
+    });
+
+    const validateSnapshot = (row, phase) => {
+      if (!row.supportTrianglePartitionExact) {
+        throw new Error(
+          `${phase} representative support triangle partition is not exact`,
+        );
+      }
+      if (!row.stairTrianglePartitionExact) {
+        throw new Error(
+          `${phase} representative stair triangle partition is not exact`,
+        );
+      }
+      assertFiniteWithin(
+        row.supportBottomDeltaMeters,
+        0.02,
+        `${phase} support-bottom drift`,
+      );
+      assertFiniteWithin(
+        row.stairFootDeltaMeters,
+        0.02,
+        `${phase} stair-foot drift`,
+      );
+      assertFiniteWithin(
+        row.stairHingeGapMeters,
+        0.001,
+        `${phase} stair-hinge gap`,
+      );
+      assertFiniteWithin(
+        row.terminalPivotGapMeters,
+        0.001,
+        `${phase} terminal-hinge gap`,
+      );
+      assertFiniteWithin(
+        row.cabinJointGapMeters,
+        0.08,
+        `${phase} cabin-joint gap`,
+      );
+      assertFiniteWithin(
+        row.fixedWallMotionMaxMeters,
+        0.001,
+        `${phase} fixed-wall motion`,
+      );
+      assertFiniteWithin(
+        row.fixedWallRotationMaxRadians,
+        0.001,
+        `${phase} fixed-wall rotation`,
+      );
+      if (!Number.isFinite(row.bridgePitchDegrees)
+        || !Number.isFinite(row.bridgeYawDeltaDegrees)) {
+        throw new Error(
+          `${phase} representative bridge pose is not finite`,
+        );
+      }
+    };
+
+    const results = [];
+    for (const profileId of expectedProfiles) {
+      const entry = representatives.get(profileId);
+      const controller = getControllerByFacadeWedObjectId(
+        entry.facadeWedObjectId,
+      );
+      const originalDeployment = controller.getDeployment();
+
+      controller.setDeployment(0.5);
+      const midpoint = snapshotController(controller);
+      validateSnapshot(midpoint, `${entry.gate}/${profileId}/midpoint`);
+
+      controller.setDeployment(0);
+      const parked = snapshotController(controller);
+      validateSnapshot(parked, `${entry.gate}/${profileId}/parked`);
+
+      controller.setDeployment(originalDeployment);
+
+      results.push(Object.freeze({
+        gate: entry.gate,
+        rampWedObjectId: entry.rampWedObjectId,
+        facadeWedObjectId: entry.facadeWedObjectId,
+        tunnelFamily: entry.tunnelFamily,
+        motionProfileId: entry.motionProfileId,
+        motionSourceProfileId: profileId,
+        midpoint: Object.freeze(midpoint),
+        parked: Object.freeze(parked),
+      }));
+    }
+
+    layer.userData.stockAutoGateRepresentativeAuditStatus = "PASS";
+    layer.userData.stockAutoGateRepresentativeAuditCount = results.length;
+    layer.userData.stockAutoGateRepresentativeAuditProfiles =
+      expectedProfiles.join("|");
+    layer.userData.stockAutoGateInstalledControllerCount = controllers.size;
+
+    return Object.freeze({
+      status: "PASS",
+      representativeCount: results.length,
+      profiles: Object.freeze([...expectedProfiles]),
+      results: Object.freeze(results),
+    });
+  };
+
   environment.add(layer);
 
   return {
@@ -383,5 +531,6 @@ export async function installKphxTerminal4StockJetways(
     controllers,
     getControllerByFacadeWedObjectId,
     getControllerByRampWedObjectId,
+    runRepresentativeControllerAudit,
   };
 }
