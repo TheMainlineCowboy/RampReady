@@ -1,7 +1,12 @@
 import * as THREE_NS from "three";
 import { kphxWedToRampReadyPosition } from "./sourceAuthority.js";
 import { buildXp11Type2Facade } from "./xp11Type2Facade.js";
-import { installA1ExactAutoGateController } from "./a1ExactAutoGateController.js";
+import {
+  installA1ExactAutoGateController,
+  installExactStockAutoGateController,
+} from "./a1ExactAutoGateController.js";
+import { resolveExactStockJetwayRig } from "./stockJetwayRigAuthority.js";
+import { selectExactStockJetwayMotionReference } from "./stockJetwayMotionAuthority.js";
 
 const RESOURCE = "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac";
 const STOCK_BASE = "/models/xplane11-stock/jetway1";
@@ -137,6 +142,9 @@ export async function installKphxTerminal4StockJetways(
   layer.name = "KPHX_T4_Exact_XP11_Stock_Jetways";
 
   const evidence = [];
+  const controllerFactories = new Map();
+  const controllers = new Map();
+  const controllerKeyByRampWedObjectId = new Map();
   let totalEdges = 0;
   let a1Controller = null;
 
@@ -204,14 +212,75 @@ export async function installKphxTerminal4StockJetways(
       gateMap.gate,
     );
 
+    // Resolve every placement against its own authored WED/facade hierarchy
+    // now, but install the expensive split/articulation controller lazily.
+    // This proves the same generic binder can understand all 76 placements
+    // without cloning support/stair geometry for 75 background jetways.
+    const resolvedRig = resolveExactStockJetwayRig({
+      root: built.root,
+      footprint,
+      wallEvidence: built.wallEvidence,
+      gateMap,
+    });
+    const motionSelection = selectExactStockJetwayMotionReference({
+      rig: resolvedRig,
+      footprint,
+      gateMap,
+    });
+    const controllerKey = String(gateMap.facadeWedObjectId);
+    if (controllerFactories.has(controllerKey)) {
+      throw new Error(`Duplicate T4 jetway facade controller key ${controllerKey}`);
+    }
+    controllerKeyByRampWedObjectId.set(
+      String(gateMap.rampWedObjectId),
+      controllerKey,
+    );
+
+    const installController = () => {
+      const existing = controllers.get(controllerKey);
+      if (existing) return existing;
+
+      const controller = gateMap.gate === "A1"
+        ? installA1ExactAutoGateController({
+          THREE,
+          root: built.root,
+          footprint,
+          wallEvidence: built.wallEvidence,
+          gateMap,
+        })
+        : installExactStockAutoGateController({
+          THREE,
+          root: built.root,
+          footprint,
+          wallEvidence: built.wallEvidence,
+          gateMap,
+          initialDeployment: 0,
+          enforceA1Reference: false,
+        });
+
+      controllers.set(controllerKey, controller);
+      built.root.userData.stockAutoGateControllerInstalled = true;
+      built.root.userData.stockAutoGateControllerKey = controllerKey;
+      return controller;
+    };
+
+    controllerFactories.set(controllerKey, installController);
+    built.root.userData.stockAutoGateControllerKey = controllerKey;
+    built.root.userData.stockAutoGateControllerInstalled = false;
+    built.root.userData.stockAutoGateRigAuthority = resolvedRig.authority;
+    built.root.userData.stockAutoGateTunnelFamily =
+      resolvedRig.tunnelFamily.family;
+    built.root.userData.stockAutoGateMotionProfileId =
+      motionSelection.profile.id;
+    built.root.userData.stockAutoGateMotionSourceProfileId =
+      motionSelection.sourceProfileId;
+    built.root.userData.stockAutoGateAuthoredHingeTurnDegrees =
+      motionSelection.rawTurnDegrees;
+    built.root.userData.stockAutoGateEffectiveHingeTurnDegrees =
+      motionSelection.effectiveTurnDegrees;
+
     if (gateMap.gate === "A1") {
-      a1Controller = installA1ExactAutoGateController({
-        THREE,
-        root: built.root,
-        footprint,
-        wallEvidence: built.wallEvidence,
-        gateMap,
-      });
+      a1Controller = installController();
       built.root.userData.a1ExactAutoGateControllerInstalled = true;
     }
 
@@ -229,6 +298,14 @@ export async function installKphxTerminal4StockJetways(
       ringMode: built.facade.ringMode,
       staticPrefixWallCount: staticShellEvidence.fixedWallCount,
       restoredStaticShellCount: staticShellEvidence.restoredShellCount,
+      tunnelFamily: resolvedRig.tunnelFamily.family,
+      motionProfileId: motionSelection.profile.id,
+      motionSourceProfileId: motionSelection.sourceProfileId,
+      authoredHingeTurnDegrees: motionSelection.rawTurnDegrees,
+      effectiveHingeTurnDegrees: motionSelection.effectiveTurnDegrees,
+      authoredBridgeReachMeters: motionSelection.reachMeters,
+      controllerKey,
+      controllerInstalled: gateMap.gate === "A1",
     });
   }
 
@@ -254,6 +331,44 @@ export async function installKphxTerminal4StockJetways(
   layer.userData.a1JetwayMotionDurationMs = a1Controller?.getMotionDurationMs?.() ?? Number.NaN;
   layer.userData.a1JetwayVerticalResolved = a1Controller?.getDoorTargets?.().verticalResolved === true;
   layer.userData.a1JetwayFixedWallCount = 4;
+  layer.userData.stockAutoGateResolvedPlacementCount = evidence.length;
+  layer.userData.stockAutoGateLazyFactoryCount = controllerFactories.size;
+  layer.userData.stockAutoGateInstalledControllerCount = controllers.size;
+  layer.userData.stockAutoGateControllerPolicy =
+    "source-resolved-all-76-lazy-install-nonactive-gates-v1";
+
+  const getControllerByFacadeWedObjectId = (
+    facadeWedObjectId,
+    { install = true } = {},
+  ) => {
+    const key = String(facadeWedObjectId);
+    if (controllers.has(key)) return controllers.get(key);
+    if (!install) return null;
+    const factory = controllerFactories.get(key);
+    if (!factory) {
+      throw new Error(
+        `No T4 stock jetway controller factory for facade ${facadeWedObjectId}`,
+      );
+    }
+    const controller = factory();
+    layer.userData.stockAutoGateInstalledControllerCount = controllers.size;
+    return controller;
+  };
+
+  const getControllerByRampWedObjectId = (
+    rampWedObjectId,
+    options,
+  ) => {
+    const controllerKey = controllerKeyByRampWedObjectId.get(
+      String(rampWedObjectId),
+    );
+    if (!controllerKey) {
+      throw new Error(
+        `No T4 stock jetway controller factory for ramp ${rampWedObjectId}`,
+      );
+    }
+    return getControllerByFacadeWedObjectId(controllerKey, options);
+  };
 
   environment.add(layer);
 
@@ -264,5 +379,9 @@ export async function installKphxTerminal4StockJetways(
     map,
     stockManifest,
     a1Controller,
+    controllerFactories,
+    controllers,
+    getControllerByFacadeWedObjectId,
+    getControllerByRampWedObjectId,
   };
 }
