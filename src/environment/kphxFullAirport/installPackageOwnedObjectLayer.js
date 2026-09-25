@@ -100,8 +100,13 @@ export function preparePlacementRoot(root, placement) {
       const materialLayer = material?.userData?.xPlaneLayerGroupDraped
         || material?.userData?.xPlaneLayerGroup
         || null;
+      const xPlaneDraped = material?.userData?.xPlaneDraped === true;
       if (materialLayer) authoredLayer = materialLayer;
-      if (authoredLayer && material) {
+      // X-Plane draped OBJ geometry is composited over airport pavement even
+      // when no explicit LAYER_GROUP is authored. Preserve the exact Y=0
+      // source geometry and emulate that draw ordering with polygon offset
+      // rather than inventing a vertical placement correction.
+      if ((authoredLayer || xPlaneDraped) && material) {
         material.polygonOffset = true;
         material.polygonOffsetFactor = -1;
         material.polygonOffsetUnits = -1;
