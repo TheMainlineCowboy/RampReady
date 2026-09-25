@@ -83,6 +83,11 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxExactLiveT4GsePlacementCount === '884'
       && d.kphxExactLiveT4GseMisterXPlacementCount === '861'
       && d.kphxExactLiveT4GseCdbPlacementCount === '23'
+      && d.kphxExactLiveT4StaticPropPlacementCount === '141'
+      && d.kphxExactLiveT4StaticPropLightPlacementCount === '78'
+      && d.kphxExactLiveT4StaticPropMisterXPlacementCount === '63'
+      && d.kphxExactLiveT4StaticPropZdpPlacementCount === '0'
+      && d.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount === '13'
       && d.kphxExactLiveOldAirportJetwayGlbUsed === 'false'
       && d.kphxExactLiveProceduralTerminalMassing === 'false'
       && d.kphxExactLiveLegacyFsxTerminal === 'false'
@@ -464,6 +469,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     exactGsePlacements: runtime.kphxExactLiveT4GsePlacementCount,
     exactGseMisterXPlacements: runtime.kphxExactLiveT4GseMisterXPlacementCount,
     exactGseCdbPlacements: runtime.kphxExactLiveT4GseCdbPlacementCount,
+    exactStaticPropPlacements: runtime.kphxExactLiveT4StaticPropPlacementCount,
+    exactStaticPropLights: runtime.kphxExactLiveT4StaticPropLightPlacementCount,
+    exactStaticPropMisterX: runtime.kphxExactLiveT4StaticPropMisterXPlacementCount,
+    deferredZdpStopMarkers: runtime.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount,
     lektro: runtime.tugSource,
     pavementPolygons: runtime.kphxSurfacePolygonCount,
     a1MarkingMeshes: runtime.kphxA1ZdpMarkingLineMeshCount,
