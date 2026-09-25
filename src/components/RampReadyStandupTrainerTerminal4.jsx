@@ -875,10 +875,12 @@ export default function RampReadyStandupTrainer({
         loadLines: false,
         addOpaqueBaseUnderlay: false,
       }),
+      installKphxFullExactZdpMarkings(THREE, environment, { strict: true }),
     ])
-      .then(([packageResult, a1ZdpResult]) => {
+      .then(([packageResult, a1ZdpResult, zdpMarkingsResult]) => {
         const packageData = packageResult.layer.userData;
         const zdpData = a1ZdpResult.layer.userData;
+        const zdpMarkingData = zdpMarkingsResult.layer.userData;
 
         const exactConcreteSourceResource = "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol";
         const exactConcreteSourceMesh = a1ZdpResult.layer.children.find(
@@ -925,28 +927,62 @@ export default function RampReadyStandupTrainer({
         const failures = [
           ...(packageData.failures || []),
           ...(zdpData.failures || []),
+          ...(zdpMarkingData.failures || []),
         ];
-        const ready = packageData.ready === true && zdpData.ready === true && failures.length === 0;
-        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement";
-        renderer.domElement.dataset.kphxVersion = String(packageData.sourceVersion || zdpData.sourceVersion || "missing");
+        const ready = (
+          packageData.ready === true
+          && zdpData.ready === true
+          && zdpMarkingData.ready === true
+          && failures.length === 0
+        );
+        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + T4 exact ZDP markings";
+        renderer.domElement.dataset.kphxVersion = String(packageData.sourceVersion || zdpData.sourceVersion || zdpMarkingData.sourceVersion || "missing");
         renderer.domElement.dataset.kphxSurfaceReady = String(ready);
-        renderer.domElement.dataset.kphxSurfacePolygonCount = String((packageData.polygonCount ?? 0) + (zdpData.polygonCount ?? 0));
-        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String((packageData.drapedOrthophotoCount ?? 0) + (zdpData.drapedOrthophotoCount ?? 0));
-        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String((packageData.lineMeshCount ?? 0) + (zdpData.lineMeshCount ?? 0));
-        renderer.domElement.dataset.kphxSurfaceMaterialCount = String((packageData.materialCount ?? 0) + (zdpData.materialCount ?? 0));
+        renderer.domElement.dataset.kphxSurfacePolygonCount = String(
+          (packageData.polygonCount ?? 0)
+          + (zdpData.polygonCount ?? 0)
+          + (zdpMarkingData.polygonCount ?? 0)
+        );
+        renderer.domElement.dataset.kphxSurfaceOrthophotoCount = String(
+          (packageData.drapedOrthophotoCount ?? 0)
+          + (zdpData.drapedOrthophotoCount ?? 0)
+          + (zdpMarkingData.drapedOrthophotoCount ?? 0)
+        );
+        renderer.domElement.dataset.kphxSurfaceLineMeshCount = String(
+          (packageData.lineMeshCount ?? 0)
+          + (zdpData.lineMeshCount ?? 0)
+          + (zdpMarkingData.lineMeshCount ?? 0)
+        );
+        renderer.domElement.dataset.kphxSurfaceMaterialCount = String(
+          (packageData.materialCount ?? 0)
+          + (zdpData.materialCount ?? 0)
+          + (zdpMarkingData.materialCount ?? 0)
+        );
         renderer.domElement.dataset.kphxSurfaceFailureCount = String(failures.length);
         renderer.domElement.dataset.kphxA1ZdpSurfaceReady = String(zdpData.ready === true);
         renderer.domElement.dataset.kphxA1ZdpSurfacePolygonCount = String(zdpData.polygonCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpOpaqueBaseUnderlayCount = String(zdpData.opaqueBaseUnderlayCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpSurfaceOrthophotoCount = String(zdpData.drapedOrthophotoCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpSurfaceLineMeshCount = String(zdpData.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingReady = String(zdpMarkingData.ready === true);
+        renderer.domElement.dataset.kphxT4ZdpMarkingPlacementCount = String(
+          zdpMarkingData.exactZdpMarkingPlacementCount ?? 0
+        );
+        renderer.domElement.dataset.kphxT4ZdpMarkingOrthophotoPlacementCount = String(
+          zdpMarkingData.selectedDrapedOrthophotoPlacementCount ?? 0
+        );
+        renderer.domElement.dataset.kphxT4ZdpMarkingLinePlacementCount = String(
+          zdpMarkingData.selectedLinePlacementCount ?? 0
+        );
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
-        return { packageResult, a1ZdpResult, ready, failures };
+        return { packageResult, a1ZdpResult, zdpMarkingsResult, ready, failures };
       })
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
         renderer.domElement.dataset.kphxSurfaceReady = "false";
         renderer.domElement.dataset.kphxA1ZdpSurfaceReady = "false";
+        renderer.domElement.dataset.kphxT4ZdpMarkingReady = "false";
+        renderer.domElement.dataset.kphxT4ZdpMarkingPlacementCount = "load-error";
         renderer.domElement.dataset.kphxSurfaceFailureCount = "load-error";
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
         console.error("RampReady exact KPHX surface load failed", error);
