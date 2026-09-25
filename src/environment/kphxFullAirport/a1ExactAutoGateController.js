@@ -531,46 +531,52 @@ function splitExactCabinStairComponents(THREE, cabinHalfB) {
   });
 }
 
-export function installA1ExactAutoGateController({
+export function installExactStockAutoGateController({
   THREE,
   root,
   footprint,
   wallEvidence,
   gateMap,
+  initialDeployment = 0,
+  enforceA1Reference = false,
 }) {
-  if (!THREE || !root?.isObject3D) throw new Error("A1 exact stock jetway root is required");
-  if (gateMap?.gate !== "A1" || gateMap?.facadeWedObjectId !== 104804) {
-    throw new Error("A1 exact AutoGate controller received the wrong WED facade");
+  const gate = String(gateMap?.gate || "UNKNOWN");
+  if (!THREE || !root?.isObject3D) {
+    throw new Error(`${gate} exact stock jetway root is required`);
   }
 
-  // A1 is the locked reference implementation, but its hierarchy discovery
-  // now goes through the same source-derived resolver intended for all 76 T4
-  // placements. Keep the A1 sequence assertion as a regression canary while
-  // removing gate-specific wall-number/object-name discovery from the motion
-  // controller itself.
   const rig = resolveExactStockJetwayRig({
     root,
     footprint,
     wallEvidence,
     gateMap,
   });
-  if (rig.wallSequence.join("|")
-    !== "Rotunda_extension|Rotunda_extension|Rotunda_extension|Rotunda_extension|Tunnel_11-15.5m|Cabin") {
-    throw new Error("A1 exact AutoGate controller wall sequence changed");
-  }
-  if (rig.tunnelFamily.family !== "5m") {
-    throw new Error(`A1 tunnel family changed to ${rig.tunnelFamily.family}`);
-  }
   const motionSelection = selectExactStockJetwayMotionReference({
     rig,
     footprint,
     gateMap,
   });
-  if (motionSelection.sourceProfileId !== "standard-26m"
-    || motionSelection.mirrorSign !== 1) {
-    throw new Error(
-      `A1 source-derived motion reference changed to ${motionSelection.profile.id}`,
-    );
+
+  // A1 remains the user-verified canary. The wrapper below enables these
+  // assertions so genericization can never silently change its exact WED
+  // structure or the AutoGate-26m reference that produced the approved motion.
+  if (enforceA1Reference) {
+    if (gate !== "A1" || gateMap?.facadeWedObjectId !== 104804) {
+      throw new Error("A1 reference controller received the wrong WED facade");
+    }
+    if (rig.wallSequence.join("|")
+      !== "Rotunda_extension|Rotunda_extension|Rotunda_extension|Rotunda_extension|Tunnel_11-15.5m|Cabin") {
+      throw new Error("A1 exact AutoGate controller wall sequence changed");
+    }
+    if (rig.tunnelFamily.family !== "5m") {
+      throw new Error(`A1 tunnel family changed to ${rig.tunnelFamily.family}`);
+    }
+    if (motionSelection.sourceProfileId !== "standard-26m"
+      || motionSelection.mirrorSign !== 1) {
+      throw new Error(
+        `A1 source-derived motion reference changed to ${motionSelection.profile.id}`,
+      );
+    }
   }
   const motionProfile = motionSelection.profile;
 
@@ -651,7 +657,7 @@ export function installA1ExactAutoGateController({
   };
   const attachedTunnelLength = Math.hypot(attachedTunnelVector.x, attachedTunnelVector.z);
   if (!(attachedTunnelLength > attachedLatMeters + 1)) {
-    throw new Error(`A1 exact tunnel length ${attachedTunnelLength} cannot retract ${attachedLatMeters} m safely`);
+    throw new Error(`${gate} exact tunnel length ${attachedTunnelLength} cannot retract ${attachedLatMeters} m safely`);
   }
   const tunnelUnit = {
     x: attachedTunnelVector.x / attachedTunnelLength,
@@ -698,8 +704,18 @@ export function installA1ExactAutoGateController({
     (Math.abs(motionProfile.innerTunnelTranslationYMeters[1])
       - Math.abs(motionProfile.innerTunnelTranslationYMeters[0]))
     / motionProfile.latRangeMeters[1];
-  const history = ["attached-to-aircraft-door"];
-  let deployment = 1;
+  const normalizedInitialDeployment = clamp(
+    Number(initialDeployment) || 0,
+    0,
+    1,
+  );
+  const initialState = normalizedInitialDeployment >= 0.995
+    ? "attached-to-aircraft-door"
+    : normalizedInitialDeployment <= 0.005
+      ? "parked-clear-of-aircraft"
+      : "autogate-disengaging";
+  const history = [initialState];
+  let deployment = normalizedInitialDeployment;
   let connectedLatMeters = attachedLatMeters;
   let connectedVertMeters = doorTargets.vertMeters;
   let dockingCorrectionMeters = 0;
@@ -815,7 +831,7 @@ export function installA1ExactAutoGateController({
     let highError = applyPitchAtFixedHinge(highPitch) - targetEntranceWorldY;
     if (lowError * highError > 0) {
       throw new Error(
-        `A1 fixed elevated hinge cannot reach AutoGate vertical target ${currentVertMeters.toFixed(4)} m`,
+        `${gate} fixed elevated hinge cannot reach AutoGate vertical target ${currentVertMeters.toFixed(4)} m`,
       );
     }
 
@@ -1116,19 +1132,19 @@ export function installA1ExactAutoGateController({
     aircraftType = doorTargets.aircraftType,
   } = {}) {
     if (!targetWorld?.isVector3 || !outwardWorldDirection?.isVector3) {
-      throw new Error("A1 X-Plane ACF aircraft door contact requires exact world point and outward direction");
+      throw new Error("${gate} X-Plane ACF aircraft door contact requires exact world point and outward direction");
     }
 
     const profile = getRampReadyAircraftDoorProfile(aircraftType);
-    if (!profile) throw new Error(`Unsupported A1 aircraft AutoGate profile: ${aircraftType}`);
+    if (!profile) throw new Error(`Unsupported ${gate} aircraft AutoGate profile: ${aircraftType}`);
     const exactTargets = getAutoGateDoorTargets(profile);
     if (Math.abs(exactTargets.latMeters - attachedLatMeters) > 0.001) {
       throw new Error(
-        `A1 AutoGate lateral source changed from ${attachedLatMeters.toFixed(4)} to ${exactTargets.latMeters.toFixed(4)} m`,
+        `${gate} AutoGate lateral source changed from ${attachedLatMeters.toFixed(4)} to ${exactTargets.latMeters.toFixed(4)} m`,
       );
     }
     if (!Number.isFinite(exactTargets.vertMeters)) {
-      throw new Error(`A1 ${profile.aircraftType} ACF has no finite AutoGate vertical target`);
+      throw new Error(`${gate} ${profile.aircraftType} ACF has no finite AutoGate vertical target`);
     }
 
     doorTargets = exactTargets;
@@ -1277,7 +1293,12 @@ export function installA1ExactAutoGateController({
     `${exteriorStairs.hingeLocal.x.toFixed(3)},${exteriorStairs.hingeLocal.y.toFixed(3)},${exteriorStairs.hingeLocal.z.toFixed(3)}`;
   root.userData.a1AutoGateExteriorStairGroundWorldY = sourceStairFootWorldY;
   root.userData.a1AutoGateSourceGeometryAuthority =
-    "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
+    `KPHX-1.75.1-WED-${gateMap?.facadeWedObjectId ?? "unknown"}-plus-XP11-Jetway_1_solid.fac`;
+  root.userData.stockAutoGateGate = gate;
+  root.userData.stockAutoGateFacadeWedObjectId = gateMap?.facadeWedObjectId ?? null;
+  root.userData.stockAutoGateRigAuthority = rig.authority;
+  root.userData.stockAutoGateMotionProfileId = motionSelection.profile.id;
+  root.userData.stockAutoGateMotionSelectorAuthority = motionSelection.authority;
   root.userData.a1AutoGateMotionSource = motionProfile.sourceAsset;
   root.userData.a1AutoGateHorizontalDataref = AUTOGATE_REFERENCE.horizontalDataref;
   root.userData.a1AutoGateVerticalDataref = AUTOGATE_REFERENCE.verticalDataref;
@@ -1303,12 +1324,22 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateMotionProfileId = motionSelection.profile.id;
   root.userData.a1AutoGateAuthoredHingeTurnDegrees = motionSelection.rawTurnDegrees;
   root.userData.a1AutoGateEffectiveHingeTurnDegrees = motionSelection.effectiveTurnDegrees;
-  root.userData.a1AutoGatePivotWedNodeId = 104809;
-  root.userData.a1AutoGateCabinJointWedNodeId = 104810;
+  if (enforceA1Reference) {
+    root.userData.a1AutoGatePivotWedNodeId = 104809;
+    root.userData.a1AutoGateCabinJointWedNodeId = 104810;
+  }
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
   root.userData.a1AutoGateRequiredPrePushSequence =
     "AutoGate DISENGAGE: reverse meter-space lat target to zero over 15 seconds; exact tunnel telescopes and cabin counter-rotates";
-  setDeployment(1);
+  setDeployment(normalizedInitialDeployment);
 
   return controller;
+}
+
+export function installA1ExactAutoGateController(args) {
+  return installExactStockAutoGateController({
+    ...args,
+    initialDeployment: 1,
+    enforceA1Reference: true,
+  });
 }
