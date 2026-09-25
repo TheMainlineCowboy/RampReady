@@ -612,6 +612,8 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxExactLiveT4StaticPropMisterXPlacementCount = String(environment.userData.exactLiveT4StaticPropMisterXPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4StaticPropZdpPlacementCount = String(environment.userData.exactLiveT4StaticPropZdpPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount = String(environment.userData.exactLiveT4DeferredZdpStopMarkerPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4MisterXRampPlacementCount = String(environment.userData.exactLiveT4MisterXRampPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4DrapedMarkingFallbackRenderOrderMeshCount = String(environment.userData.exactLiveT4DrapedMarkingFallbackRenderOrderMeshCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4GateMarkingPlacementCount = String(environment.userData.exactLiveT4GateMarkingPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4GateNumberPlacementCount = String(environment.userData.exactLiveT4GateNumberPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4GroundMarkingPlacementCount = String(environment.userData.exactLiveT4GroundMarkingPlacementCount ?? 0);

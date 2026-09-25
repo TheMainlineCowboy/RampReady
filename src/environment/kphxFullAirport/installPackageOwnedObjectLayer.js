@@ -100,6 +100,7 @@ export function preparePlacementRoot(root, placement) {
     }
   });
 
+  let drapedMarkingFallbackRenderOrderMeshCount = 0;
   root.traverse((node) => {
     if (!node?.isMesh) return;
     node.castShadow = !xPlaneGlobalNoShadow;
@@ -156,14 +157,29 @@ export function preparePlacementRoot(root, placement) {
         material.needsUpdate = true;
       }
     }
-    const renderOrder = xPlaneLayerOrder(authoredLayer);
+    // X-Plane draped OBJ geometry is composited over airport pavement even when
+    // the source OBJ omits ATTR_layer_group_draped. Three.js otherwise leaves
+    // these alpha-blended stand decals at renderOrder=0, so the opaque authored
+    // apron (renderOrder 30+) is drawn afterward and visually erases them.
+    // Preserve every authored position/heading/mesh/texture and supply only the
+    // missing compositor ordering semantic.
+    const usedDrapedMarkingFallbackLayer = exactDrapedMarkingResource && !authoredLayer;
+    const effectiveLayer = authoredLayer || (
+      usedDrapedMarkingFallbackLayer
+        ? { group: "markings", offset: 0 }
+        : null
+    );
+    const renderOrder = xPlaneLayerOrder(effectiveLayer);
     if (renderOrder !== null) node.renderOrder = renderOrder;
+    if (usedDrapedMarkingFallbackLayer) drapedMarkingFallbackRenderOrderMeshCount += 1;
     node.userData = {
       ...(node.userData || {}),
       kphxFullAirport: true,
       sourceResource: placement.resource,
       wedObjectId: placement.id,
-      xPlaneLayerGroup: authoredLayer,
+      xPlaneLayerGroup: effectiveLayer,
+      xPlaneAuthoredLayerGroup: authoredLayer,
+      kphxDrapedMarkingFallbackLayer: usedDrapedMarkingFallbackLayer,
       xPlaneGlobalNoShadow,
       xPlaneGlobalSpecular,
       xPlaneShinyRatio: materials
@@ -171,6 +187,11 @@ export function preparePlacementRoot(root, placement) {
         .find((value) => value !== undefined && value !== null) ?? null,
     };
   });
+
+  root.userData.kphxDrapedMarkingFallbackRenderOrderMeshCount =
+    drapedMarkingFallbackRenderOrderMeshCount;
+  root.userData.kphxDrapedMarkingFallbackLayerPolicy =
+    "xplane-draped-default-markings-compositor-order";
 
   return root;
 }

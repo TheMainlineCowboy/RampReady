@@ -73,6 +73,11 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       `Exact live T4 authored static props incomplete: ${staticProps.summary.loadedPlacementCount}/141`,
     );
   }
+  if (staticProps.summary.misterXRampPlacementCount !== 62) {
+    throw new Error(
+      `Exact live T4 MisterX ramp markings incomplete: ${staticProps.summary.misterXRampPlacementCount}/62`,
+    );
+  }
   if (gateMarkings.summary.loadedPlacementCount !== 317 || !gateMarkings.summary.ready) {
     throw new Error(
       `Exact live T4 gate markings incomplete: ${gateMarkings.summary.loadedPlacementCount}/317`,
@@ -97,6 +102,10 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       staticProps.summary.loadedPlacementCount,
     authoredTerminal4DeferredZdpStopMarkerPlacementCount:
       staticProps.summary.deferredZdpStopMarkerPlacementCount,
+    authoredTerminal4ExactMisterXRampPlacementCount:
+      staticProps.summary.misterXRampPlacementCount,
+    authoredTerminal4DrapedMarkingFallbackRenderOrderMeshCount:
+      staticProps.summary.drapedMarkingFallbackRenderOrderMeshCount,
     authoredTerminal4ExactGateMarkings: gateMarkings,
     authoredTerminal4ExactGateMarkingAuthority: gateMarkings.summary.authority,
     authoredTerminal4ExactGateMarkingPlacementCount: gateMarkings.summary.loadedPlacementCount,
@@ -171,6 +180,9 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     exactLiveT4StaticPropZdpPlacementCount: staticProps.summary.zdpPlacementCount,
     exactLiveT4DeferredZdpStopMarkerPlacementCount:
       staticProps.summary.deferredZdpStopMarkerPlacementCount,
+    exactLiveT4MisterXRampPlacementCount: staticProps.summary.misterXRampPlacementCount,
+    exactLiveT4DrapedMarkingFallbackRenderOrderMeshCount:
+      staticProps.summary.drapedMarkingFallbackRenderOrderMeshCount,
     exactLiveT4GateMarkingPlacementCount: gateMarkings.summary.loadedPlacementCount,
     exactLiveT4GateNumberPlacementCount: gateMarkings.summary.gateNumberPlacementCount,
     exactLiveT4GroundMarkingPlacementCount: gateMarkings.summary.groundMarkingPlacementCount,

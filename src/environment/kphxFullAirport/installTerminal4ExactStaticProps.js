@@ -47,6 +47,18 @@ export async function installKphxTerminal4ExactStaticProps(
 
   const lightCount = lights.layer.userData.loadedPlacementCount;
   const misterXCount = misterX.layer.userData.loadedPlacementCount;
+  const misterXRampPlacementCount = misterX.layer.children.filter(
+    (instance) => instance?.userData?.sourceResource?.startsWith("MisterX_Library/Airport/Ramps/"),
+  ).length;
+  const misterXConstructionPlacementCount = misterX.layer.children.filter(
+    (instance) => instance?.userData?.sourceResource?.startsWith("MisterX_Library/Objects/Construction/"),
+  ).length;
+  const drapedMarkingFallbackRenderOrderMeshCount = misterX.layer.children.reduce(
+    (sum, instance) => sum + Number(
+      instance?.userData?.kphxDrapedMarkingFallbackRenderOrderMeshCount || 0
+    ),
+    0,
+  );
   const zdpCount = zdp?.layer?.userData?.loadedPlacementCount ?? 0;
   const expectedZdpCount = includeZdpStopMarkers
     ? KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.zdpStopMarkers.expectedPlacementCount
@@ -68,6 +80,24 @@ export async function installKphxTerminal4ExactStaticProps(
     + KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.misterXConstruction.expectedPlacementCount;
   if (strict && misterXCount !== expectedMisterX) {
     throw new Error(`Exact T4 MisterX static props incomplete: ${misterXCount}/${expectedMisterX}`);
+  }
+  if (
+    strict
+    && misterXRampPlacementCount
+      !== KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.misterXRamps.expectedPlacementCount
+  ) {
+    throw new Error(
+      `Exact T4 MisterX ramp markings incomplete: ${misterXRampPlacementCount}/${KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.misterXRamps.expectedPlacementCount}`,
+    );
+  }
+  if (
+    strict
+    && misterXConstructionPlacementCount
+      !== KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.misterXConstruction.expectedPlacementCount
+  ) {
+    throw new Error(
+      `Exact T4 MisterX construction props incomplete: ${misterXConstructionPlacementCount}/${KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.misterXConstruction.expectedPlacementCount}`,
+    );
   }
   if (strict && zdpCount !== expectedZdpCount) {
     throw new Error(
@@ -95,6 +125,9 @@ export async function installKphxTerminal4ExactStaticProps(
         - KPHX_T4_EXACT_STATIC_PROP_AUTHORITY.zdpStopMarkers.expectedUniqueResourceCount,
     lightPlacementCount: lightCount,
     misterXPlacementCount: misterXCount,
+    misterXRampPlacementCount,
+    misterXConstructionPlacementCount,
+    drapedMarkingFallbackRenderOrderMeshCount,
     zdpPlacementCount: zdpCount,
     deferredZdpStopMarkerPlacementCount: includeZdpStopMarkers
       ? 0
