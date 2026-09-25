@@ -110,7 +110,12 @@ function signedTurnAtHinge(rig, footprint) {
   }
   const dot = incomingX * tunnelX + incomingZ * tunnelZ;
   const cross = incomingX * tunnelZ - incomingZ * tunnelX;
-  return Math.atan2(cross, dot) * 180 / Math.PI;
+
+  // RampReady's 2D facade footprint uses [x,z] = [-north,-east].
+  // Relative to WED's [east,north] plane that swaps the axes and therefore
+  // reverses signed turn handedness. Negate the local-space cross-product
+  // angle so the selector matches the authored WED/MisterX turn direction.
+  return -Math.atan2(cross, dot) * 180 / Math.PI;
 }
 
 function mirroredProfile(profile, mirrorSign) {
@@ -182,7 +187,7 @@ export function selectExactStockJetwayMotionReference({
     score: winner.score,
     mirrorSign,
     authority:
-      "WED-authored-hinge-angle-plus-authored-reach-to-user-supplied-MisterX-AutoGate-reference-v1",
+      "WED-authored-hinge-angle-plus-authored-reach-to-user-supplied-MisterX-AutoGate-reference-v2",
   });
 }
 
