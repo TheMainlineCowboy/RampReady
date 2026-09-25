@@ -72,6 +72,12 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     authoredTerminal4JetwayInitialState: "attached-to-aircraft-door",
     authoredTerminal4RequiredPrePushSequence: "AutoGate DISENGAGE: reverse CRJ door lat target to zero over 15 seconds, telescope exact tunnel and rotate/counter-rotate exact cabin",
     authoredTerminal4A1JetwayController: jetways.a1Controller,
+    authoredTerminal4RunRepresentativeJetwayAudit:
+      jetways.runRepresentativeControllerAudit,
+    authoredTerminal4JetwayResolvedPlacementCount:
+      jetways.layer.userData.stockAutoGateResolvedPlacementCount,
+    authoredTerminal4JetwayLazyFactoryCount:
+      jetways.layer.userData.stockAutoGateLazyFactoryCount,
     authoredTerminal4A1JetwayAnimationAuthority: jetways.layer.userData.a1JetwayAnimationAuthority,
     authoredTerminal4A1JetwayAttachedLatMeters: jetways.layer.userData.a1JetwayAttachedLatMeters,
     authoredTerminal4A1JetwayMotionDurationMs: jetways.layer.userData.a1JetwayMotionDurationMs,
@@ -81,7 +87,8 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     authoredTerminal4UploadedJetwayConnectorCount: 261,
     authoredTerminal4UploadedJetwayVerifiedModelCount: 76,
     authoredTerminal4UploadedJetwayReadyAuthority: jetways.layer.userData.sourceAuthority,
-    authoredTerminal4UploadedJetwayArticulationAuthority: "A1-exact-stock-facade-AutoGate-horizontal-articulation-v1; other-75-static",
+    authoredTerminal4UploadedJetwayArticulationAuthority:
+      "A1-user-verified-plus-source-resolved-lazy-controller-factories-all-76-v2",
     authoredTerminal4UploadedJetwaySourceContactDistanceMeters: Number.NaN,
     authoredTerminal4UploadedJetwayStaticArticulatedGateCount: 76,
     authoredTerminal4UploadedJetwayStaticMaximumContactErrorMeters: 0,
