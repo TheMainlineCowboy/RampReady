@@ -117,12 +117,12 @@ export default function PushbackTrainer() {
         : Boolean(data.tugSource && data.tugSource !== "loading" && data.tugSource !== "load-error");
       const terminalReady = data.kphxExactLiveT4 === "ready";
       const surfacesReady = data.kphxSurfaceReady === "true";
-      const markingsReady = data.kphxA1ZdpMarkingsReady === "true";
+      const markingsReady = data.kphxT4ZdpMarkingsReady === "true";
       const failed = [
         data.tugSource,
         data.kphxExactLiveT4,
         data.kphxSurfaceReady,
-        data.kphxA1ZdpMarkingsReady,
+        data.kphxT4ZdpMarkingsReady,
         data.environmentSource,
       ].includes("load-error");
 
@@ -130,7 +130,7 @@ export default function PushbackTrainer() {
       let label = "Loading selected equipment…";
       if (equipmentReady && !terminalReady) label = "Loading exact PHX Terminal 4 and jetways…";
       else if (equipmentReady && terminalReady && !surfacesReady) label = "Loading exact KPHX ramp surfaces…";
-      else if (equipmentReady && terminalReady && surfacesReady && !markingsReady) label = "Loading exact A1 ramp markings…";
+      else if (equipmentReady && terminalReady && surfacesReady && !markingsReady) label = "Loading exact Terminal 4 ramp markings…";
       else if (completed === 4) label = "RampReady";
 
       setRuntimeLoading((previous) => {
