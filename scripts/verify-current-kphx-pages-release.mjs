@@ -111,9 +111,18 @@ const liveInstaller = fs.readFileSync("src/environment/kphxFullAirport/installLi
 assert(liveInstaller.includes('"Terminals/Terminal4.obj"'), "Live exact T4 south resource missing");
 assert(liveInstaller.includes('"Terminals/Terminal4b.obj"'), "Live exact T4 north resource missing");
 assert(liveInstaller.includes("installKphxTerminal4StockJetways"), "Live exact stock jetway installer missing");
+assert(liveInstaller.includes("installKphxTerminal4ExactGse"), "Live exact authored T4 GSE installer missing");
 assert(liveInstaller.includes("jetwayCount !== 76"), "Live exact jetway count guard missing");
 assert(liveInstaller.includes("authoredOpenEdgeCount !== 261"), "Live exact jetway edge guard missing");
+assert(liveInstaller.includes("gse.summary.loadedPlacementCount !== 884"), "Live exact T4 GSE placement-count guard missing");
+assert(liveInstaller.includes("exactLiveT4GsePlacementCount"), "Live exact T4 GSE runtime evidence missing");
 assert(liveInstaller.includes("exactLiveOldAirportJetwayGlbUsed: false"), "Old Airport_Jetway.glb exclusion guard missing");
+
+const t4GseAuthority = fs.readFileSync("src/environment/kphxFullAirport/terminal4GseAuthority.js", "utf8");
+assert(t4GseAuthority.includes("expectedPlacementCount: 884"), "Exact T4 GSE expected placement count drifted");
+assert(t4GseAuthority.includes("expectedUniqueResourceCount: 33"), "Exact T4 GSE expected resource count drifted");
+assert(t4GseAuthority.includes("expectedPlacementCount: 861"), "Exact T4 MisterX GSE count drifted");
+assert(t4GseAuthority.includes("expectedPlacementCount: 23"), "Exact T4 CDB GSE count drifted");
 
 const equipment = fs.readFileSync("src/tug/runtimeEquipmentVisual.js", "utf8");
 assert(equipment.includes("LEKTRO_AP88_TVO914.glb"), "Live LEKTRO does not load finalized R187A GLB");
