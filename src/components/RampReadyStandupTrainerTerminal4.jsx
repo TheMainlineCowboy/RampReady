@@ -582,6 +582,10 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.terminal4LowerFacadeFitCount = "loading";
     renderer.domElement.dataset.terminal4JetwayTextureAuthority = "loading";
     renderer.domElement.dataset.terminal4ExactJetwayTextureActive = "loading";
+    renderer.domElement.dataset.t4JetwayRepresentativeAuditStatus =
+      new URLSearchParams(window.location.search).get("jetwayRigAudit") === "1"
+        ? "loading"
+        : "not-requested";
     renderer.domElement.dataset.groundMarkingContactMode = "loading";
     renderer.domElement.dataset.groundPavementAuthority = "loading";
     renderer.domElement.dataset.groundSourceAerialPriority = "loading";
@@ -614,6 +618,64 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.terminal4JetwayPrePushSequence = environment.userData.authoredTerminal4JetwayRequiredPrePushSequence || "missing";
         const a1JetwayController = environment.userData.authoredTerminal4A1JetwayController || null;
         jetwayRef.current.controller = a1JetwayController;
+
+        if (new URLSearchParams(window.location.search).get("jetwayRigAudit") === "1") {
+          const runAudit =
+            environment.userData.authoredTerminal4RunRepresentativeJetwayAudit;
+          if (typeof runAudit !== "function") {
+            throw new Error("Representative T4 jetway runtime audit is unavailable");
+          }
+          const audit = runAudit();
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditStatus =
+            audit.status;
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditCount =
+            String(audit.representativeCount);
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditProfiles =
+            audit.profiles.join("|");
+          renderer.domElement.dataset.t4JetwayResolvedPlacementCount =
+            String(
+              environment.userData.authoredTerminal4JetwayResolvedPlacementCount
+                ?? 0,
+            );
+          renderer.domElement.dataset.t4JetwayLazyFactoryCount =
+            String(
+              environment.userData.authoredTerminal4JetwayLazyFactoryCount
+                ?? 0,
+            );
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditResults =
+            JSON.stringify(
+              audit.results.map((entry) => ({
+                gate: entry.gate,
+                facadeWedObjectId: entry.facadeWedObjectId,
+                tunnelFamily: entry.tunnelFamily,
+                motionSourceProfileId: entry.motionSourceProfileId,
+                midpoint: {
+                  supportBottomDeltaMeters:
+                    entry.midpoint.supportBottomDeltaMeters,
+                  stairFootDeltaMeters:
+                    entry.midpoint.stairFootDeltaMeters,
+                  stairHingeGapMeters:
+                    entry.midpoint.stairHingeGapMeters,
+                  terminalPivotGapMeters:
+                    entry.midpoint.terminalPivotGapMeters,
+                  cabinJointGapMeters:
+                    entry.midpoint.cabinJointGapMeters,
+                },
+                parked: {
+                  supportBottomDeltaMeters:
+                    entry.parked.supportBottomDeltaMeters,
+                  stairFootDeltaMeters:
+                    entry.parked.stairFootDeltaMeters,
+                  stairHingeGapMeters:
+                    entry.parked.stairHingeGapMeters,
+                  terminalPivotGapMeters:
+                    entry.parked.terminalPivotGapMeters,
+                  cabinJointGapMeters:
+                    entry.parked.cabinJointGapMeters,
+                },
+              })),
+            );
+        }
 
         const registerRenderedA1DoorContact = () => {
           if (!a1JetwayController?.registerAircraftDoorContact) return false;
@@ -708,6 +770,15 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
+        if (
+          new URLSearchParams(window.location.search).get("jetwayRigAudit")
+            === "1"
+        ) {
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditStatus =
+            "FAIL";
+          renderer.domElement.dataset.t4JetwayRepresentativeAuditError =
+            String(error?.message || error);
+        }
         renderer.domElement.dataset.terminal4A1LegacyBlockRemovedTriangles = "load-error";
         renderer.domElement.dataset.terminal4A1LegacyBlockAuthority = "load-error";
         renderer.domElement.dataset.terminal4Position = "load-error";
