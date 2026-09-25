@@ -17,6 +17,12 @@ function kphxRuntimeUrl(url) {
 const DEFAULT_MANIFEST_URL = "/models/kphx-full-airport/surfaces/manifest.json";
 const DEFAULT_NETWORK_URL = "/models/kphx-full-airport/surfaces/surface-network.json";
 
+// Browser/mobile depth precision is not identical to X-Plane's draped-layer compositor.
+ // Keep authored pavement at Y=0 and apply only a millimeter-scale visual separation
+ // to paint/marking layers so exact WED markings do not z-fight or disappear.
+const KPHX_MARKING_RENDER_LIFT_METERS = 0.006;
+const KPHX_MARKING_LAYER_EPSILON_METERS = 0.00005;
+
 const LAYER_GROUP_ORDER = Object.freeze({
   terrain: 0,
   beaches: 100,
@@ -470,6 +476,11 @@ export async function installKphxPackageOwnedSurfaceLayer(
 
       const mesh = new THREE.Mesh(geometry, material);
       mesh.name = `KPHX_POL_${placement.id}_${placement.name}`;
+      if (art?.layerGroup?.group === "markings") {
+        mesh.position.y =
+          KPHX_MARKING_RENDER_LIFT_METERS
+          + Number(art.layerGroup?.offset || 0) * KPHX_MARKING_LAYER_EPSILON_METERS;
+      }
       mesh.renderOrder = material.userData.xPlaneLayerOrder;
       mesh.receiveShadow = true;
       mesh.userData = {
@@ -479,6 +490,9 @@ export async function installKphxPackageOwnedSurfaceLayer(
         sourceResource: placement.resource,
         physicalSurface: art.surface,
         xPlaneLayerGroup: art.layerGroup,
+        kphxRenderLiftMeters: art?.layerGroup?.group === "markings"
+          ? mesh.position.y
+          : 0,
       };
       layer.add(mesh);
       polygonCount += 1;
@@ -496,6 +510,9 @@ export async function installKphxPackageOwnedSurfaceLayer(
       const material = await materialFor(placement.resource, "markings");
       const mesh = new THREE.Mesh(geometry, material);
       mesh.name = `KPHX_ORTHO_${placement.id}_${placement.name}`;
+      mesh.position.y =
+        KPHX_MARKING_RENDER_LIFT_METERS
+        + Number(art?.layerGroup?.offset || 0) * KPHX_MARKING_LAYER_EPSILON_METERS;
       mesh.renderOrder = material.userData.xPlaneLayerOrder;
       mesh.receiveShadow = true;
       mesh.userData = {
@@ -523,6 +540,10 @@ export async function installKphxPackageOwnedSurfaceLayer(
         if (!geometry) continue;
         const mesh = new THREE.Mesh(geometry, material);
         mesh.name = `KPHX_LIN_${placement.id}_L${offset.layer}_${placement.name}`;
+        mesh.position.y =
+          KPHX_MARKING_RENDER_LIFT_METERS
+          + (Number(art?.layerGroup?.offset || 0) + Number(offset.layer || 0))
+            * KPHX_MARKING_LAYER_EPSILON_METERS;
         mesh.renderOrder = material.userData.xPlaneLayerOrder + offset.layer * 0.001;
         mesh.receiveShadow = true;
         mesh.userData = {
