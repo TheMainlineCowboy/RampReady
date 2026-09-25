@@ -64,6 +64,18 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
 
   await page.waitForFunction(() => {
     const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return d.kphxExactLiveT4 === 'ready' || d.kphxExactLiveT4 === 'load-error';
+  }, null, { timeout: 180000 });
+  const terminal4Gate = await canvas.evaluate(element => ({ ...element.dataset }));
+  if (terminal4Gate.kphxExactLiveT4 === 'load-error') {
+    throw new Error(
+      'Terminal 4 runtime load failed before representative audit: '
+        + (terminal4Gate.t4JetwayRepresentativeAuditError || 'no audit error dataset'),
+    );
+  }
+
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
     return d.kphxExactLiveT4 === 'ready'
       && d.kphxExactLiveT4BuildingCount === '2'
       && d.kphxExactLiveT4JetwayCount === '76'
@@ -475,6 +487,22 @@ test('live RampReady serves exact manager Kubota free-drive inspection', async (
 
   const canvas = page.locator('canvas.trainerCanvas');
   await expect(canvas).toBeVisible({ timeout: 30000 });
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    return d.kphxExactLiveT4 === 'ready' || d.kphxExactLiveT4 === 'load-error';
+  }, null, { timeout: 180000 });
+  const kubotaTerminal4Gate = await canvas.evaluate(
+    element => ({ ...element.dataset }),
+  );
+  if (kubotaTerminal4Gate.kphxExactLiveT4 === 'load-error') {
+    throw new Error(
+      'Terminal 4 runtime load failed in Kubota verification: '
+        + (kubotaTerminal4Gate.t4JetwayRepresentativeAuditError
+          || kubotaTerminal4Gate.terminal4JetwaySourceGeometryMode
+          || 'no runtime error dataset'),
+    );
+  }
+
   await page.waitForFunction(() => {
     const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
     return d.tugSource === 'manager-kubota-exact'
