@@ -93,6 +93,20 @@ export function preparePlacementRoot(root, placement) {
     if (!node?.isMesh) return;
     node.castShadow = !xPlaneGlobalNoShadow;
     node.receiveShadow = true;
+
+    const exactGseResource = (
+      placement.resource?.startsWith("MisterX_Library/Airport/Vehicles/")
+      || placement.resource?.startsWith("MisterX_Library/Vehicles/")
+      || placement.resource?.startsWith("CDB-Library/Airport/GSE/")
+    );
+    if (exactGseResource && node.geometry && !node.geometry.userData?.kphxExactGseBoundsRecomputed) {
+      node.geometry.computeBoundingBox();
+      node.geometry.computeBoundingSphere();
+      node.geometry.userData = {
+        ...(node.geometry.userData || {}),
+        kphxExactGseBoundsRecomputed: true,
+      };
+    }
     node.frustumCulled = true;
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     let authoredLayer = placement.layerGroupDraped || null;
@@ -111,11 +125,6 @@ export function preparePlacementRoot(root, placement) {
       // GSE appears to lose pieces. Restore X-Plane-style stable depth for
       // non-draped static object geometry while leaving the separate draped
       // shadow/decal range transparent.
-      const exactGseResource = (
-        placement.resource?.startsWith("MisterX_Library/Airport/Vehicles/")
-        || placement.resource?.startsWith("MisterX_Library/Vehicles/")
-        || placement.resource?.startsWith("CDB-Library/Airport/GSE/")
-      );
       if (exactGseResource && !xPlaneDraped && material?.transparent === true) {
         material.depthWrite = true;
         material.userData = {
