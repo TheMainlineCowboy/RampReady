@@ -524,6 +524,11 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "loading";
     renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "loading";
     renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4StaticPropPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4StaticPropLightPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4StaticPropMisterXPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4StaticPropZdpPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount = "loading";
     renderer.domElement.dataset.photoDetailLevel = "loading";
     renderer.domElement.dataset.photoTextureMode = "loading";
     renderer.domElement.dataset.photoRuntimeTileCount = "loading";
@@ -600,6 +605,11 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = String(environment.userData.exactLiveT4GsePlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = String(environment.userData.exactLiveT4GseMisterXPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = String(environment.userData.exactLiveT4GseCdbPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropPlacementCount = String(environment.userData.exactLiveT4StaticPropPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropLightPlacementCount = String(environment.userData.exactLiveT4StaticPropLightPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropMisterXPlacementCount = String(environment.userData.exactLiveT4StaticPropMisterXPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropZdpPlacementCount = String(environment.userData.exactLiveT4StaticPropZdpPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount = String(environment.userData.exactLiveT4DeferredZdpStopMarkerPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveOldAirportJetwayGlbUsed = String(environment.userData.exactLiveOldAirportJetwayGlbUsed === true);
         renderer.domElement.dataset.kphxExactLiveProceduralTerminalMassing = String(environment.userData.proceduralTerminalMassing === true);
         renderer.domElement.dataset.kphxExactLiveLegacyFsxTerminal = String(environment.userData.legacyFsxTerminal === true);
@@ -789,6 +799,11 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropLightPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropMisterXPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4StaticPropZdpPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4DeferredZdpStopMarkerPlacementCount = "load-error";
         if (
           new URLSearchParams(window.location.search).get("jetwayRigAudit")
             === "1"
