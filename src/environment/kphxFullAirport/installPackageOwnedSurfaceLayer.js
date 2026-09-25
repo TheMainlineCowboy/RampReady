@@ -45,6 +45,7 @@ function layerOrder(layerGroup, fallbackGroup) {
 
 function resourceAssetUrl(resource, image) {
   if (!image) return null;
+  if (image.runtimeUrl) return image.runtimeUrl;
   return `${resource.outputBaseUrl}/${image.outputName}`;
 }
 
