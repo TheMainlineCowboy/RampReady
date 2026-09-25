@@ -370,6 +370,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     loadDrapedOrthophotos = true,
     loadLines = true,
     addOpaqueBaseUnderlay = false,
+    includeResourcePathPrefixes = null,
   } = {},
 ) {
   if (!environment?.add) throw new Error("KPHX surface loader requires a Three.js environment group");
@@ -401,10 +402,23 @@ export async function installKphxPackageOwnedSurfaceLayer(
   let drapedOrthophotoCount = 0;
   let lineMeshCount = 0;
   const resolvedExternalPrefixes = new Set(manifest.policy?.externalPrefixes || []);
-  const isSelectedSurfacePlacement = (entry) => (
-    entry.sourceClass === "package-owned"
-    || resolvedExternalPrefixes.has(entry.resourcePrefix)
-  );
+  const includedResourcePathPrefixes = includeResourcePathPrefixes?.length
+    ? [...includeResourcePathPrefixes]
+    : null;
+  const isSelectedSurfacePlacement = (entry) => {
+    const sourceResolved = (
+      entry.sourceClass === "package-owned"
+      || resolvedExternalPrefixes.has(entry.resourcePrefix)
+    );
+    if (!sourceResolved) return false;
+    if (
+      includedResourcePathPrefixes
+      && !includedResourcePathPrefixes.some((prefix) => String(entry.resource || "").startsWith(prefix))
+    ) {
+      return false;
+    }
+    return true;
+  };
 
   async function materialFor(resourceName, fallbackGroup) {
     const key = `${resourceName}|${fallbackGroup}`;
@@ -576,6 +590,7 @@ export async function installKphxPackageOwnedSurfaceLayer(
     failures,
     ready: failures.length === 0,
     resolvedExternalPrefixes: [...resolvedExternalPrefixes],
+    includeResourcePathPrefixes: includedResourcePathPrefixes,
     externalPolygonCount: network.polygons.filter((entry) => entry.sourceClass !== "package-owned").length,
     externalDrapedOrthophotoCount: network.drapedOrthophotos.filter((entry) => entry.sourceClass !== "package-owned").length,
     externalLineCount: network.lines.filter((entry) => entry.sourceClass !== "package-owned").length,
