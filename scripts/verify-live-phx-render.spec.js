@@ -109,6 +109,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxA1ZdpMarkingLineMeshCount === '26'
       && d.kphxA1ZdpMarkingTextureDecodeCount === '4'
       && d.kphxA1ZdpMarkingFailureCount === '0'
+      && d.kphxT4ZdpMarkingReady === 'true'
+      && d.kphxT4ZdpMarkingPlacementCount === '221'
+      && d.kphxT4ZdpMarkingOrthophotoPlacementCount === '34'
+      && d.kphxT4ZdpMarkingLinePlacementCount === '187'
       && d.photoGroundSource === 'not-used-exact-kphx-1.75.1-only';
   }, null, { timeout: 180000 });
 
@@ -476,6 +480,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     lektro: runtime.tugSource,
     pavementPolygons: runtime.kphxSurfacePolygonCount,
     a1MarkingMeshes: runtime.kphxA1ZdpMarkingLineMeshCount,
+    t4ZdpMarkingPlacements: runtime.kphxT4ZdpMarkingPlacementCount,
+    t4ZdpMarkingOrthophotos: runtime.kphxT4ZdpMarkingOrthophotoPlacementCount,
+    t4ZdpMarkingLines: runtime.kphxT4ZdpMarkingLinePlacementCount,
     oldAirportJetwayGlbUsed: runtime.kphxExactLiveOldAirportJetwayGlbUsed,
     supportBottomDeltaMid: midRuntime.a1JetwaySupportBottomDeltaMeters,
     supportBottomDeltaParked: parkedRuntime.a1JetwaySupportBottomDeltaMeters,
