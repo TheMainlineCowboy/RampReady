@@ -14,7 +14,7 @@ Locked project order from the 2026-09-23 review. Do not reorder without an expli
 ## Exact-source completeness
 6. Deep-dive the supplied KPHX scenery/dependencies for all authored ramp props/GSE/static placements and produce a loaded/unresolved/omitted inventory.
 7. Import missing static ramp/GSE objects exactly as authored before adding custom ambience.
-8. Inventory static aircraft from the source; separate scenery-only aircraft from any models suitable for pushback training.
+8. Inventory static aircraft from the source; separate scenery-only aircraft from any models suitable for pushback training. Also review the newest user-supplied **actual X-Plane airframes in Drive** against the current RampReady training aircraft; where the newer airframes are materially higher quality and technically usable, adopt them as the new aircraft-source baseline rather than continuing with an inferior older model.
 9. Verify the B2↔A1 elevated walkway/road-under structure against source geometry and user photos; do not creatively rebuild before source comparison.
 10. Import remaining exact airport structures/dependencies around T4.
 
@@ -23,8 +23,10 @@ Locked project order from the 2026-09-23 review. Do not reorder without an expli
 12. Build the airport perimeter/background layer, preferring KPHX/X-Plane source assets before custom PHX horizon scenery.
 13. Enable optional gyro camera in free-drive first, then training. The Operator View now accepts look input correctly, but the user-visible **Gyro View enable/toggle button is still missing** and must be added as part of this item.
 14. Consolidate camera architecture for future Quest/VR head-pose input.
-15. Create a professional title/main-menu scene: pushback-driver viewpoint toward ramp, aircraft crossing frame right→left, RampReady title left-center, polished menu.
-16. Final polish/regression pass: loading transitions, audio, lighting, shadows, LOD/performance, mobile controls, VR performance, collision cleanup, gate-by-gate QA.
+15. Build the real ramp soundscape: LEKTRO/Kubota/stand-up tug motors and drivetrain, jetway motors/mechanisms, aircraft/APU/engine ambience, ramp equipment, warning tones, brakes/air/hydraulics, environmental airport ambience, and spatial/distance behavior. Prefer authentic/source-appropriate recordings where available instead of generic game sounds.
+16. Add pushback voice/comms and operational pushback plans: headset/wing-walker/ramp dialogue, engine/start and brake callouts, push-clearance flow, abnormal/collision callouts, and gate/aircraft-specific pushback paths/plans so training is procedural rather than only free-form driving.
+17. Create a professional title/main-menu scene: pushback-driver viewpoint toward ramp, aircraft crossing frame right→left, RampReady title left-center, polished menu.
+18. Final polish/regression pass: loading transitions, audio mix, lighting, shadows, LOD/performance, mobile controls, VR performance, collision cleanup, gate-by-gate QA.
 
 ## Current source-truth constraints
 - Preserve exact KPHX 1.75.1 source geometry/material/placement whenever available.
