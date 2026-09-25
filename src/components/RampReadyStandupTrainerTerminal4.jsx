@@ -521,6 +521,9 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.photoGroundSource = "loading-source-authored-phx-photo";
     renderer.domElement.dataset.kphxVersion = "loading";
     renderer.domElement.dataset.kphxDetailLevel = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "loading";
     renderer.domElement.dataset.photoDetailLevel = "loading";
     renderer.domElement.dataset.photoTextureMode = "loading";
     renderer.domElement.dataset.photoRuntimeTileCount = "loading";
@@ -594,6 +597,9 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxExactLiveT4BuildingCount = String(environment.userData.exactLiveT4BuildingCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4JetwayCount = String(environment.userData.exactLiveT4JetwayCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveT4JetwayOpenEdgeCount = String(environment.userData.exactLiveT4JetwayOpenEdgeCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = String(environment.userData.exactLiveT4GsePlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = String(environment.userData.exactLiveT4GseMisterXPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = String(environment.userData.exactLiveT4GseCdbPlacementCount ?? 0);
         renderer.domElement.dataset.kphxExactLiveOldAirportJetwayGlbUsed = String(environment.userData.exactLiveOldAirportJetwayGlbUsed === true);
         renderer.domElement.dataset.kphxExactLiveProceduralTerminalMassing = String(environment.userData.proceduralTerminalMassing === true);
         renderer.domElement.dataset.kphxExactLiveLegacyFsxTerminal = String(environment.userData.legacyFsxTerminal === true);
@@ -780,6 +786,9 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "load-error";
         if (
           new URLSearchParams(window.location.search).get("jetwayRigAudit")
             === "1"
