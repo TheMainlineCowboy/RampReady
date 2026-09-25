@@ -4,27 +4,14 @@ import {
   getRampReadyAircraftDoorProfile,
 } from "./aircraftDoorAuthority.js";
 import { resolveExactStockJetwayRig } from "./stockJetwayRigAuthority.js";
+import { selectExactStockJetwayMotionReference } from "./stockJetwayMotionAuthority.js";
 
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const lerp = (a, b, t) => a + (b - a) * t;
 const radians = (degrees) => degrees * Math.PI / 180;
 
-// User-supplied MisterX AutoGate-26m.obj horizontal articulation.
-// A1's exact WED stock-facade reach is 23.860805 m, making the 26 m
-// AutoGate bridge the closest supplied kinematic reference.
-const AUTOGATE_26M = Object.freeze({
-  sourceAsset: "MisterX_Library/Airport/Jetways-Steel/AutoGate-26m.obj",
-  latRangeMeters: Object.freeze([0, 7.5]),
-  bridgeYawDegrees: Object.freeze([58.87485095, 66.4785727]),
-  cabinRelativeYawDegrees: Object.freeze([-60.6997204, -67.50015727]),
-  sourceTranslationZMeters: Object.freeze([1, -6.5]),
-  innerTunnelTranslationYMeters: Object.freeze([-0.64999994, -7.41999963]),
-  vertRangeMeters: Object.freeze([-2, 0]),
-  sourceBridgePitchDegreesAtMinus2: 3.99981854,
-});
-
-function linearCurve([a, b], valueMeters) {
-  const t = clamp(valueMeters / AUTOGATE_26M.latRangeMeters[1], 0, 1);
+function linearCurve(motionProfile, [a, b], valueMeters) {
+  const t = clamp(valueMeters / motionProfile.latRangeMeters[1], 0, 1);
   return lerp(a, b, t);
 }
 
@@ -574,11 +561,23 @@ export function installA1ExactAutoGateController({
   if (rig.tunnelFamily.family !== "5m") {
     throw new Error(`A1 tunnel family changed to ${rig.tunnelFamily.family}`);
   }
+  const motionSelection = selectExactStockJetwayMotionReference({
+    rig,
+    footprint,
+    gateMap,
+  });
+  if (motionSelection.sourceProfileId !== "standard-26m"
+    || motionSelection.mirrorSign !== 1) {
+    throw new Error(
+      `A1 source-derived motion reference changed to ${motionSelection.profile.id}`,
+    );
+  }
+  const motionProfile = motionSelection.profile;
 
   const defaultProfile = getRampReadyAircraftDoorProfile("CRJ700");
   let doorTargets = getAutoGateDoorTargets(defaultProfile);
   const attachedLatMeters = doorTargets.latMeters;
-  if (!(attachedLatMeters > 0 && attachedLatMeters < AUTOGATE_26M.latRangeMeters[1])) {
+  if (!(attachedLatMeters > 0 && attachedLatMeters < motionProfile.latRangeMeters[1])) {
     throw new Error(`A1 CRJ AutoGate lat target is outside the supplied 26 m curve: ${attachedLatMeters}`);
   }
 
@@ -689,15 +688,16 @@ export function installA1ExactAutoGateController({
   // datarefs are zero in that pose and rise toward the aircraft during ENGAGE.
   // Therefore all dynamic yaw/telescope deltas are measured from lat=0, not
   // from the attached lat target.
-  const restBridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, 0);
+  const restBridgeYaw = linearCurve(motionProfile, motionProfile.bridgeYawDegrees, 0);
   const restCabinRelativeYaw = linearCurve(
-    AUTOGATE_26M.cabinRelativeYawDegrees,
+    motionProfile,
+    motionProfile.cabinRelativeYawDegrees,
     0,
   );
   const innerTunnelTravelPerLatMeter =
-    (Math.abs(AUTOGATE_26M.innerTunnelTranslationYMeters[1])
-      - Math.abs(AUTOGATE_26M.innerTunnelTranslationYMeters[0]))
-    / AUTOGATE_26M.latRangeMeters[1];
+    (Math.abs(motionProfile.innerTunnelTranslationYMeters[1])
+      - Math.abs(motionProfile.innerTunnelTranslationYMeters[0]))
+    / motionProfile.latRangeMeters[1];
   const history = ["attached-to-aircraft-door"];
   let deployment = 1;
   let connectedLatMeters = attachedLatMeters;
@@ -722,10 +722,11 @@ export function installA1ExactAutoGateController({
     // WED is lat=0/rest. ENGAGE increases lat toward the ACF door target.
     // Port the supplied AutoGate-26m yaw and inner-tunnel translation from that
     // true rest baseline; DISENGAGE simply reverses these same source curves.
-    const bridgeYaw = linearCurve(AUTOGATE_26M.bridgeYawDegrees, currentLatMeters);
+    const bridgeYaw = linearCurve(motionProfile, motionProfile.bridgeYawDegrees, currentLatMeters);
     const bridgeYawDelta = radians(bridgeYaw - restBridgeYaw);
     const cabinRelativeYaw = linearCurve(
-      AUTOGATE_26M.cabinRelativeYawDegrees,
+      motionProfile,
+      motionProfile.cabinRelativeYawDegrees,
       currentLatMeters,
     );
     const cabinCounterYawDelta = radians(cabinRelativeYaw - restCabinRelativeYaw);
@@ -1090,11 +1091,11 @@ export function installA1ExactAutoGateController({
     targetWorld,
     outwardWorldDirection,
   ) {
-    connectedLatMeters = clamp(candidateLatMeters, 0.05, AUTOGATE_26M.latRangeMeters[1]);
+    connectedLatMeters = clamp(candidateLatMeters, 0.05, motionProfile.latRangeMeters[1]);
     connectedVertMeters = clamp(
       candidateVertMeters,
-      AUTOGATE_26M.vertRangeMeters[0],
-      AUTOGATE_26M.vertRangeMeters[1],
+      motionProfile.vertRangeMeters[0],
+      motionProfile.vertRangeMeters[1],
     );
     setDeployment(1);
     const hit = measureDoorContactGap(targetWorld, outwardWorldDirection);
@@ -1277,7 +1278,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateExteriorStairGroundWorldY = sourceStairFootWorldY;
   root.userData.a1AutoGateSourceGeometryAuthority =
     "KPHX-1.75.1-WED-104804-plus-XP11-Jetway_1_solid.fac";
-  root.userData.a1AutoGateMotionSource = AUTOGATE_26M.sourceAsset;
+  root.userData.a1AutoGateMotionSource = motionProfile.sourceAsset;
   root.userData.a1AutoGateHorizontalDataref = AUTOGATE_REFERENCE.horizontalDataref;
   root.userData.a1AutoGateVerticalDataref = AUTOGATE_REFERENCE.verticalDataref;
   root.userData.a1AutoGateAttachedLatMeters = attachedLatMeters;
@@ -1298,6 +1299,10 @@ export function installA1ExactAutoGateController({
     "Segment-11-attached-cabin-pivot-world-to-Cabin-wall-origin";
   root.userData.a1AutoGateRigResolverAuthority = rig.authority;
   root.userData.a1AutoGateResolvedTunnelFamily = rig.tunnelFamily.family;
+  root.userData.a1AutoGateMotionSelectorAuthority = motionSelection.authority;
+  root.userData.a1AutoGateMotionProfileId = motionSelection.profile.id;
+  root.userData.a1AutoGateAuthoredHingeTurnDegrees = motionSelection.rawTurnDegrees;
+  root.userData.a1AutoGateEffectiveHingeTurnDegrees = motionSelection.effectiveTurnDegrees;
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
