@@ -111,7 +111,12 @@ export function preparePlacementRoot(root, placement) {
       // GSE appears to lose pieces. Restore X-Plane-style stable depth for
       // non-draped static object geometry while leaving the separate draped
       // shadow/decal range transparent.
-      if (!xPlaneDraped && material?.transparent === true) {
+      const exactGseResource = (
+        placement.resource?.startsWith("MisterX_Library/Airport/Vehicles/")
+        || placement.resource?.startsWith("MisterX_Library/Vehicles/")
+        || placement.resource?.startsWith("CDB-Library/Airport/GSE/")
+      );
+      if (exactGseResource && !xPlaneDraped && material?.transparent === true) {
         material.depthWrite = true;
         material.userData = {
           ...(material.userData || {}),
