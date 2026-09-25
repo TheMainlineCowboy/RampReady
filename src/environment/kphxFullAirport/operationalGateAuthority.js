@@ -1,0 +1,62 @@
+export const RAMPREADY_OPERATIONAL_GATES = Object.freeze([
+  "A1",
+  "B2",
+  "B8",
+  "B10",
+  "B12",
+  "B14",
+  "B1",
+  "B1A",
+  "B3",
+  "B5",
+  "B7",
+  "B9",
+  "B16",
+  "B18",
+  "B22",
+  "B24",
+  "B15B",
+  "B15A",
+  "B17",
+  "B19",
+  "B21"
+]);
+
+export const RAMPREADY_OPERATIONAL_GATE_AUTHORITY = Object.freeze({
+  authority: "user-specified-current-operation-gate-set-2026-09-24",
+  airport: "KPHX",
+  terminalFocus: "Terminal 4 / current RampReady operating area",
+  gateCount: 21,
+  gates: RAMPREADY_OPERATIONAL_GATES,
+  currentlyMatchedToTerminal4JetwayMap: Object.freeze([
+  "A1",
+  "B2",
+  "B8",
+  "B10",
+  "B12",
+  "B14",
+  "B3",
+  "B5",
+  "B7",
+  "B9",
+  "B16",
+  "B18",
+  "B22",
+  "B24",
+  "B17",
+  "B19"
+]),
+  requiresSourceReconciliation: Object.freeze([
+  "B1",
+  "B1A",
+  "B15B",
+  "B15A",
+  "B21"
+]),
+  rules: Object.freeze([
+    "Preserve gate names exactly as supplied by the user.",
+    "Do not normalize, rename, merge, or substitute unmatched gate names.",
+    "Prioritize these gates for scenario QA, aircraft assignment, pushback plans, and operational training work.",
+    "A gate does not need to have a jetway to remain part of the operational gate set.",
+  ]),
+});
