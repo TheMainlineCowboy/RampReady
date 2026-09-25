@@ -585,6 +585,15 @@ export async function installKphxPackageOwnedSurfaceLayer(
     opaqueBaseUnderlayCount,
     drapedOrthophotoCount,
     lineMeshCount,
+    selectedPolygonPlacementCount: loadPolygons
+      ? network.polygons.filter(isSelectedSurfacePlacement).length
+      : 0,
+    selectedDrapedOrthophotoPlacementCount: loadDrapedOrthophotos
+      ? network.drapedOrthophotos.filter(isSelectedSurfacePlacement).length
+      : 0,
+    selectedLinePlacementCount: loadLines
+      ? network.lines.filter(isSelectedSurfacePlacement).length
+      : 0,
     materialCount: materials.size,
     uniqueTextureDecodeCount: textureCache.size,
     failures,
