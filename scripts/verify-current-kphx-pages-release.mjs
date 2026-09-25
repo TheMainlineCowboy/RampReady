@@ -254,6 +254,14 @@ assert(lektroOperatorViewEvidence.state?.modelForwardCorrectionDegrees === 180, 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxT4ZdpMarkingsReady"), "Preload screen does not wait for exact Terminal 4 markings");
+const fullZdpMarkingInstaller = fs.readFileSync("src/environment/kphxFullAirport/installFullExactZdpMarkings.js", "utf8");
+assert(fullZdpMarkingInstaller.includes('/models/kphx-full-airport/full-zdp-surfaces/manifest.json'), "Full ZDP marking installer is not bound to promoted full surface manifest");
+assert(fullZdpMarkingInstaller.includes('/models/kphx-full-airport/full-zdp-surfaces/surface-network.json'), "Full ZDP marking installer is not bound to promoted full surface network");
+assert(fullZdpMarkingInstaller.includes("expectedPolygonPlacementCount: 17"), "Full ZDP marking polygon count drifted");
+assert(fullZdpMarkingInstaller.includes("expectedDrapedOrthophotoPlacementCount: 955"), "Full ZDP marking orthophoto count drifted");
+assert(fullZdpMarkingInstaller.includes("expectedLinePlacementCount: 827"), "Full ZDP marking line count drifted");
+assert(fullZdpMarkingInstaller.includes("expectedPlacementCount: 1799"), "Full ZDP marking total placement count drifted");
+assert(fullZdpMarkingInstaller.includes('includeResourcePathPrefixes: Object.freeze(["ZDP_Library/markings/"])'), "Full ZDP installer no longer restricts runtime loading to marking resources");
 assert(launcher.includes('"manager-kubota-exact"'), "Launcher does not wait for exact manager Kubota");
 assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "training")'), "Launcher training-only availability guard missing");
 assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "inspection")'), "Launcher inspection availability guard missing");

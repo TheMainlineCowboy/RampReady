@@ -1,16 +1,16 @@
 import { installKphxPackageOwnedSurfaceLayer } from "./installPackageOwnedSurfaceLayer.js";
 
 export const KPHX_FULL_EXACT_ZDP_MARKING_AUTHORITY = Object.freeze({
-  authority: "KPHX-1.75.1-WED-T4-ZDP-markings-150m-v1",
+  authority: "KPHX-1.75.1-WED-full-ZDP-markings-only-v1",
   sourceWedSha256: "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
-  manifestUrl: "/models/kphx-full-airport/t4-zdp-markings/manifest.json",
-  networkUrl: "/models/kphx-full-airport/t4-zdp-markings/surface-network.json",
+  manifestUrl: "/models/kphx-full-airport/full-zdp-surfaces/manifest.json",
+  networkUrl: "/models/kphx-full-airport/full-zdp-surfaces/surface-network.json",
   includeResourcePathPrefixes: Object.freeze(["ZDP_Library/markings/"]),
-  expectedPolygonPlacementCount: 0,
-  expectedDrapedOrthophotoPlacementCount: 34,
-  expectedLinePlacementCount: 187,
-  expectedPlacementCount: 221,
-  expectedUniqueResourceCount: 19,
+  expectedPolygonPlacementCount: 17,
+  expectedDrapedOrthophotoPlacementCount: 955,
+  expectedLinePlacementCount: 827,
+  expectedPlacementCount: 1799,
+  expectedUniqueResourceCount: 33,
 });
 
 export async function installKphxFullExactZdpMarkings(
