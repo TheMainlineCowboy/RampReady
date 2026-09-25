@@ -158,8 +158,8 @@ assert(trainer.includes("camera.position.copy(operatorEyeWorld)"), "LEKTRO Opera
 assert(trainer.includes('dataset.lektroOperatorLookUnlocked = "true"'), "LEKTRO Operator View look-around runtime evidence missing");
 assert(trainer.includes('dataset.lektroOperatorViewAuthority = "user-verified-driver-side-r187a-unlocked-local-look-v2"'), "LEKTRO Operator View runtime authority missing");
 const lektroRigSource = fs.readFileSync("src/tug/lektroRig.js", "utf8");
-assert(lektroRigSource.includes("operatorEye: Object.freeze([-0.45, 1.35, -2.15])"), "LEKTRO Operator View eye is not on the user-verified driver side");
-assert(lektroRigSource.includes("operatorLook: Object.freeze([-0.45, 1.2, 8])"), "LEKTRO Operator View forward anchor is not on the user-verified driver side");
+assert(lektroRigSource.includes("operatorEye: Object.freeze([0.45, 1.35, -2.15])"), "LEKTRO Operator View eye is not on the user-verified driver side");
+assert(lektroRigSource.includes("operatorLook: Object.freeze([0.45, 1.2, 8])"), "LEKTRO Operator View forward anchor is not on the user-verified driver side");
 assert(!trainer.includes("same-a1-wed-gate-pose-equipment-spawn-v1"), "Obsolete A1-only equipment spawn authority remains");
 assert(trainer.includes("dataset.a1EquipmentSpawnAuthority = A1_EQUIPMENT_SPAWN_AUTHORITY"), "A1 equipment runtime evidence missing");
 
@@ -246,8 +246,8 @@ assert(equipmentProfiles.includes("trainingAvailable: false"), "Manager Kubota m
 assert(equipmentProfiles.includes("inspectionAvailable: true"), "Manager Kubota inspection availability missing");
 
 const tugRig = fs.readFileSync("src/tug/lektroRig.js", "utf8");
-assert(tugRig.includes("operatorEye: Object.freeze([-0.45, 1.35, -2.15])"), "LEKTRO operator eye is not on the user-verified R187A driver seat");
-assert(tugRig.includes("operatorLook: Object.freeze([-0.45, 1.2, 8])"), "LEKTRO operator look target is not aligned with the user-verified driver seat");
+assert(tugRig.includes("operatorEye: Object.freeze([0.45, 1.35, -2.15])"), "LEKTRO operator eye is not on the R187A driver seat after 180-degree model correction");
+assert(tugRig.includes("operatorLook: Object.freeze([0.45, 1.2, 8])"), "LEKTRO operator look target is not aligned with the driver seat after 180-degree model correction");
 assert(tugRig.includes('id: "manager-kubota-exact"'), "Manager Kubota exact rig profile missing");
 assert(tugRig.includes('steeringMode: "front"'), "Manager Kubota front-steer authority missing");
 assert(tugRig.includes("wheelbase: 1.94"), "Manager Kubota wheelbase authority missing");
