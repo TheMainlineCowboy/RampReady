@@ -10,7 +10,7 @@ const RAW_PROFILES = Object.freeze([
     vertRangeMeters: freezeCurve([-2, 0]),
     bridgeYawDegrees: freezeCurve([-3.26757829, 18.49507823]),
     cabinRelativeYawDegrees: freezeCurve([0, -20.60012374]),
-    innerTunnelTranslationMeters: freezeCurve([0, -1.64999988]),
+    innerTunnelTranslationYMeters: freezeCurve([0, -1.64999988]),
     sourceBridgePitchDegreesAtMinus2: 5.89974622,
   }),
   Object.freeze({
@@ -22,7 +22,7 @@ const RAW_PROFILES = Object.freeze([
     vertRangeMeters: freezeCurve([-2, 0]),
     bridgeYawDegrees: freezeCurve([-2.22937887, 13.31038237]),
     cabinRelativeYawDegrees: freezeCurve([0, -15.73227524]),
-    innerTunnelTranslationMeters: freezeCurve([0, -1.64999998]),
+    innerTunnelTranslationYMeters: freezeCurve([0, -1.64999998]),
     sourceBridgePitchDegreesAtMinus2: 4.19978044,
   }),
   Object.freeze({
@@ -34,7 +34,7 @@ const RAW_PROFILES = Object.freeze([
     vertRangeMeters: freezeCurve([-2, 0]),
     bridgeYawDegrees: freezeCurve([-1.87930158, 11.13486211]),
     cabinRelativeYawDegrees: freezeCurve([1.54469424, -11.20017921]),
-    innerTunnelTranslationMeters: freezeCurve([0, -0.91999996]),
+    innerTunnelTranslationYMeters: freezeCurve([0, -0.91999996]),
     sourceBridgePitchDegreesAtMinus2: 3.50019917,
   }),
   Object.freeze({
@@ -46,7 +46,7 @@ const RAW_PROFILES = Object.freeze([
     vertRangeMeters: freezeCurve([-2, 0]),
     bridgeYawDegrees: freezeCurve([42.77473587, 55.82098458]),
     cabinRelativeYawDegrees: freezeCurve([-44.49991188, -57.49974945]),
-    innerTunnelTranslationMeters: freezeCurve([0, -5.71999979]),
+    innerTunnelTranslationYMeters: freezeCurve([0, -5.71999979]),
     sourceBridgePitchDegreesAtMinus2: 4.6999727,
   }),
   Object.freeze({
@@ -58,7 +58,7 @@ const RAW_PROFILES = Object.freeze([
     vertRangeMeters: freezeCurve([-2, 0]),
     bridgeYawDegrees: freezeCurve([58.87485095, 66.4785727]),
     cabinRelativeYawDegrees: freezeCurve([-60.6997204, -67.50015727]),
-    innerTunnelTranslationMeters: freezeCurve([-0.64999994, -7.41999963]),
+    innerTunnelTranslationYMeters: freezeCurve([-0.64999994, -7.41999963]),
     sourceBridgePitchDegreesAtMinus2: 3.99981854,
   }),
   Object.freeze({
@@ -74,7 +74,7 @@ const RAW_PROFILES = Object.freeze([
     // while main bridge yaw remains at its authored WED rest angle.
     bridgeYawDegrees: freezeCurve([0, 0]),
     cabinRelativeYawDegrees: freezeCurve([0, 0]),
-    innerTunnelTranslationMeters: freezeCurve([0, -7.61999989]),
+    innerTunnelTranslationYMeters: freezeCurve([0, -7.61999989]),
     sourceBridgePitchDegreesAtMinus2: 4.60027797,
   }),
 ]);
