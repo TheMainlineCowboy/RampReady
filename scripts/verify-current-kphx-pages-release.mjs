@@ -124,6 +124,15 @@ assert(t4GseAuthority.includes("expectedUniqueResourceCount: 33"), "Exact T4 GSE
 assert(t4GseAuthority.includes("expectedPlacementCount: 861"), "Exact T4 MisterX GSE count drifted");
 assert(t4GseAuthority.includes("expectedPlacementCount: 23"), "Exact T4 CDB GSE count drifted");
 
+const t4StaticPropAuthority = fs.readFileSync("src/environment/kphxFullAirport/terminal4StaticPropAuthority.js", "utf8");
+assert(t4StaticPropAuthority.includes("expectedPlacementCount: 154"), "Exact T4 full static-prop source count drifted");
+assert(t4StaticPropAuthority.includes("expectedPlacementCount: 78"), "Exact T4 package-light count drifted");
+assert(t4StaticPropAuthority.includes("expectedPlacementCount: 62"), "Exact T4 MisterX ramp count drifted");
+assert(t4StaticPropAuthority.includes("expectedPlacementCount: 13"), "Exact T4 deferred ZDP stop-marker count drifted");
+assert(liveInstaller.includes("installKphxTerminal4ExactStaticProps"), "Live exact T4 static-prop installer missing");
+assert(liveInstaller.includes("staticProps.summary.loadedPlacementCount !== 141"), "Live exact first static-prop count guard missing");
+assert(liveInstaller.includes("exactLiveT4StaticPropPlacementCount"), "Live exact static-prop runtime evidence missing");
+
 const equipment = fs.readFileSync("src/tug/runtimeEquipmentVisual.js", "utf8");
 assert(equipment.includes("LEKTRO_AP88_TVO914.glb"), "Live LEKTRO does not load finalized R187A GLB");
 assert(equipment.includes('"lektro-ap88-tvo914-r187a"'), "Live LEKTRO finalized source label missing");
