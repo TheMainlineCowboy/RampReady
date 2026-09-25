@@ -34,7 +34,7 @@ function attachDiagnostics(page) {
 }
 
 async function launchTraining(page) {
-  await page.getByRole('heading', { name: 'Choose pushback equipment' }).waitFor({ state: 'visible', timeout: 30000 });
+  await page.getByRole('heading', { name: 'Choose RampReady equipment' }).waitFor({ state: 'visible', timeout: 30000 });
   const radios = page.getByRole('radio');
   if (await radios.count() !== 2) throw new Error(`Expected two equipment choices, found ${await radios.count()}`);
   const lektro = page.getByRole('radio', { name: /Lektro 88/i });
