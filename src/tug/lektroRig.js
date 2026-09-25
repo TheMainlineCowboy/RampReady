@@ -4,11 +4,11 @@ export const LEKTRO_RIG_PROFILE = Object.freeze({
   turningRadius: 4.572,
   trackWidth: 2.28,
   cradleOffset: 2.30,
-  // User-verified R187A operator station is on the -X side of the physics
-  // frame after the authored visual's 180-degree forward-axis correction.
-  // +X was visually confirmed to place Operator View in the passenger seat.
-  operatorEye: Object.freeze([-0.45, 1.35, -2.15]),
-  operatorLook: Object.freeze([-0.45, 1.2, 8]),
+  // Final R187A visual is rotated 180 degrees in runtime; the authored steering
+  // column at source X≈-0.44 therefore lands on +X in the physics frame.
+  // The -X eye is the passenger seat; +X is the driver station.
+  operatorEye: Object.freeze([0.45, 1.35, -2.15]),
+  operatorLook: Object.freeze([0.45, 1.2, 8]),
   captureAnchor: Object.freeze([0, 0.34, 2.30]),
   liftTravel: 0.2286,
   bodyBounds: Object.freeze([2.35, 1.45, 5.5]),
