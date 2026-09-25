@@ -344,6 +344,11 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     if (!gltf?.scene) throw new Error("Exact manager Kubota GLB loaded without a scene");
 
     gltf.scene.name = "RampReady_ManagerKubota_Exact";
+    // User visual verification showed the authored Kubota GLB is laterally
+    // mirrored: its steering wheel/driver station lands on vehicle-right.
+    // Mirror X only so front/back heading and all physics remain unchanged.
+    gltf.scene.scale.x = -1;
+    gltf.scene.userData.modelLateralMirror = "x";
     gltf.scene.traverse((node) => {
       if (!node.isMesh) return;
       if (!node.geometry.getAttribute("normal")) node.geometry.computeVertexNormals();
@@ -360,8 +365,10 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     const originalSetSteering = rig.setSteering.bind(rig);
     rig.setSteering = (angle) => {
       originalSetSteering(angle);
-      steerLeft.rotation.y = angle;
-      steerRight.rotation.y = angle;
+      // Parent X reflection reverses visible yaw handedness; compensate here
+      // so the authored front wheels continue to steer with the physics turn.
+      steerLeft.rotation.y = -angle;
+      steerRight.rotation.y = -angle;
     };
 
     rig.visual.visible = false;
@@ -372,6 +379,7 @@ export async function installRuntimeEquipmentVisual(rig, equipmentId) {
     rig.root.userData.runtimeVisualSha256 = "726fdcb3511e6d52990da11118be4ca8a8b73c5d5c8f5bde4f934131e3c31b7d";
     rig.root.userData.runtimeVisualBytes = 23988388;
     rig.root.userData.modelForwardCorrectionDegrees = 0;
+    rig.root.userData.modelLateralMirror = "x";
     rig.root.userData.inspectionOnly = true;
     return "manager-kubota-exact";
   }
