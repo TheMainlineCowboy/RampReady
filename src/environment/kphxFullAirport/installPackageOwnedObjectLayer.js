@@ -136,6 +136,7 @@ export async function installKphxPackageOwnedObjectLayer(
     strict = true,
     resourcePrefixes = null,
     includeResources = null,
+    includePlacementIds = null,
     excludeResources = [],
     assetConcurrency = 6,
   } = {},
@@ -156,12 +157,16 @@ export async function installKphxPackageOwnedObjectLayer(
 
   const allowedPrefixes = resourcePrefixes ? new Set(resourcePrefixes) : null;
   const included = includeResources ? new Set(includeResources) : null;
+  const includedPlacementIds = includePlacementIds
+    ? new Set(includePlacementIds.map((value) => String(value)))
+    : null;
   const excluded = new Set(excludeResources || []);
   const allPlacements = [
     ...(manifest.packageOwned?.placements || []),
     ...(manifest.resolvedExternal?.placements || []),
   ];
   const placements = allPlacements.filter((placement) => {
+    if (includedPlacementIds && !includedPlacementIds.has(String(placement.id))) return false;
     if (included && !included.has(placement.resource)) return false;
     if (excluded.has(placement.resource)) return false;
     if (!allowedPrefixes) return true;
