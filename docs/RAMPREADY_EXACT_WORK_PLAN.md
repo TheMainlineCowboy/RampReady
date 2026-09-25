@@ -28,6 +28,13 @@ Locked project order from the 2026-09-23 review. Do not reorder without an expli
 17. Create a professional title/main-menu scene: pushback-driver viewpoint toward ramp, aircraft crossing frame right→left, RampReady title left-center, polished menu.
 18. Final polish/regression pass: loading transitions, audio mix, lighting, shadows, LOD/performance, mobile controls, VR performance, collision cleanup, gate-by-gate QA.
 
+## Operational gate set — USER AUTHORITY
+- Prioritize these 21 gates for scenario QA, aircraft assignment, pushback procedures/routes, and operational training work: `A1, B2, B8, B10, B12, B14, B1, B1A, B3, B5, B7, B9, B16, B18, B22, B24, B15B, B15A, B17, B19, B21`.
+- Preserve these names exactly as supplied. Sixteen currently match the T4 jetway map directly.
+- Five — `B1`, `B1A`, `B15A`, `B15B`, and `B21` — do not currently appear under those exact names in the jetway map. Source-reconcile them later; do not rename, merge, or guess.
+- A gate does not need to have a jetway to remain part of the operational set.
+- Source authority: `src/environment/kphxFullAirport/operationalGateAuthority.js`.
+
 ## Current source-truth constraints
 - Preserve exact KPHX 1.75.1 source geometry/material/placement whenever available.
 - Do not use old Airport_Jetway.glb, procedural terminal massing, legacy FSX terminal fallback, or rejected vehicle placeholders.
