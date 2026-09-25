@@ -67,6 +67,7 @@ export function preparePlacementRoot(root, placement) {
     placement.resource?.startsWith("MisterX_Library/Airport/Ramps/")
     || placement.resource?.startsWith("ZDP_Library/markings/")
     || placement.resource?.startsWith("GroundMarkings/")
+    || placement.resource?.startsWith("GateNumbers/")
   );
   const markingRenderLiftMeters = exactDrapedMarkingResource ? 0.006 : 0;
   root.position.set(position[0], position[1] + markingRenderLiftMeters, position[2]);

@@ -251,6 +251,16 @@ assert(Math.abs(lektroOperatorViewEvidence.state?.localEye?.[0] - 0.45) < 0.001,
 assert(lektroOperatorViewEvidence.state?.cameraToEyeMeters < 0.05, "Committed LEKTRO Operator View camera does not land on driver eye");
 assert(lektroOperatorViewEvidence.state?.modelForwardCorrectionDegrees === 180, "Committed LEKTRO Operator View lost model-forward correction");
 
+const t4GateMarkingInstaller = fs.readFileSync("src/environment/kphxFullAirport/installTerminal4ExactGateMarkings.js", "utf8");
+assert(t4GateMarkingInstaller.includes("expectedGateNumberPlacementCount: 307"), "Exact T4 gate-number placement authority drifted");
+assert(t4GateMarkingInstaller.includes("expectedGroundMarkingPlacementCount: 10"), "Exact T4 ground-marking placement authority drifted");
+assert(t4GateMarkingInstaller.includes("expectedPlacementCount: 317"), "Exact T4 gate-marking total placement authority drifted");
+const liveT4Installer = fs.readFileSync("src/environment/kphxFullAirport/installLiveTerminal4Exact.js", "utf8");
+assert(liveT4Installer.includes("installKphxTerminal4ExactGateMarkings"), "Exact T4 gate markings are not wired into the live terminal installer");
+assert(liveT4Installer.includes("loadedPlacementCount !== 317"), "Live T4 gate-marking count gate missing");
+const objectLayerSource = fs.readFileSync("src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js", "utf8");
+assert(objectLayerSource.includes('placement.resource?.startsWith("GateNumbers/")'), "Gate-number draped render lift compatibility missing");
+
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxT4ZdpMarkingsReady"), "Preload screen does not wait for exact Terminal 4 markings");

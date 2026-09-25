@@ -2,6 +2,7 @@ import { installKphxPackageOwnedObjectLayer } from "./installPackageOwnedObjectL
 import { installKphxTerminal4StockJetways } from "./installTerminal4StockJetways.js";
 import { installKphxTerminal4ExactGse } from "./installTerminal4ExactGse.js";
 import { installKphxTerminal4ExactStaticProps } from "./installTerminal4ExactStaticProps.js";
+import { installKphxTerminal4ExactGateMarkings } from "./installTerminal4ExactGateMarkings.js";
 
 const STRUCTURES_MANIFEST_URL = "/models/kphx-full-airport/batches/structures.manifest.json";
 const T4_RESOURCES = Object.freeze([
@@ -33,7 +34,7 @@ function nearestDistanceToA1(THREE, object) {
 export async function installKphxExactLiveTerminal4(THREE, environment) {
   if (!environment?.isObject3D) throw new Error("KPHX exact live environment is required");
 
-  const [buildings, jetways, gse, staticProps] = await Promise.all([
+  const [buildings, jetways, gse, staticProps, gateMarkings] = await Promise.all([
     installKphxPackageOwnedObjectLayer(THREE, environment, {
       manifestUrl: STRUCTURES_MANIFEST_URL,
       includeResources: T4_RESOURCES,
@@ -50,6 +51,7 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       assetConcurrency: 4,
       includeZdpStopMarkers: false,
     }),
+    installKphxTerminal4ExactGateMarkings(THREE, environment, { strict: true }),
   ]);
 
   if (buildings.layer.userData.loadedPlacementCount !== 2) {
@@ -71,6 +73,11 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       `Exact live T4 authored static props incomplete: ${staticProps.summary.loadedPlacementCount}/141`,
     );
   }
+  if (gateMarkings.summary.loadedPlacementCount !== 317 || !gateMarkings.summary.ready) {
+    throw new Error(
+      `Exact live T4 gate markings incomplete: ${gateMarkings.summary.loadedPlacementCount}/317`,
+    );
+  }
 
   const nearest = nearestDistanceToA1(THREE, buildings.layer);
 
@@ -90,6 +97,11 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       staticProps.summary.loadedPlacementCount,
     authoredTerminal4DeferredZdpStopMarkerPlacementCount:
       staticProps.summary.deferredZdpStopMarkerPlacementCount,
+    authoredTerminal4ExactGateMarkings: gateMarkings,
+    authoredTerminal4ExactGateMarkingAuthority: gateMarkings.summary.authority,
+    authoredTerminal4ExactGateMarkingPlacementCount: gateMarkings.summary.loadedPlacementCount,
+    authoredTerminal4ExactGateNumberPlacementCount: gateMarkings.summary.gateNumberPlacementCount,
+    authoredTerminal4ExactGroundMarkingPlacementCount: gateMarkings.summary.groundMarkingPlacementCount,
     authoredTerminal4TextureCount: 4,
     authoredTerminal4ExactTextureCount: 4,
     authoredTerminal4FallbackTextureCount: 0,
@@ -159,6 +171,9 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     exactLiveT4StaticPropZdpPlacementCount: staticProps.summary.zdpPlacementCount,
     exactLiveT4DeferredZdpStopMarkerPlacementCount:
       staticProps.summary.deferredZdpStopMarkerPlacementCount,
+    exactLiveT4GateMarkingPlacementCount: gateMarkings.summary.loadedPlacementCount,
+    exactLiveT4GateNumberPlacementCount: gateMarkings.summary.gateNumberPlacementCount,
+    exactLiveT4GroundMarkingPlacementCount: gateMarkings.summary.groundMarkingPlacementCount,
     exactLiveOldAirportJetwayGlbUsed: false,
   };
 
@@ -167,6 +182,7 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     jetways,
     gse,
     staticProps,
+    gateMarkings,
     layer: buildings.layer,
     root: buildings.layer,
   };
