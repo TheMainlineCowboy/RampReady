@@ -1,0 +1,136 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_damaged.pol",
+  "texture": {
+    "requested": "../Smooth1_ALB.png",
+    "sourcePath": "polygons/Smooth1_ALB.dds",
+    "sourceSha256": "1b93e8abc48666e8d87408e76f8b20e9bf0b0d9949e0227091d1c75541e07fd9",
+    "sourceDecodedRgbaSha256": "9ff1e9a9e58ac36e0f568aa28baae4e9eaf7702a386fcd4872aa81be65a059bc",
+    "outputName": "Smooth1_ALB.png",
+    "outputUrl": "Smooth1_ALB.png",
+    "outputSha256": "808480bde27b85ce7875c342ba1d66238e28501abc05a40af192f38c77025362",
+    "outputDecodedRgbaSha256": "9ff1e9a9e58ac36e0f568aa28baae4e9eaf7702a386fcd4872aa81be65a059bc",
+    "width": 4096,
+    "height": 4096
+  },
+  "textureLit": null,
+  "textureNormal": "../Smooth1_rough_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "../asphalt_smooth_WXR.png",
+    "sourcePath": "polygons/asphalt_smooth_WXR.png",
+    "sourceSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+    "sourceDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+    "outputName": "asphalt_smooth_WXR.png",
+    "outputUrl": "asphalt_smooth_WXR.png",
+    "outputSha256": "2ac4047590932442512118bcf041600ef5d78bfb7646e1b9e0f38469b5133c08",
+    "outputDecodedRgbaSha256": "9c5b7c0dee052c88676c08e092bd4cfee5efc16ddb14d756e068493cb3a0f9e6",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": "../decals/DECAL_damaged.dcl",
+  "unsupported": [],
+  "sourceSha256": "844081ee58d1a62d4e27f53db96058987811f8fb13872524d176f4ea9d4f8947",
+  "outputBaseUrl": "/../.runtime-zdp-surfaces/resources/ZDP_Library/ground_textures/asphalt/smooth1/smooth1_worn_damaged",
+  "lit": null,
+  "normal": {
+    "requested": "../Smooth1_rough_NRM.png",
+    "sourcePath": "polygons/Smooth1_rough_NRM.png",
+    "sourceSha256": "a1724fd2fb9a519645d0ff80a4e586b1c741b3e6ae6b19b8bd0320cf71ef1598",
+    "sourceDecodedRgbaSha256": "453689a3483d56f9019bfb4917fb46613e847c0c99282c2dafb1893aa1a19227",
+    "outputName": "Smooth1_rough_NRM.png",
+    "outputUrl": "Smooth1_rough_NRM.png",
+    "outputSha256": "a1724fd2fb9a519645d0ff80a4e586b1c741b3e6ae6b19b8bd0320cf71ef1598",
+    "outputDecodedRgbaSha256": "453689a3483d56f9019bfb4917fb46613e847c0c99282c2dafb1893aa1a19227",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": {
+    "kind": "DECAL",
+    "sourceResource": "polygons/decals/DECAL_damaged.dcl",
+    "decals": [
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 6,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.4
+        ],
+        "texture": "asphalt_damage_HF.png",
+        "image": {
+          "requested": "asphalt_damage_HF.png",
+          "sourcePath": "polygons/decals/asphalt_damage_HF.png",
+          "sourceSha256": "2b40fd986182126dd1003f0d35d6e7c8822159c196ed8681f116340de3730910",
+          "sourceDecodedRgbaSha256": "236a3749f388df14435798e7cc16922e607368d4cb82a11b7b685cc59c6fa14e",
+          "outputName": "asphalt_damage_HF.png",
+          "outputUrl": "asphalt_damage_HF.png",
+          "outputSha256": "2b40fd986182126dd1003f0d35d6e7c8822159c196ed8681f116340de3730910",
+          "outputDecodedRgbaSha256": "236a3749f388df14435798e7cc16922e607368d4cb82a11b7b685cc59c6fa14e",
+          "width": 2048,
+          "height": 2048
+        }
+      },
+      {
+        "type": "DECAL_PARAMS",
+        "scaleRatio": 0.15,
+        "dither": 0,
+        "rgbKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaKey": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.25
+        ],
+        "texture": "asphalt_damage_LF.png",
+        "image": {
+          "requested": "asphalt_damage_LF.png",
+          "sourcePath": "polygons/decals/asphalt_damage_LF.png",
+          "sourceSha256": "a87c3b2acd091ced5820d22e86cecc572d78669750312503843b09f481c91689",
+          "sourceDecodedRgbaSha256": "95c93475b58d23e1ebb11ddd8cc87698b2ddcdacdf6dfe174a7fbd8c7fdd3989",
+          "outputName": "asphalt_damage_LF.png",
+          "outputUrl": "asphalt_damage_LF.png",
+          "outputSha256": "a87c3b2acd091ced5820d22e86cecc572d78669750312503843b09f481c91689",
+          "outputDecodedRgbaSha256": "95c93475b58d23e1ebb11ddd8cc87698b2ddcdacdf6dfe174a7fbd8c7fdd3989",
+          "width": 2048,
+          "height": 2048
+        }
+      }
+    ],
+    "unsupported": [],
+    "sourceSha256": "093230e736cf1ce576a34bda70daed71d35397083ab188dda69c154841bc61fb"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Uniform.pol",
+  "texture": {
+    "requested": "../Concrete_Grooved_ALB.png",
+    "sourcePath": "polygons/Concrete_Grooved_ALB.dds",
+    "sourceSha256": "deb0f95903672d732202d62411ad5160279d106b110e0e86e9717c5c3cf45327",
+    "sourceDecodedRgbaSha256": "d3c3d126640e55dacb7c14e970ebc8e706248d939b18c0a5f7d4e04c6deeb2df",
+    "outputName": "Concrete_Grooved_ALB.png",
+    "outputUrl": "Concrete_Grooved_ALB.png",
+    "outputSha256": "07886e9dc952bd00dfa778c5af2ae8556b11ccc1fc3c1b8a016bb8720cf22876",
+    "outputDecodedRgbaSha256": "d3c3d126640e55dacb7c14e970ebc8e706248d939b18c0a5f7d4e04c6deeb2df",
+    "width": 4096,
+    "height": 4096
+  },
+  "textureLit": null,
+  "textureNormal": "../Concrete_Grooved_NRM.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    36,
+    36
+  ],
+  "layerGroup": {
+    "group": "taxiways",
+    "offset": 2
+  },
+  "surface": "concrete",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "../Concrete_Grooved_WXR.png",
+    "sourcePath": "polygons/Concrete_Grooved_WXR.png",
+    "sourceSha256": "ca29898b788ff4fc7eb200809f1d5ea324b40b4c69a49de66c626d8d92bb6805",
+    "sourceDecodedRgbaSha256": "d8d502827b2bd13c732e3942eef1bd419bda487375e5e64115e6fe4591c8b053",
+    "outputName": "Concrete_Grooved_WXR.png",
+    "outputUrl": "Concrete_Grooved_WXR.png",
+    "outputSha256": "ca29898b788ff4fc7eb200809f1d5ea324b40b4c69a49de66c626d8d92bb6805",
+    "outputDecodedRgbaSha256": "d8d502827b2bd13c732e3942eef1bd419bda487375e5e64115e6fe4591c8b053",
+    "width": 4096,
+    "height": 4096
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "b8a944a03a498821e05d56641d90d6441f41801a3b7f8a30df0aadd48ad71b36",
+  "outputBaseUrl": "/../.runtime-zdp-surfaces/resources/ZDP_Library/ground_textures/concrete/grooved/Grooved_New_Uniform",
+  "lit": null,
+  "normal": {
+    "requested": "../Concrete_Grooved_NRM.png",
+    "sourcePath": "polygons/Concrete_Grooved_NRM.png",
+    "sourceSha256": "432f4c92ce612b428c1e481049a3c4e18dcd529ce7b2f6f109e7d1db0255cc96",
+    "sourceDecodedRgbaSha256": "99622eca4600924d2ca50250f85d910e4f30b94f68eee0d2ffd895d101df8404",
+    "outputName": "Concrete_Grooved_NRM.png",
+    "outputUrl": "Concrete_Grooved_NRM.png",
+    "outputSha256": "432f4c92ce612b428c1e481049a3c4e18dcd529ce7b2f6f109e7d1db0255cc96",
+    "outputDecodedRgbaSha256": "99622eca4600924d2ca50250f85d910e4f30b94f68eee0d2ffd895d101df8404",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}
