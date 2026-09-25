@@ -1,0 +1,1356 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-25T00:00:00.000Z",
+  "source": {
+    "package": "KPHX - Phoenix Sky Harbor Intl",
+    "version": "1.75.1",
+    "wedSha256": null
+  },
+  "policy": {
+    "polygons": "Exact KPHX 1.75.1 WED placements; T4 operational envelope only",
+    "lines": "Exact KPHX 1.75.1 WED chains/Bezier controls and exact ZDP LIN art",
+    "textures": "Successful ZDP 1.2.0 materialization; byte-identical images deduplicated by Git blob identity",
+    "externalResources": "ZDP_Library only",
+    "externalPrefixes": [
+      "ZDP_Library"
+    ],
+    "scope": "All 76 Terminal 4 gate poses plus 150m operational apron/taxi margin",
+    "bounds": {
+      "minLat": 33.43218632723751,
+      "maxLat": 33.43962467676249,
+      "minLon": -112.00394718543166,
+      "maxLon": -111.99217203156834
+    }
+  },
+  "packageOwnedResourceCount": 0,
+  "materializedResourceCount": 0,
+  "resolvedExternalResourceCount": 19,
+  "expectedResolvedExternalResourceCount": 19,
+  "resources": {
+    "ZDP_Library/markings/lines/clean/centerline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/clean/centerline.lin",
+      "texture": {
+        "requested": "../lines1.png",
+        "sourcePath": "markings/lines/lines1.dds",
+        "sourceSha256": "3bc2af08a3ade044dc34d0a1d4fc1e2cc9b59e9bb2c9d662d49308e033ac0b46",
+        "sourceDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "outputName": "lines1.png",
+        "outputUrl": "lines1.png",
+        "outputSha256": "a71f1b71376d0917e13c32059213c2a5e609b532b700458a094b8331d58ffdf4",
+        "outputDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/ef5193da2b147cb9be3cb7de382fdc0cb541f1d9.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1152,
+          "center": 1279,
+          "right": 1407
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "72f9a85cae3b76cc81a913711634e8ac55d47997600d5d56e5105051ac5a8af5",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/clean/dashed_black_yellow.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/clean/dashed_black_yellow.lin",
+      "texture": {
+        "requested": "../lines1.png",
+        "sourcePath": "markings/lines/lines1.dds",
+        "sourceSha256": "3bc2af08a3ade044dc34d0a1d4fc1e2cc9b59e9bb2c9d662d49308e033ac0b46",
+        "sourceDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "outputName": "lines1.png",
+        "outputUrl": "lines1.png",
+        "outputSha256": "a71f1b71376d0917e13c32059213c2a5e609b532b700458a094b8331d58ffdf4",
+        "outputDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/ef5193da2b147cb9be3cb7de382fdc0cb541f1d9.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 2304,
+          "center": 2367,
+          "right": 2432
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "eb8aae01a676b80ab378006dd2d6b502644bcff6ef1dd9c0d20a54abc92cae5d",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/clean/intermediate_hold_sm.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/clean/intermediate_hold_sm.lin",
+      "texture": {
+        "requested": "../lines1.png",
+        "sourcePath": "markings/lines/lines1.dds",
+        "sourceSha256": "3bc2af08a3ade044dc34d0a1d4fc1e2cc9b59e9bb2c9d662d49308e033ac0b46",
+        "sourceDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "outputName": "lines1.png",
+        "outputUrl": "lines1.png",
+        "outputSha256": "a71f1b71376d0917e13c32059213c2a5e609b532b700458a094b8331d58ffdf4",
+        "outputDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/ef5193da2b147cb9be3cb7de382fdc0cb541f1d9.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 128,
+          "center": 255,
+          "right": 383
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "7cc3a73ade94bdcfbe4a132c1363d6412f8449bbca7672834249d8cf4fe6f1a1",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/clean/yellow_centerline_road.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/clean/yellow_centerline_road.lin",
+      "texture": {
+        "requested": "../lines1.png",
+        "sourcePath": "markings/lines/lines1.dds",
+        "sourceSha256": "3bc2af08a3ade044dc34d0a1d4fc1e2cc9b59e9bb2c9d662d49308e033ac0b46",
+        "sourceDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "outputName": "lines1.png",
+        "outputUrl": "lines1.png",
+        "outputSha256": "a71f1b71376d0917e13c32059213c2a5e609b532b700458a094b8331d58ffdf4",
+        "outputDecodedRgbaSha256": "43e8fd8d45b5e543b6a71777192f7b6388cf02d115e325a96cb0132d7c269549",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/ef5193da2b147cb9be3cb7de382fdc0cb541f1d9.png"
+      },
+      "scaleMeters": [
+        12,
+        8
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 768,
+          "center": 832,
+          "right": 896
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "cb7b0a096c35b755dd97d1a13e136f0398c1512252155d69eac7f69e27387230",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/blue_border.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/blue_border.lin",
+      "texture": {
+        "requested": "../lines2_worn.png",
+        "sourcePath": "markings/lines/lines2_worn.dds",
+        "sourceSha256": "986b61c4f44434bd8db8670538dcf9fe4aa1314dc8046d4f293eb60476f39eb5",
+        "sourceDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "outputName": "lines2_worn.png",
+        "outputUrl": "lines2_worn.png",
+        "outputSha256": "a4aaa1ab471814acf8bdbda7a8d1ffd55750cbf5b9c1adf264094e4a9eafbe78",
+        "outputDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/e05de84f6c65c82cc62b38a944897a4dd58fe745.png"
+      },
+      "scaleMeters": [
+        20,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 512,
+          "center": 575,
+          "right": 639
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "663f505ae2e062b1b3bb181134993983d414ba43fbb69bb91d8ac1676ff34c3e",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/centerline.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/centerline.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1152,
+          "center": 1279,
+          "right": 1407
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "32854cf888050a5324b9b245cacd0bbd5cdb562188d9411dc858188426c4d71d",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/dashed_black_yellow.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 2304,
+          "center": 2367,
+          "right": 2432
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "f4e038005e7a05e57b852bf91d301ad47718c946ce7d3fa1d2c614dd1a4c18e6",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/double_yellow.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/double_yellow.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        24,
+        24
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 264,
+          "center": 384,
+          "right": 512
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "a042c2935bee18d405673b2790289e36bd091580e5f1c5fc152fd42480cd16b0",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/double_yellow_sm.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/double_yellow_sm.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 264,
+          "center": 384,
+          "right": 512
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "b80eee6fc92fd8c86a8022c280f7c326f32f479b8aa2e574048db55858c3fcf6",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/intermediate_hold.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/intermediate_hold.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        24,
+        24
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 128,
+          "center": 255,
+          "right": 383
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "cc0b57e4646e29aa73a8337e96455ebd3a019efcad4d782328a1e003423c0bbe",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/intermediate_hold_sm.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/intermediate_hold_sm.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 128,
+          "center": 255,
+          "right": 383
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "596eb7a91e6f349050178a3ee6d177c518d32572cdfb394255eac7470670cf05",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/white.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/white.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 896,
+          "center": 1023,
+          "right": 1151
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "e2ac5f2bfc09b7b53f40a7d9d66ea822dc56c18f1ea2231fe9d970a7c6dada77",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/white_centerline_road.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/white_centerline_road.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        8
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 640,
+          "center": 703,
+          "right": 767
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "2afc50b9b190de6fc62a28c76387ac20970dc4f8dcd40a4860aae6e4c5821b36",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/yellow_centerline_road.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/yellow_centerline_road.lin",
+      "texture": {
+        "requested": "../lines1_worn.png",
+        "sourcePath": "markings/lines/lines1_worn.dds",
+        "sourceSha256": "0854e37642d966a6af3b26ba68cb538bd97283630e641079a0a77bbc9b3def89",
+        "sourceDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "outputName": "lines1_worn.png",
+        "outputUrl": "lines1_worn.png",
+        "outputSha256": "c9bff3d36c34b66765a57fae7611842c2555bc0996d64a611b0e0e336556598e",
+        "outputDecodedRgbaSha256": "f919f4c3129add3d20dd28e4a60101d9731184b6a420054aacccf20564751132",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a9e82c3dd6afedb4c9d6a09cc1855f2fbc2dd015.png"
+      },
+      "scaleMeters": [
+        12,
+        8
+      ],
+      "textureWidth": 4096,
+      "textureHeight": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 768,
+          "center": 832,
+          "right": 896
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "9884ab307cdcb7612257328cf82837d9d2802b37b247f6b3b09a39d14b908c13",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/lines/worn/zipper_black.lin": {
+      "kind": "LINE_PAINT",
+      "sourceResource": "ZDP_Library/markings/lines/worn/zipper_black.lin",
+      "texture": {
+        "requested": "../lines2_worn.png",
+        "sourcePath": "markings/lines/lines2_worn.dds",
+        "sourceSha256": "986b61c4f44434bd8db8670538dcf9fe4aa1314dc8046d4f293eb60476f39eb5",
+        "sourceDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "outputName": "lines2_worn.png",
+        "outputUrl": "lines2_worn.png",
+        "outputSha256": "a4aaa1ab471814acf8bdbda7a8d1ffd55750cbf5b9c1adf264094e4a9eafbe78",
+        "outputDecodedRgbaSha256": "31ae41835fef371f5fafa0bd6a74afd8b76ff97ca9c9a93f5a745b1e2edfdab2",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/e05de84f6c65c82cc62b38a944897a4dd58fe745.png"
+      },
+      "scaleMeters": [
+        12,
+        12
+      ],
+      "textureWidth": 4096,
+      "textureHeight": 4096,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "globalSpecular": 1,
+      "layerGroup": {
+        "group": "markings",
+        "offset": 2
+      },
+      "lodMeters": null,
+      "mirror": true,
+      "weatherTransparent": false,
+      "sOffsets": [
+        {
+          "layer": 0,
+          "left": 1792,
+          "center": 1919,
+          "right": 2047
+        }
+      ],
+      "unsupported": [],
+      "sourceSha256": "5efe7c78f47d81d369afc0e69ba4a3cbfb330898907903c172e3c74de8a825f2",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/signs/clean/DrapedDirSigns.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/markings/signs/clean/DrapedDirSigns.pol",
+      "texture": {
+        "requested": "../DrapedDirSigns.png",
+        "sourcePath": "markings/signs/DrapedDirSigns.dds",
+        "sourceSha256": "3c16ea8fe94d003357a89977e8c1b29cd0fecadc2c5b235bf47f16a94548cdf9",
+        "sourceDecodedRgbaSha256": "3c2966807e3afbd328805383fb5de10cba9097890d290e57031d8e01f0b5f5f1",
+        "outputName": "DrapedDirSigns.png",
+        "outputUrl": "DrapedDirSigns.png",
+        "outputSha256": "2d3c5a4834f6e6b003b9ff64187681f0d29cbffe44c1ccdf7f39291bffea8b2b",
+        "outputDecodedRgbaSha256": "3c2966807e3afbd328805383fb5de10cba9097890d290e57031d8e01f0b5f5f1",
+        "width": 4096,
+        "height": 2048,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/92bbcd1d008890aff7bdaf511f8b3dd02f339611.png"
+      },
+      "textureLit": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        20,
+        20
+      ],
+      "layerGroup": null,
+      "surface": "asphalt",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "weatherTransparent": false,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "e4709d7c68c0422840460fd31bb80cd5319c3dc9ac5c28b7af3fe11e384a356b",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/signs/clean/DrapedLocSigns.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/markings/signs/clean/DrapedLocSigns.pol",
+      "texture": {
+        "requested": "../DrapedLocSigns.png",
+        "sourcePath": "markings/signs/DrapedLocSigns.dds",
+        "sourceSha256": "38bef254dd4a980832250be7c68504d3016a6d4954dfd13c34947a46e1b1219e",
+        "sourceDecodedRgbaSha256": "98a2880f2a387a15421e0a74b3473a3e739daafc24209fc233ebabd9f5d3fc23",
+        "outputName": "DrapedLocSigns.png",
+        "outputUrl": "DrapedLocSigns.png",
+        "outputSha256": "1c9f38bb8af9080df6c54f434bd1edaab72007a8c72cc832f5c26fb9d66107e6",
+        "outputDecodedRgbaSha256": "98a2880f2a387a15421e0a74b3473a3e739daafc24209fc233ebabd9f5d3fc23",
+        "width": 4096,
+        "height": 2048,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/ab687cf16b8c1f92ad3b649ee584ae95307acdf6.png"
+      },
+      "textureLit": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        20,
+        20
+      ],
+      "layerGroup": null,
+      "surface": "asphalt",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "weatherTransparent": false,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "df3ed7f529c1f22f190dde46e6f4e16183cab8762ffe98a80eb4aad94c24146b",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/signs/worn/DrapedDirSigns.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/markings/signs/worn/DrapedDirSigns.pol",
+      "texture": {
+        "requested": "../DrapedDirSigns_worn.png",
+        "sourcePath": "markings/signs/DrapedDirSigns_worn.dds",
+        "sourceSha256": "a73044cf4604de5be13d8137b52c834fe29960f6e1ee77f1fccda3ce04645484",
+        "sourceDecodedRgbaSha256": "8c85bfea5e13c71122da9baf30852c8d2921e912f41a13990ca64bd01ba1ab93",
+        "outputName": "DrapedDirSigns_worn.png",
+        "outputUrl": "DrapedDirSigns_worn.png",
+        "outputSha256": "90c0c69756005aabe79d65b5867300b87600ad837f08e555f26d9cd03d2ab4d2",
+        "outputDecodedRgbaSha256": "8c85bfea5e13c71122da9baf30852c8d2921e912f41a13990ca64bd01ba1ab93",
+        "width": 4096,
+        "height": 2048,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/8df314644c62a682a594a4843c7253e0b096d977.png"
+      },
+      "textureLit": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        20,
+        20
+      ],
+      "layerGroup": null,
+      "surface": "asphalt",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "weatherTransparent": false,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "7abb7e093c2c8f4623efcf14578ca3ba423ad5d186fe690ea9e80d8f495dae65",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    },
+    "ZDP_Library/markings/signs/worn/DrapedLocSigns.pol": {
+      "kind": "DRAPED_POLYGON",
+      "sourceResource": "ZDP_Library/markings/signs/worn/DrapedLocSigns.pol",
+      "texture": {
+        "requested": "../DrapedLocSigns_worn.png",
+        "sourcePath": "markings/signs/DrapedLocSigns_worn.dds",
+        "sourceSha256": "86cdd504231b211d4eee41422c9de12039ea3e3e1ac954a2b53a0debe29f39f2",
+        "sourceDecodedRgbaSha256": "2c4437bb19a74f15051b2f0b4284e0cc2ec02113a0260d10f4fc2895ded8b17c",
+        "outputName": "DrapedLocSigns_worn.png",
+        "outputUrl": "DrapedLocSigns_worn.png",
+        "outputSha256": "d77b2bd469cf186b6acb4d273b37b1cdfa522f3e740bafdfc4e6f15f67981023",
+        "outputDecodedRgbaSha256": "2c4437bb19a74f15051b2f0b4284e0cc2ec02113a0260d10f4fc2895ded8b17c",
+        "width": 4096,
+        "height": 2048,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/f7ac2a899ae323a4b2fd1f66ec99cd8db68c8d6f.png"
+      },
+      "textureLit": null,
+      "textureNormal": "../../paint/textures/paint_clean_NML.png",
+      "normalScale": 1,
+      "scaleMeters": [
+        20,
+        20
+      ],
+      "layerGroup": null,
+      "surface": "asphalt",
+      "noAlpha": false,
+      "globalSpecular": null,
+      "weather": {
+        "requested": "../../paint/textures/paint_WXR.png",
+        "sourcePath": "markings/paint/textures/paint_WXR.png",
+        "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "outputName": "paint_WXR.png",
+        "outputUrl": "paint_WXR.png",
+        "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+        "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+        "width": 1024,
+        "height": 1024,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/2230dd47b3b686b57792a96b12a37537fdee882e.png"
+      },
+      "weatherTransparent": false,
+      "decalLib": null,
+      "unsupported": [],
+      "sourceSha256": "373f68d7b8fe0d5aef96beb704cda6e83eed13b7b4e439711541a688911ded83",
+      "outputBaseUrl": "/models/kphx-full-airport/t4-zdp-markings/shared",
+      "lit": null,
+      "normal": {
+        "requested": "../../paint/textures/paint_clean_NML.png",
+        "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+        "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "outputName": "paint_clean_NML.png",
+        "outputUrl": "paint_clean_NML.png",
+        "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+        "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+        "width": 4096,
+        "height": 4096,
+        "runtimeUrl": "/models/kphx-full-airport/t4-zdp-markings/shared/a02d56abffddfdf11501431ea52fcf4c59946b0b.png"
+      },
+      "decal": null
+    }
+  },
+  "failures": []
+}
