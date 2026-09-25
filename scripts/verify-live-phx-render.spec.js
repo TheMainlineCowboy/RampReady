@@ -110,6 +110,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxT4ZdpMarkingPlacementCount === '1799'
       && d.kphxT4ZdpMarkingOrthophotoPlacementCount === '955'
       && d.kphxT4ZdpMarkingLinePlacementCount === '827'
+      && d.kphxMisterXLinesReady === 'true'
+      && d.kphxMisterXLinePlacementCount === '65'
+      && d.kphxT4MisterXLinePlacementCount === '22'
+      && d.kphxMisterXLineFailureCount === '0'
       && d.photoGroundSource === 'not-used-exact-kphx-1.75.1-only';
   }, null, { timeout: 180000 });
 

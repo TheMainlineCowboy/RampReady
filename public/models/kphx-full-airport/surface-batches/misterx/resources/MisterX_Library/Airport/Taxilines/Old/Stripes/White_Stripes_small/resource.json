@@ -1,0 +1,39 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small.pol",
+  "texture": {
+    "requested": "White_Stripes.png",
+    "sourcePath": "Airport/Taxilines/Old/Stripes/White_Stripes.dds",
+    "sourceSha256": "650dbb4f1c403959faeae7493f627917b100d240dddb93d3ba69b5dd9abb0ec7",
+    "sourceDecodedRgbaSha256": "55c8e29f00db8bbb6f07b15605db9557c83b346684374c1dc712573221a992d4",
+    "outputName": "White_Stripes.png",
+    "outputUrl": "White_Stripes.png",
+    "outputSha256": "c98d0fa17d927ae95a6c26b520231641aa26d0b99deaa79fed962b8e6aba1cd0",
+    "outputDecodedRgbaSha256": "55c8e29f00db8bbb6f07b15605db9557c83b346684374c1dc712573221a992d4",
+    "width": 1024,
+    "height": 1024
+  },
+  "textureLit": null,
+  "textureNormal": null,
+  "normalScale": null,
+  "scaleMeters": [
+    2,
+    2
+  ],
+  "layerGroup": {
+    "group": "markings",
+    "offset": 1
+  },
+  "surface": null,
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": null,
+  "weatherTransparent": true,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "a63d78bae5efbd41b9dc9a9481f03222d760be64e324e1d7e92bce5d1767c04c",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx/resources/MisterX_Library/Airport/Taxilines/Old/Stripes/White_Stripes_small",
+  "lit": null,
+  "normal": null,
+  "decal": null
+}

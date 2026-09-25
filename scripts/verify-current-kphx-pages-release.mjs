@@ -254,6 +254,11 @@ assert(lektroOperatorViewEvidence.state?.modelForwardCorrectionDegrees === 180, 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
 assert(launcher.includes("kphxT4ZdpMarkingsReady"), "Preload screen does not wait for exact Terminal 4 markings");
+assert(launcher.includes("kphxMisterXLinesReady"), "Preload screen does not wait for exact MisterX line markings");
+const misterXLineInstaller = fs.readFileSync("src/environment/kphxFullAirport/installFullExactMisterXLines.js", "utf8");
+assert(misterXLineInstaller.includes("expectedLinePlacementCount: 65"), "Full MisterX line count drifted");
+assert(misterXLineInstaller.includes("expectedTerminal4LinePlacementCount: 22"), "T4 MisterX line count drifted");
+assert(misterXLineInstaller.includes('/models/kphx-full-airport/surface-batches/misterx/manifest.json'), "MisterX line installer runtime manifest binding missing");
 const fullZdpMarkingInstaller = fs.readFileSync("src/environment/kphxFullAirport/installFullExactZdpMarkings.js", "utf8");
 assert(fullZdpMarkingInstaller.includes('/models/kphx-full-airport/full-zdp-surfaces/manifest.json'), "Full ZDP marking installer is not bound to promoted full surface manifest");
 assert(fullZdpMarkingInstaller.includes('/models/kphx-full-airport/full-zdp-surfaces/surface-network.json'), "Full ZDP marking installer is not bound to promoted full surface network");

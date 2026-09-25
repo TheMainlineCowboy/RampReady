@@ -18,6 +18,7 @@ import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from ".
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
 import { installKphxFullExactZdpMarkings } from "../environment/kphxFullAirport/installFullExactZdpMarkings.js";
+import { installKphxFullExactMisterXLines } from "../environment/kphxFullAirport/installFullExactMisterXLines.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { KPHX_T4_GATE_POSE_SOURCE } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
 import { createA1AircraftDockingScenarioPose } from "../environment/kphxFullAirport/a1AircraftDockingAuthority.js";
@@ -981,7 +982,28 @@ export default function RampReadyStandupTrainer({
         throw error;
       });
 
-    void Promise.all([terminalLoad, surfaceLoad, t4MarkingsLoad])
+    renderer.domElement.dataset.kphxMisterXLinesReady = "loading";
+    const misterXLinesLoad = installKphxFullExactMisterXLines(THREE, environment, { strict: true })
+      .then((result) => {
+        const data = result.layer.userData;
+        renderer.domElement.dataset.kphxMisterXLinesReady = String(data.ready === true);
+        renderer.domElement.dataset.kphxMisterXLinePlacementCount =
+          String(data.exactMisterXLinePlacementCount ?? 0);
+        renderer.domElement.dataset.kphxT4MisterXLinePlacementCount =
+          String(data.exactMisterXTerminal4LinePlacementCount ?? 0);
+        renderer.domElement.dataset.kphxMisterXLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxMisterXLineFailureCount = String((data.failures || []).length);
+        return result;
+      })
+      .catch((error) => {
+        renderer.domElement.dataset.kphxMisterXLinesReady = "load-error";
+        renderer.domElement.dataset.kphxMisterXLineFailureCount = "load-error";
+        console.error("RampReady exact MisterX line load failed", error);
+        setMessage(`Exact MisterX ramp markings failed to load: ${error.message}`);
+        throw error;
+      });
+
+    void Promise.all([terminalLoad, surfaceLoad, t4MarkingsLoad, misterXLinesLoad])
       .then(([, surfaceState]) => {
         const baseResource = "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol";
         const sourceMesh = surfaceState.a1ZdpResult.layer.children.find((child) => child?.userData?.sourceResource === baseResource && child.material?.map);

@@ -117,12 +117,13 @@ export default function PushbackTrainer() {
         : Boolean(data.tugSource && data.tugSource !== "loading" && data.tugSource !== "load-error");
       const terminalReady = data.kphxExactLiveT4 === "ready";
       const surfacesReady = data.kphxSurfaceReady === "true";
-      const markingsReady = data.kphxT4ZdpMarkingsReady === "true";
+      const markingsReady = data.kphxT4ZdpMarkingsReady === "true" && data.kphxMisterXLinesReady === "true";
       const failed = [
         data.tugSource,
         data.kphxExactLiveT4,
         data.kphxSurfaceReady,
         data.kphxT4ZdpMarkingsReady,
+        data.kphxMisterXLinesReady,
         data.environmentSource,
       ].includes("load-error");
 

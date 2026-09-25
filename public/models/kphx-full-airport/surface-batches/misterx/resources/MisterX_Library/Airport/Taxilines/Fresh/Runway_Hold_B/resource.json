@@ -1,0 +1,64 @@
+{
+  "kind": "LINE_PAINT",
+  "sourceResource": "MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B.lin",
+  "texture": {
+    "requested": "Taxilines.png",
+    "sourcePath": "Airport/Taxilines/Fresh/Taxilines.dds",
+    "sourceSha256": "fd0bae231a6148b8c468f2e69960884d479525fe3e301cae0b86bee9bf455fd5",
+    "sourceDecodedRgbaSha256": "d8a998f17c40f83b697f826d7c7f421a94dfe21e0c8006459ab26cbd91870d1d",
+    "outputName": "Taxilines.png",
+    "outputUrl": "Taxilines.png",
+    "outputSha256": "003a5ea9416fc5873940a4f92fb02853ec6cf8ef427aa61a79a40dbe0a28525c",
+    "outputDecodedRgbaSha256": "d8a998f17c40f83b697f826d7c7f421a94dfe21e0c8006459ab26cbd91870d1d",
+    "width": 4096,
+    "height": 4096
+  },
+  "scaleMeters": [
+    12,
+    12
+  ],
+  "textureWidth": 4096,
+  "textureHeight": null,
+  "textureNormal": "Taxilines_NML.png",
+  "normalScale": 1,
+  "weather": null,
+  "globalSpecular": null,
+  "layerGroup": {
+    "group": "markings",
+    "offset": 5
+  },
+  "lodMeters": 10000,
+  "mirror": false,
+  "weatherTransparent": true,
+  "sOffsets": [
+    {
+      "layer": 0,
+      "left": 2500,
+      "center": 2920,
+      "right": 3340
+    },
+    {
+      "layer": 1,
+      "left": 10,
+      "center": 360,
+      "right": 710
+    }
+  ],
+  "unsupported": [],
+  "sourceSha256": "5664b6c6a23e635996cfa076d22a98b9537e2bb809b9b362be3e22da733fd91b",
+  "outputBaseUrl": "/models/kphx-full-airport/surface-batches/misterx/resources/MisterX_Library/Airport/Taxilines/Fresh/Runway_Hold_B",
+  "lit": null,
+  "normal": {
+    "requested": "Taxilines_NML.png",
+    "sourcePath": "Airport/Taxilines/Fresh/Taxilines_NML.png",
+    "sourceSha256": "cbbb32fff1f6185ad91084a0ab6656e01b98577c869157497474137b13a94fb4",
+    "sourceDecodedRgbaSha256": "bcbef39986740bd9ab5eff4f641b1154fb8f1c99067ee5a784c718933feadeb2",
+    "outputName": "Taxilines_NML.png",
+    "outputUrl": "Taxilines_NML.png",
+    "outputSha256": "cbbb32fff1f6185ad91084a0ab6656e01b98577c869157497474137b13a94fb4",
+    "outputDecodedRgbaSha256": "bcbef39986740bd9ab5eff4f641b1154fb8f1c99067ee5a784c718933feadeb2",
+    "width": 2048,
+    "height": 2048
+  },
+  "decal": null
+}
