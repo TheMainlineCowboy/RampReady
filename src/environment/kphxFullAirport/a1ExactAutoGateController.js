@@ -3,6 +3,7 @@ import {
   getAutoGateDoorTargets,
   getRampReadyAircraftDoorProfile,
 } from "./aircraftDoorAuthority.js";
+import { resolveExactStockJetwayRig } from "./stockJetwayRigAuthority.js";
 
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -488,12 +489,24 @@ export function installA1ExactAutoGateController({
   if (gateMap?.gate !== "A1" || gateMap?.facadeWedObjectId !== 104804) {
     throw new Error("A1 exact AutoGate controller received the wrong WED facade");
   }
-  if (!Array.isArray(footprint) || footprint.length !== 7) {
-    throw new Error(`A1 exact AutoGate controller expected seven WED nodes, received ${footprint?.length ?? 0}`);
-  }
-  if (wallEvidence?.map((entry) => entry.wallName).join("|")
+
+  // A1 is the locked reference implementation, but its hierarchy discovery
+  // now goes through the same source-derived resolver intended for all 76 T4
+  // placements. Keep the A1 sequence assertion as a regression canary while
+  // removing gate-specific wall-number/object-name discovery from the motion
+  // controller itself.
+  const rig = resolveExactStockJetwayRig({
+    root,
+    footprint,
+    wallEvidence,
+    gateMap,
+  });
+  if (rig.wallSequence.join("|")
     !== "Rotunda_extension|Rotunda_extension|Rotunda_extension|Rotunda_extension|Tunnel_11-15.5m|Cabin") {
     throw new Error("A1 exact AutoGate controller wall sequence changed");
+  }
+  if (rig.tunnelFamily.family !== "5m") {
+    throw new Error(`A1 tunnel family changed to ${rig.tunnelFamily.family}`);
   }
 
   const defaultProfile = getRampReadyAircraftDoorProfile("CRJ700");
@@ -503,29 +516,24 @@ export function installA1ExactAutoGateController({
     throw new Error(`A1 CRJ AutoGate lat target is outside the supplied 26 m curve: ${attachedLatMeters}`);
   }
 
-  const fixedWalls = [1, 2, 3, 4].map((number) =>
-    requireObject(root, `Wall_${number}_Rotunda_extension`));
-  const tunnelWall = requireObject(root, "Wall_5_Tunnel_11-15.5m");
-  const cabinWall = requireObject(root, "Wall_6_Cabin");
-  const terminalTunnelSegment = requireObject(tunnelWall, "Segment_10_0");
-  const aircraftTunnelSegment = requireObject(tunnelWall, "Segment_11_1");
-  const cabinHalfB = requireObject(aircraftTunnelSegment, "Attached_jw_cabin_1b.obj");
-  const cabinHalfBAttachmentPivot = cabinHalfB.parent;
-  const terminalTunnelVisual = requireObject(
+  const {
+    fixedWalls,
+    tunnelWall,
+    cabinWall,
     terminalTunnelSegment,
-    "Attached_jw_tunnel_2_5a.obj",
-  );
-  const terminalHingeAttachmentPivot = terminalTunnelVisual.parent;
-  const aircraftTunnelVisual = requireObject(
     aircraftTunnelSegment,
-    "Attached_jw_tunnel_2_5b.obj",
-  );
-  const aircraftEntranceAttachmentPivot = aircraftTunnelVisual.parent;
+    cabinHalfA,
+    cabinHalfB,
+    cabinHalfBAttachmentPivot,
+    terminalTunnelVisual,
+    terminalHingeAttachmentPivot,
+    aircraftTunnelVisual,
+    aircraftEntranceAttachmentPivot,
+  } = rig;
   const lowerSupport = splitExactLowerSupportComponents(
     THREE,
     aircraftTunnelVisual,
   );
-  const cabinHalfA = requireObject(cabinWall, "Attached_jw_cabin_1a.obj");
   const exteriorStairs = splitExactCabinStairComponents(THREE, cabinHalfB);
   root.updateMatrixWorld(true);
   const measureLowerSupportBottom = () => {
@@ -570,8 +578,8 @@ export function installA1ExactAutoGateController({
   };
   const sourceStairFootWorldY = measureStairFootWorldY(0);
 
-  const pivot = footprint[4];
-  const attachedCabinJoint = footprint[5];
+  const pivot = rig.pivot;
+  const attachedCabinJoint = rig.cabinJoint;
   const attachedTunnelVector = {
     x: attachedCabinJoint.x - pivot.x,
     z: attachedCabinJoint.y - pivot.y,
@@ -1221,6 +1229,8 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateCabinHalfB = cabinHalfB.name;
   root.userData.a1AutoGateCabinJointAuthority =
     "Segment-11-attached-cabin-pivot-world-to-Cabin-wall-origin";
+  root.userData.a1AutoGateRigResolverAuthority = rig.authority;
+  root.userData.a1AutoGateResolvedTunnelFamily = rig.tunnelFamily.family;
   root.userData.a1AutoGatePivotWedNodeId = 104809;
   root.userData.a1AutoGateCabinJointWedNodeId = 104810;
   root.userData.a1AutoGateAttachedTunnelLengthMeters = attachedTunnelLength;
