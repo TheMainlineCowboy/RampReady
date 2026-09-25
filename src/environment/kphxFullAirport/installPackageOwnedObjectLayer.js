@@ -102,6 +102,24 @@ export function preparePlacementRoot(root, placement) {
         || null;
       const xPlaneDraped = material?.userData?.xPlaneDraped === true;
       if (materialLayer) authoredLayer = materialLayer;
+
+      // GLTF alphaMode=BLEND disables depth writes in Three.js. X-Plane OBJ8
+      // vehicle draw ranges commonly use the default blended state even when
+      // the diffuse texture is fully opaque (for example Van_White.dds is
+      // alpha=255 at every texel). Without depth writes, overlapping vehicle
+      // triangles/primitives sort differently as the camera moves and solid
+      // GSE appears to lose pieces. Restore X-Plane-style stable depth for
+      // non-draped static object geometry while leaving the separate draped
+      // shadow/decal range transparent.
+      if (!xPlaneDraped && material?.transparent === true) {
+        material.depthWrite = true;
+        material.userData = {
+          ...(material.userData || {}),
+          kphxObj8StaticDepthWriteCompatibility: true,
+        };
+        material.needsUpdate = true;
+      }
+
       // X-Plane draped OBJ geometry is composited over airport pavement even
       // when no explicit LAYER_GROUP is authored. Preserve the exact Y=0
       // source geometry and emulate that draw ordering with polygon offset
