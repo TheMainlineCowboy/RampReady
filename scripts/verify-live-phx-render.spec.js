@@ -80,6 +80,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxExactLiveT4BuildingCount === '2'
       && d.kphxExactLiveT4JetwayCount === '76'
       && d.kphxExactLiveT4JetwayOpenEdgeCount === '261'
+      && d.kphxExactLiveT4GsePlacementCount === '884'
+      && d.kphxExactLiveT4GseMisterXPlacementCount === '861'
+      && d.kphxExactLiveT4GseCdbPlacementCount === '23'
       && d.kphxExactLiveOldAirportJetwayGlbUsed === 'false'
       && d.kphxExactLiveProceduralTerminalMassing === 'false'
       && d.kphxExactLiveLegacyFsxTerminal === 'false'
@@ -458,6 +461,9 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     buildings: runtime.kphxExactLiveT4BuildingCount,
     jetways: runtime.kphxExactLiveT4JetwayCount,
     authoredOpenEdges: runtime.kphxExactLiveT4JetwayOpenEdgeCount,
+    exactGsePlacements: runtime.kphxExactLiveT4GsePlacementCount,
+    exactGseMisterXPlacements: runtime.kphxExactLiveT4GseMisterXPlacementCount,
+    exactGseCdbPlacements: runtime.kphxExactLiveT4GseCdbPlacementCount,
     lektro: runtime.tugSource,
     pavementPolygons: runtime.kphxSurfacePolygonCount,
     a1MarkingMeshes: runtime.kphxA1ZdpMarkingLineMeshCount,
