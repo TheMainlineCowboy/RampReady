@@ -1,5 +1,6 @@
 import { installKphxPackageOwnedObjectLayer } from "./installPackageOwnedObjectLayer.js";
 import { installKphxTerminal4StockJetways } from "./installTerminal4StockJetways.js";
+import { installKphxTerminal4ExactGse } from "./installTerminal4ExactGse.js";
 
 const STRUCTURES_MANIFEST_URL = "/models/kphx-full-airport/batches/structures.manifest.json";
 const T4_RESOURCES = Object.freeze([
@@ -31,7 +32,7 @@ function nearestDistanceToA1(THREE, object) {
 export async function installKphxExactLiveTerminal4(THREE, environment) {
   if (!environment?.isObject3D) throw new Error("KPHX exact live environment is required");
 
-  const [buildings, jetways] = await Promise.all([
+  const [buildings, jetways, gse] = await Promise.all([
     installKphxPackageOwnedObjectLayer(THREE, environment, {
       manifestUrl: STRUCTURES_MANIFEST_URL,
       includeResources: T4_RESOURCES,
@@ -39,6 +40,10 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
       assetConcurrency: 2,
     }),
     installKphxTerminal4StockJetways(THREE, environment, { strict: true }),
+    installKphxTerminal4ExactGse(THREE, environment, {
+      strict: true,
+      assetConcurrency: 6,
+    }),
   ]);
 
   if (buildings.layer.userData.loadedPlacementCount !== 2) {
@@ -50,6 +55,11 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
   if (jetways.layer.userData.authoredOpenEdgeCount !== 261) {
     throw new Error(`Exact live T4 jetway edge count changed: ${jetways.layer.userData.authoredOpenEdgeCount}/261`);
   }
+  if (gse.summary.loadedPlacementCount !== 884 || !gse.summary.ready) {
+    throw new Error(
+      `Exact live T4 authored GSE incomplete: ${gse.summary.loadedPlacementCount}/884`,
+    );
+  }
 
   const nearest = nearestDistanceToA1(THREE, buildings.layer);
 
@@ -58,6 +68,11 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     environmentSource: "KPHX 1.75.1 exact T4 live runtime",
     authoredTerminal4: buildings.layer,
     authoredTerminal4Jetways: jetways.layer,
+    authoredTerminal4ExactGse: gse,
+    authoredTerminal4ExactGseAuthority: gse.summary.authority,
+    authoredTerminal4ExactGsePlacementCount: gse.summary.loadedPlacementCount,
+    authoredTerminal4ExactGseUniqueResourceCount:
+      gse.summary.expectedUniqueResourceCount,
     authoredTerminal4TextureCount: 4,
     authoredTerminal4ExactTextureCount: 4,
     authoredTerminal4FallbackTextureCount: 0,
@@ -118,12 +133,16 @@ export async function installKphxExactLiveTerminal4(THREE, environment) {
     exactLiveT4BuildingCount: 2,
     exactLiveT4JetwayCount: 76,
     exactLiveT4JetwayOpenEdgeCount: 261,
+    exactLiveT4GsePlacementCount: gse.summary.loadedPlacementCount,
+    exactLiveT4GseMisterXPlacementCount: gse.summary.misterXPlacementCount,
+    exactLiveT4GseCdbPlacementCount: gse.summary.cdbPlacementCount,
     exactLiveOldAirportJetwayGlbUsed: false,
   };
 
   return {
     buildings,
     jetways,
+    gse,
     layer: buildings.layer,
     root: buildings.layer,
   };
