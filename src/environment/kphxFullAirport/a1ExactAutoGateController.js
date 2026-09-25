@@ -102,15 +102,7 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
     return `${q(position.getX(index))},${q(position.getY(index))},${q(position.getZ(index))}`;
   };
 
-  for (const mesh of sourceMeshes) {
-    const geometry = mesh.geometry;
-    const position = geometry.getAttribute("position");
-    const sourceIndex = geometry.getIndex();
-    const source = Array.from(sourceIndex.array);
-    if (source.length % 3 !== 0) {
-      throw new Error("A1 exact stock tunnel index buffer is not triangular");
-    }
-
+  const connectedComponents = (position, source) => {
     const triangleCount = source.length / 3;
     const parent = Array.from({ length: triangleCount }, (_, index) => index);
     const find = (value) => {
@@ -147,16 +139,17 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
       }
     }
 
-    const components = new Map();
+    const grouped = new Map();
     for (let triangle = 0; triangle < triangleCount; triangle += 1) {
-      const root = find(triangle);
-      const list = components.get(root) || [];
+      const component = find(triangle);
+      const list = grouped.get(component) || [];
       list.push(triangle);
-      components.set(root, list);
+      grouped.set(component, list);
     }
 
-    const lowerSupportTriangles = new Set();
-    for (const triangles of components.values()) {
+    return [...grouped.values()].map((triangles) => {
+      let minX = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
       let minY = Number.POSITIVE_INFINITY;
       let maxY = Number.NEGATIVE_INFINITY;
       let minZ = Number.POSITIVE_INFINITY;
@@ -170,25 +163,97 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
         vertices.add(source[cursor + 2]);
       }
       for (const vertexIndex of vertices) {
+        const x = position.getX(vertexIndex);
         const y = position.getY(vertexIndex);
         const z = position.getZ(vertexIndex);
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y);
         minZ = Math.min(minZ, z);
         maxZ = Math.max(maxZ, z);
       }
 
-      // Exact jw_tunnel_2_5b topology: the lower telescoping support/wheel
-      // carriage is the connected source geometry centered on the support
-      // station at local Z=3 m and ending at/below the lower-post top.
-      // The upper posts extend to Y=3.4 m and therefore remain with the bridge.
+      return {
+        triangles,
+        minX,
+        maxX,
+        minY,
+        maxY,
+        minZ,
+        maxZ,
+        spanX: maxX - minX,
+        spanZ: maxZ - minZ,
+      };
+    });
+  };
+
+  // The exact 5/7/9/11/13-m aircraft-side stock tunnel objects all contain
+  // the same detailed lower wheel/post pair, but at different local Z
+  // stations. Discover that station from source topology instead of assuming
+  // A1's Z=3 m. This keeps A1 byte-for-byte equivalent in selection bounds
+  // (3 +/- 0.65 m) while allowing the same rule to bind every stock family.
+  const wheelCenters = [];
+  const meshComponents = new Map();
+  for (const mesh of sourceMeshes) {
+    const geometry = mesh.geometry;
+    const position = geometry.getAttribute("position");
+    const sourceIndex = geometry.getIndex();
+    const source = Array.from(sourceIndex.array);
+    if (source.length % 3 !== 0) {
+      throw new Error("Exact stock tunnel index buffer is not triangular");
+    }
+    const components = connectedComponents(position, source);
+    meshComponents.set(mesh, { position, sourceIndex, source, components });
+
+    for (const component of components) {
+      const isDetailedLowerWheelPost =
+        component.triangles.length >= 50
+        && component.minY <= -3.9
+        && component.maxY <= -3.15
+        && component.spanX >= 0.20
+        && component.spanX <= 0.35
+        && component.spanZ >= 0.70
+        && component.spanZ <= 0.90;
+      if (isDetailedLowerWheelPost) {
+        wheelCenters.push((component.minZ + component.maxZ) / 2);
+      }
+    }
+  }
+
+  if (wheelCenters.length < 2) {
+    throw new Error(
+      `Exact stock tunnel lower support station could not be derived from wheel topology; found ${wheelCenters.length} wheel/post components`,
+    );
+  }
+  const supportStationZ =
+    wheelCenters.reduce((sum, value) => sum + value, 0) / wheelCenters.length;
+  const supportStationToleranceMeters = 0.65;
+
+  for (const mesh of sourceMeshes) {
+    const record = meshComponents.get(mesh);
+    const {
+      position,
+      sourceIndex,
+      source,
+      components,
+    } = record;
+
+    const lowerSupportTriangles = new Set();
+    for (const component of components) {
+      // The lower support is everything in the exact support station envelope
+      // that ends at/below the lower-post top. Upper posts extend above
+      // Y=1.05 m and remain with the bridge so they telescope through the
+      // grounded lower carriage as the bridge tilts.
       const isLowerSupport =
-        minZ >= 2.35
-        && maxZ <= 3.65
-        && maxY <= 1.05;
+        component.minZ >= supportStationZ - supportStationToleranceMeters
+        && component.maxZ <= supportStationZ + supportStationToleranceMeters
+        && component.maxY <= 1.05;
 
       if (isLowerSupport) {
-        for (const triangle of triangles) lowerSupportTriangles.add(triangle);
+        for (const triangle of component.triangles) {
+          lowerSupportTriangles.add(triangle);
+        }
       }
     }
 
@@ -196,6 +261,7 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
 
     const bridgeIndices = [];
     const supportIndices = [];
+    const triangleCount = source.length / 3;
     for (let triangle = 0; triangle < triangleCount; triangle += 1) {
       const target = lowerSupportTriangles.has(triangle)
         ? supportIndices
@@ -205,14 +271,14 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
     }
 
     const IndexArray = sourceIndex.array.constructor;
-    const bridgeGeometry = geometry.clone();
+    const bridgeGeometry = mesh.geometry.clone();
     bridgeGeometry.setIndex(
       new THREE.BufferAttribute(new IndexArray(bridgeIndices), 1),
     );
     bridgeGeometry.computeBoundingBox();
     bridgeGeometry.computeBoundingSphere();
 
-    const supportGeometry = geometry.clone();
+    const supportGeometry = mesh.geometry.clone();
     supportGeometry.setIndex(
       new THREE.BufferAttribute(new IndexArray(supportIndices), 1),
     );
@@ -220,7 +286,7 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
     supportGeometry.computeBoundingSphere();
 
     const supportMesh = mesh.clone(false);
-    supportMesh.name = `${mesh.name}_A1ExactLowerSupport`;
+    supportMesh.name = `${mesh.name}_ExactLowerSupport`;
     supportMesh.geometry = supportGeometry;
     supportMesh.material = mesh.material;
     supportMesh.updateMatrix();
@@ -241,10 +307,10 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
   }
 
   if (!supportBranches.length) {
-    throw new Error("A1 exact stock lower support components were not found");
+    throw new Error("Exact stock lower support components were not found");
   }
   if (supportIndexCount + bridgeIndexCount !== originalIndexCount) {
-    throw new Error("A1 exact support split did not preserve every source index");
+    throw new Error("Exact stock support split did not preserve every source index");
   }
 
   return Object.freeze({
@@ -252,11 +318,11 @@ function splitExactLowerSupportComponents(THREE, aircraftTunnelVisual) {
     originalIndexCount,
     supportIndexCount,
     bridgeIndexCount,
+    supportStationZ,
     authority:
-      "XP11-jw_tunnel_2_5b-connected-source-components-lower-support-v1",
+      "XP11-stock-aircraft-side-tunnel-connected-topology-derived-lower-support-v2",
   });
 }
-
 
 function splitExactCabinStairComponents(THREE, cabinHalfB) {
   const sourceMeshes = [];
@@ -1204,6 +1270,7 @@ export function installA1ExactAutoGateController({
   root.userData.a1AutoGateTerminalPivotAuthority =
     "WED-104809-Segment10-jw_tunnel_2_5a-ATTACH_GRADED-y4-fixed-rear-hinge";
   root.userData.a1AutoGateLowerSupportAuthority = lowerSupport.authority;
+  root.userData.a1AutoGateLowerSupportStationZ = lowerSupport.supportStationZ;
   root.userData.a1AutoGateExteriorStairAuthority = exteriorStairs.authority;
   root.userData.a1AutoGateExteriorStairHingeLocal =
     `${exteriorStairs.hingeLocal.x.toFixed(3)},${exteriorStairs.hingeLocal.y.toFixed(3)},${exteriorStairs.hingeLocal.z.toFixed(3)}`;
