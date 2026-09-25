@@ -17,6 +17,7 @@ import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
+import { installKphxFullExactZdpMarkings } from "../environment/kphxFullAirport/installFullExactZdpMarkings.js";
 import { KPHX_FULL_AIRPORT_SOURCE, kphxXPlaneHeadingToRampReadyYawRadians } from "../environment/kphxFullAirport/sourceAuthority.js";
 import { KPHX_T4_GATE_POSE_SOURCE } from "../environment/kphxFullAirport/terminal4GatePoseAuthority.js";
 import { createA1AircraftDockingScenarioPose } from "../environment/kphxFullAirport/a1AircraftDockingAuthority.js";
@@ -953,32 +954,32 @@ export default function RampReadyStandupTrainer({
         throw error;
       });
 
-    const a1MarkingsLoad = installKphxPackageOwnedSurfaceLayer(THREE, environment, {
-      strict: true,
-      manifestUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json",
-      networkUrl: "/models/kphx-full-airport/t4-a1-zdp-surfaces/surface-network.json",
-      loadPolygons: false,
-      loadDrapedOrthophotos: false,
-      loadLines: true,
-    })
+    const t4MarkingsLoad = installKphxFullExactZdpMarkings(THREE, environment, { strict: true })
       .then((result) => {
         const data = result.layer.userData;
-        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = String(data.ready === true);
-        renderer.domElement.dataset.kphxA1ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
-        renderer.domElement.dataset.kphxA1ZdpMarkingTextureDecodeCount = String(data.uniqueTextureDecodeCount ?? 0);
-        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = String((data.failures || []).length);
-        renderer.domElement.dataset.groundSource = "KPHX 1.75.1 exact WED package + A1 ZDP pavement + markings";
+        renderer.domElement.dataset.kphxT4ZdpMarkingsReady = String(data.ready === true);
+        renderer.domElement.dataset.kphxT4ZdpMarkingPlacementCount =
+          String(data.exactZdpMarkingPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingLinePlacementCount =
+          String(data.selectedLinePlacementCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingOrthophotoPlacementCount =
+          String(data.selectedDrapedOrthophotoPlacementCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingLineMeshCount = String(data.lineMeshCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingTextureDecodeCount = String(data.uniqueTextureDecodeCount ?? 0);
+        renderer.domElement.dataset.kphxT4ZdpMarkingFailureCount = String((data.failures || []).length);
+        renderer.domElement.dataset.groundSource =
+          "KPHX 1.75.1 exact WED package + A1 ZDP pavement + T4 ZDP markings";
         return result;
       })
       .catch((error) => {
-        renderer.domElement.dataset.kphxA1ZdpMarkingsReady = "load-error";
-        renderer.domElement.dataset.kphxA1ZdpMarkingFailureCount = "load-error";
-        console.error("RampReady exact A1 ZDP markings load failed", error);
-        setMessage(`Exact A1 ramp markings failed to load: ${error.message}`);
+        renderer.domElement.dataset.kphxT4ZdpMarkingsReady = "load-error";
+        renderer.domElement.dataset.kphxT4ZdpMarkingFailureCount = "load-error";
+        console.error("RampReady exact T4 ZDP markings load failed", error);
+        setMessage(`Exact T4 ramp markings failed to load: ${error.message}`);
         throw error;
       });
 
-    void Promise.all([terminalLoad, surfaceLoad, a1MarkingsLoad])
+    void Promise.all([terminalLoad, surfaceLoad, t4MarkingsLoad])
       .then(([, surfaceState]) => {
         const baseResource = "ZDP_Library/ground_textures/concrete/flat/Flat_New_Uniform.pol";
         const sourceMesh = surfaceState.a1ZdpResult.layer.children.find((child) => child?.userData?.sourceResource === baseResource && child.material?.map);
