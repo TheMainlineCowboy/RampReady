@@ -40,10 +40,13 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     `${request.method()} ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`
   ));
 
-  const response = await page.goto(`${pageUrl}?release=${expectedSha}`, {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000,
-  });
+  const response = await page.goto(
+    `${pageUrl}?release=${expectedSha}&jetwayRigAudit=1`,
+    {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    },
+  );
   expect(response?.ok()).toBe(true);
 
   await page.getByRole('heading', { name: 'Choose RampReady equipment' }).waitFor({
@@ -69,6 +72,10 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxExactLiveProceduralTerminalMassing === 'false'
       && d.kphxExactLiveLegacyFsxTerminal === 'false'
       && d.terminal4ExactJetwayTextureActive === 'true'
+      && d.t4JetwayRepresentativeAuditStatus === 'PASS'
+      && d.t4JetwayRepresentativeAuditCount === '6'
+      && d.t4JetwayResolvedPlacementCount === '76'
+      && d.t4JetwayLazyFactoryCount === '76'
       && d.tugSource === 'lektro-ap88-tvo914-r187a'
       && d.rigProfile === 'lektro-ap88-tvo914-r187a'
       && d.rigWheelbaseMeters === '2.33934'
@@ -132,6 +139,29 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   }, null, { timeout: 60000, polling: 100 });
 
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
+  const representativeAudit = JSON.parse(
+    runtime.t4JetwayRepresentativeAuditResults || "[]",
+  );
+  expect(representativeAudit).toHaveLength(6);
+  expect(
+    new Set(
+      representativeAudit.map((entry) => entry.motionSourceProfileId),
+    ).size,
+  ).toBe(6);
+  for (const entry of representativeAudit) {
+    for (const phase of ["midpoint", "parked"]) {
+      const sample = entry[phase];
+      expect(Math.abs(Number(sample.supportBottomDeltaMeters))).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(Number(sample.stairFootDeltaMeters))).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(Number(sample.stairHingeGapMeters))).toBeLessThanOrEqual(0.001);
+      expect(Math.abs(Number(sample.terminalPivotGapMeters))).toBeLessThanOrEqual(0.001);
+      expect(Math.abs(Number(sample.cabinJointGapMeters))).toBeLessThanOrEqual(0.08);
+    }
+  }
+  console.log(
+    "T4_REPRESENTATIVE_JETWAY_AUDIT="
+      + JSON.stringify(representativeAudit),
+  );
   expect(runtime.a1JetwayDoorContactReady).toBe('true');
   expect(Number(runtime.a1JetwayDoorContactGapMeters)).toBeLessThanOrEqual(0.08);
   expect(runtime.a1JetwayDoorContactHitObject).not.toBe('no-visible-cabin-hit');
