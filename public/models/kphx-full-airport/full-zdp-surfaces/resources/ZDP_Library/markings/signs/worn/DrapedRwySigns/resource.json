@@ -1,0 +1,58 @@
+{
+  "kind": "DRAPED_POLYGON",
+  "sourceResource": "ZDP_Library/markings/signs/worn/DrapedRwySigns.pol",
+  "texture": {
+    "requested": "../DrapedRwySigns_worn.png",
+    "sourcePath": "markings/signs/DrapedRwySigns_worn.dds",
+    "sourceSha256": "8150311f369d6e55d08e420734eb19352b0573fd3942484e259319fb2032f4be",
+    "sourceDecodedRgbaSha256": "5e3c9462f94cce0bab5d731b1baf273738cb58526a3b7e6996cd8dc720d9f8d2",
+    "outputName": "DrapedRwySigns_worn.png",
+    "outputUrl": "DrapedRwySigns_worn.png",
+    "outputSha256": "311a89e21ddc04044a1f8129b66ad9dfc520f73cbf9dddd10b4e09fe13c746ca",
+    "outputDecodedRgbaSha256": "5e3c9462f94cce0bab5d731b1baf273738cb58526a3b7e6996cd8dc720d9f8d2",
+    "width": 4096,
+    "height": 2048
+  },
+  "textureLit": null,
+  "textureNormal": "../../paint/textures/paint_clean_NML.png",
+  "normalScale": 1,
+  "scaleMeters": [
+    20,
+    20
+  ],
+  "layerGroup": null,
+  "surface": "asphalt",
+  "noAlpha": false,
+  "globalSpecular": null,
+  "weather": {
+    "requested": "../../paint/textures/paint_WXR.png",
+    "sourcePath": "markings/paint/textures/paint_WXR.png",
+    "sourceSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+    "sourceDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+    "outputName": "paint_WXR.png",
+    "outputUrl": "paint_WXR.png",
+    "outputSha256": "3e0b07ad292594325702661b20bc95ca8b828dc186fd101e498c72d64dfb2dcc",
+    "outputDecodedRgbaSha256": "5b638850fa4d29c8a8b10935605df269ebf8c517b8e6ae33ff0d0a9b09b99090",
+    "width": 1024,
+    "height": 1024
+  },
+  "weatherTransparent": false,
+  "decalLib": null,
+  "unsupported": [],
+  "sourceSha256": "d1bab797ffba5623a51a37238a3fdcb2fe0dfe221eb3d48f9e77e62a4ce814c9",
+  "outputBaseUrl": "/../.runtime-zdp-surfaces/resources/ZDP_Library/markings/signs/worn/DrapedRwySigns",
+  "lit": null,
+  "normal": {
+    "requested": "../../paint/textures/paint_clean_NML.png",
+    "sourcePath": "markings/paint/textures/paint_clean_NML.png",
+    "sourceSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+    "sourceDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+    "outputName": "paint_clean_NML.png",
+    "outputUrl": "paint_clean_NML.png",
+    "outputSha256": "e258827777980947b98675193b368feaeb78c0e6b4742b4f562b61024a737977",
+    "outputDecodedRgbaSha256": "1b327fd68f35cd0800448dd0e08527b32d696a9a5fa18539750915ae1cbe5a57",
+    "width": 4096,
+    "height": 4096
+  },
+  "decal": null
+}
