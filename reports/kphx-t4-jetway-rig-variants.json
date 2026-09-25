@@ -1,0 +1,1239 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "authority": {
+    "wedSha256": "59d9676dbccdaed24f2308e0597aacf846c8244cbadaefd8558af1e5c0dda498",
+    "facade": "lib/airport/Ramp_Equipment/Jetways/Jetway_1_solid.fac"
+  },
+  "counts": {
+    "placementCount": 76,
+    "supportedGateNameCount": 75,
+    "exactWallSequenceVariantCount": 17
+  },
+  "structuralInvariant": {
+    "value": "static-prefix > exactly-one-tunnel-wall > Cabin",
+    "staticPrefixWallTypes": [
+      "Rotunda_extension",
+      "Rotunda_jetway",
+      "Connection"
+    ],
+    "appliesToAllPlacements": true,
+    "controllerImplication": "Discover authored tunnel/cabin from each built wallEvidence; do not hardcode gate-specific wall numbers or A1 node counts."
+  },
+  "tunnelWallTypeCounts": {
+    "Tunnel_11-15.5m": 5,
+    "Tunnel_14-21.5m": 7,
+    "Tunnel_17-27.5m": 28,
+    "Tunnel_20-33.5m": 4,
+    "Tunnel_23-39.5m": 3,
+    "Tunnel_parked": 29
+  },
+  "staticPrefixTokenCounts": {
+    "Connection": 9,
+    "Rotunda_extension": 97,
+    "Rotunda_jetway": 3
+  },
+  "exactVariants": [
+    {
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "count": 21,
+      "gates": [
+        "A6",
+        "A7",
+        "A9",
+        "A13",
+        "A18",
+        "A20",
+        "A22",
+        "A23",
+        "A24",
+        "B2",
+        "B19",
+        "B24",
+        "C3",
+        "C7",
+        "C8",
+        "C9",
+        "C13",
+        "C14",
+        "C16",
+        "C18",
+        "C19"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "count": 17,
+      "gates": [
+        "A2",
+        "A3",
+        "A14",
+        "A19",
+        "A21",
+        "A25",
+        "B7",
+        "B9",
+        "B11",
+        "B27",
+        "C2",
+        "C6",
+        "C11",
+        "C12",
+        "C17",
+        "D3",
+        "D6"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "count": 5,
+      "gates": [
+        "B6",
+        "B8",
+        "B10",
+        "B18",
+        "B22"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "count": 5,
+      "gates": [
+        "A29",
+        "B23A",
+        "B25",
+        "B28",
+        "D2"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "count": 4,
+      "gates": [
+        "A11",
+        "B3",
+        "B12",
+        "B20"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "count": 4,
+      "gates": [
+        "A5",
+        "C1",
+        "C4",
+        "D4"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Tunnel_20-33.5m > Cabin",
+      "count": 4,
+      "gates": [
+        "A30",
+        "B14",
+        "B16",
+        "B21A"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "count": 3,
+      "gates": [
+        "B4",
+        "B5",
+        "B17"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Tunnel_23-39.5m > Cabin",
+      "count": 3,
+      "gates": [
+        "A27",
+        "B13",
+        "D5"
+      ]
+    },
+    {
+      "signature": "Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "count": 2,
+      "gates": [
+        "A8",
+        "D7"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "count": 2,
+      "gates": [
+        "A26",
+        "D1"
+      ]
+    },
+    {
+      "signature": "Connection > Connection > Rotunda_jetway > Rotunda_jetway > Tunnel_14-21.5m > Cabin",
+      "count": 1,
+      "gates": [
+        "A10"
+      ]
+    },
+    {
+      "signature": "Connection > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "count": 1,
+      "gates": [
+        "D7"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Connection > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "count": 1,
+      "gates": [
+        "A12"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Connection > Rotunda_jetway > Tunnel_parked > Cabin",
+      "count": 1,
+      "gates": [
+        "A4"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "count": 1,
+      "gates": [
+        "A1"
+      ]
+    },
+    {
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "count": 1,
+      "gates": [
+        "A17"
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "gate": "A1",
+      "rampWedObjectId": 27855,
+      "facadeWedObjectId": 104804,
+      "facadeNodeCount": 7,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension",
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_11-15.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "bridgeEndMeters": 23.860805
+    },
+    {
+      "gate": "A2",
+      "rampWedObjectId": 20719,
+      "facadeWedObjectId": 105851,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 28.663966
+    },
+    {
+      "gate": "A3",
+      "rampWedObjectId": 20713,
+      "facadeWedObjectId": 104845,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 18.885605
+    },
+    {
+      "gate": "A4",
+      "rampWedObjectId": 27864,
+      "facadeWedObjectId": 105843,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Connection",
+        "Rotunda_jetway"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Connection > Rotunda_jetway > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 21.873714
+    },
+    {
+      "gate": "A5",
+      "rampWedObjectId": 27870,
+      "facadeWedObjectId": 104874,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_11-15.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "bridgeEndMeters": 21.411668
+    },
+    {
+      "gate": "A6",
+      "rampWedObjectId": 20718,
+      "facadeWedObjectId": 105837,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 22.596933
+    },
+    {
+      "gate": "A7",
+      "rampWedObjectId": 20714,
+      "facadeWedObjectId": 104897,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 22.721681
+    },
+    {
+      "gate": "A8",
+      "rampWedObjectId": 27876,
+      "facadeWedObjectId": 105830,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 28.376235
+    },
+    {
+      "gate": "A9",
+      "rampWedObjectId": 27882,
+      "facadeWedObjectId": 104920,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 29.188394
+    },
+    {
+      "gate": "A10",
+      "rampWedObjectId": 20717,
+      "facadeWedObjectId": 105343,
+      "facadeNodeCount": 7,
+      "staticPrefix": [
+        "Connection",
+        "Connection",
+        "Rotunda_jetway",
+        "Rotunda_jetway"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Connection > Connection > Rotunda_jetway > Rotunda_jetway > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 37.603145
+    },
+    {
+      "gate": "A11",
+      "rampWedObjectId": 20715,
+      "facadeWedObjectId": 105256,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 30.502807
+    },
+    {
+      "gate": "A12",
+      "rampWedObjectId": 27889,
+      "facadeWedObjectId": 105335,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Connection > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 38.303033
+    },
+    {
+      "gate": "A13",
+      "rampWedObjectId": 27895,
+      "facadeWedObjectId": 105286,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 30.042172
+    },
+    {
+      "gate": "A14",
+      "rampWedObjectId": 20716,
+      "facadeWedObjectId": 105329,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 33.939828
+    },
+    {
+      "gate": "A17",
+      "rampWedObjectId": 20720,
+      "facadeWedObjectId": 106033,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 20.897537
+    },
+    {
+      "gate": "A18",
+      "rampWedObjectId": 20727,
+      "facadeWedObjectId": 106147,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 33.867864
+    },
+    {
+      "gate": "A19",
+      "rampWedObjectId": 20721,
+      "facadeWedObjectId": 106040,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 19.83639
+    },
+    {
+      "gate": "A20",
+      "rampWedObjectId": 27901,
+      "facadeWedObjectId": 106159,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 30.17343
+    },
+    {
+      "gate": "A21",
+      "rampWedObjectId": 27907,
+      "facadeWedObjectId": 106052,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 24.212513
+    },
+    {
+      "gate": "A22",
+      "rampWedObjectId": 20726,
+      "facadeWedObjectId": 106141,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 26.16541
+    },
+    {
+      "gate": "A23",
+      "rampWedObjectId": 20722,
+      "facadeWedObjectId": 106058,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 37.038407
+    },
+    {
+      "gate": "A24",
+      "rampWedObjectId": 27913,
+      "facadeWedObjectId": 106153,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 32.953831
+    },
+    {
+      "gate": "A25",
+      "rampWedObjectId": 27919,
+      "facadeWedObjectId": 106064,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 24.709699
+    },
+    {
+      "gate": "A26",
+      "rampWedObjectId": 20725,
+      "facadeWedObjectId": 106261,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 36.56776
+    },
+    {
+      "gate": "A27",
+      "rampWedObjectId": 20723,
+      "facadeWedObjectId": 106183,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_23-39.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_23-39.5m > Cabin",
+      "bridgeEndMeters": 33.902844
+    },
+    {
+      "gate": "A29",
+      "rampWedObjectId": 20724,
+      "facadeWedObjectId": 106206,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 33.28063
+    },
+    {
+      "gate": "A30",
+      "rampWedObjectId": 27933,
+      "facadeWedObjectId": 106238,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_20-33.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_20-33.5m > Cabin",
+      "bridgeEndMeters": 34.289027
+    },
+    {
+      "gate": "B2",
+      "rampWedObjectId": 20735,
+      "facadeWedObjectId": 104690,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 34.07686
+    },
+    {
+      "gate": "B3",
+      "rampWedObjectId": 27939,
+      "facadeWedObjectId": 101067,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 27.808216
+    },
+    {
+      "gate": "B4",
+      "rampWedObjectId": 27947,
+      "facadeWedObjectId": 104665,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 25.129993
+    },
+    {
+      "gate": "B5",
+      "rampWedObjectId": 20730,
+      "facadeWedObjectId": 101099,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 27.556571
+    },
+    {
+      "gate": "B6",
+      "rampWedObjectId": 27953,
+      "facadeWedObjectId": 104619,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 23.495652
+    },
+    {
+      "gate": "B7",
+      "rampWedObjectId": 27959,
+      "facadeWedObjectId": 101121,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 21.97138
+    },
+    {
+      "gate": "B8",
+      "rampWedObjectId": 27966,
+      "facadeWedObjectId": 102825,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 21.080214
+    },
+    {
+      "gate": "B9",
+      "rampWedObjectId": 20731,
+      "facadeWedObjectId": 101772,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 22.668137
+    },
+    {
+      "gate": "B10",
+      "rampWedObjectId": 20734,
+      "facadeWedObjectId": 102789,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 26.56938
+    },
+    {
+      "gate": "B11",
+      "rampWedObjectId": 27972,
+      "facadeWedObjectId": 101799,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 29.12713
+    },
+    {
+      "gate": "B12",
+      "rampWedObjectId": 20733,
+      "facadeWedObjectId": 102756,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 32.717848
+    },
+    {
+      "gate": "B13",
+      "rampWedObjectId": 102680,
+      "facadeWedObjectId": 102675,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_23-39.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_23-39.5m > Cabin",
+      "bridgeEndMeters": 22.4013
+    },
+    {
+      "gate": "B14",
+      "rampWedObjectId": 27978,
+      "facadeWedObjectId": 102705,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_20-33.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_20-33.5m > Cabin",
+      "bridgeEndMeters": 29.521383
+    },
+    {
+      "gate": "B16",
+      "rampWedObjectId": 20754,
+      "facadeWedObjectId": 100652,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_20-33.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_20-33.5m > Cabin",
+      "bridgeEndMeters": 44.610368
+    },
+    {
+      "gate": "B17",
+      "rampWedObjectId": 20748,
+      "facadeWedObjectId": 99956,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 36.862653
+    },
+    {
+      "gate": "B18",
+      "rampWedObjectId": 20753,
+      "facadeWedObjectId": 100627,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 23.396266
+    },
+    {
+      "gate": "B19",
+      "rampWedObjectId": 27995,
+      "facadeWedObjectId": 100113,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 33.025105
+    },
+    {
+      "gate": "B20",
+      "rampWedObjectId": 28003,
+      "facadeWedObjectId": 100604,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 31.430434
+    },
+    {
+      "gate": "B21A",
+      "rampWedObjectId": 100127,
+      "facadeWedObjectId": 100163,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_20-33.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_20-33.5m > Cabin",
+      "bridgeEndMeters": 33.219064
+    },
+    {
+      "gate": "B22",
+      "rampWedObjectId": 20752,
+      "facadeWedObjectId": 100587,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 23.878294
+    },
+    {
+      "gate": "B23A",
+      "rampWedObjectId": 28010,
+      "facadeWedObjectId": 100194,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 19.738392
+    },
+    {
+      "gate": "B24",
+      "rampWedObjectId": 28016,
+      "facadeWedObjectId": 100559,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 23.428022
+    },
+    {
+      "gate": "B25",
+      "rampWedObjectId": 20750,
+      "facadeWedObjectId": 100250,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 37.339466
+    },
+    {
+      "gate": "B27",
+      "rampWedObjectId": 28029,
+      "facadeWedObjectId": 100461,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 20.546339
+    },
+    {
+      "gate": "B28",
+      "rampWedObjectId": 20751,
+      "facadeWedObjectId": 100497,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 26.65412
+    },
+    {
+      "gate": "C1",
+      "rampWedObjectId": 107059,
+      "facadeWedObjectId": 107105,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_11-15.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "bridgeEndMeters": 21.565801
+    },
+    {
+      "gate": "C2",
+      "rampWedObjectId": 107103,
+      "facadeWedObjectId": 107148,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 17.637504
+    },
+    {
+      "gate": "C3",
+      "rampWedObjectId": 107062,
+      "facadeWedObjectId": 107112,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 30.329296
+    },
+    {
+      "gate": "C4",
+      "rampWedObjectId": 20700,
+      "facadeWedObjectId": 107142,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_11-15.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "bridgeEndMeters": 20.455238
+    },
+    {
+      "gate": "C6",
+      "rampWedObjectId": 107087,
+      "facadeWedObjectId": 107136,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 30.742005
+    },
+    {
+      "gate": "C7",
+      "rampWedObjectId": 107067,
+      "facadeWedObjectId": 107118,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 29.039725
+    },
+    {
+      "gate": "C8",
+      "rampWedObjectId": 107074,
+      "facadeWedObjectId": 107130,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 32.801865
+    },
+    {
+      "gate": "C9",
+      "rampWedObjectId": 107071,
+      "facadeWedObjectId": 107124,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 31.461353
+    },
+    {
+      "gate": "C11",
+      "rampWedObjectId": 109063,
+      "facadeWedObjectId": 109069,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 19.855684
+    },
+    {
+      "gate": "C12",
+      "rampWedObjectId": 109067,
+      "facadeWedObjectId": 109111,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 21.439427
+    },
+    {
+      "gate": "C13",
+      "rampWedObjectId": 109051,
+      "facadeWedObjectId": 109075,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 33.793851
+    },
+    {
+      "gate": "C14",
+      "rampWedObjectId": 109065,
+      "facadeWedObjectId": 109105,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 31.133584
+    },
+    {
+      "gate": "C16",
+      "rampWedObjectId": 109057,
+      "facadeWedObjectId": 109099,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 35.17127
+    },
+    {
+      "gate": "C17",
+      "rampWedObjectId": 109052,
+      "facadeWedObjectId": 109081,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 29.662253
+    },
+    {
+      "gate": "C18",
+      "rampWedObjectId": 109055,
+      "facadeWedObjectId": 109093,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 30.202881
+    },
+    {
+      "gate": "C19",
+      "rampWedObjectId": 109061,
+      "facadeWedObjectId": 109087,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 27.201266
+    },
+    {
+      "gate": "D1",
+      "rampWedObjectId": 20705,
+      "facadeWedObjectId": 106788,
+      "facadeNodeCount": 6,
+      "staticPrefix": [
+        "Rotunda_extension",
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 33.280081
+    },
+    {
+      "gate": "D2",
+      "rampWedObjectId": 115970,
+      "facadeWedObjectId": 115964,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_14-21.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_14-21.5m > Cabin",
+      "bridgeEndMeters": 32.820488
+    },
+    {
+      "gate": "D3",
+      "rampWedObjectId": 106804,
+      "facadeWedObjectId": 106815,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 28.36574
+    },
+    {
+      "gate": "D4",
+      "rampWedObjectId": 20701,
+      "facadeWedObjectId": 106887,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_11-15.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_11-15.5m > Cabin",
+      "bridgeEndMeters": 19.053852
+    },
+    {
+      "gate": "D5",
+      "rampWedObjectId": 20704,
+      "facadeWedObjectId": 106821,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_23-39.5m",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_23-39.5m > Cabin",
+      "bridgeEndMeters": 36.375
+    },
+    {
+      "gate": "D6",
+      "rampWedObjectId": 106894,
+      "facadeWedObjectId": 106879,
+      "facadeNodeCount": 4,
+      "staticPrefix": [
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 26.922617
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": 106848,
+      "facadeWedObjectId": 106842,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_parked",
+      "cabinWall": "Cabin",
+      "signature": "Connection > Rotunda_extension > Tunnel_parked > Cabin",
+      "bridgeEndMeters": 21.201461
+    },
+    {
+      "gate": "D7",
+      "rampWedObjectId": 106850,
+      "facadeWedObjectId": 106853,
+      "facadeNodeCount": 5,
+      "staticPrefix": [
+        "Connection",
+        "Rotunda_extension"
+      ],
+      "tunnelWall": "Tunnel_17-27.5m",
+      "cabinWall": "Cabin",
+      "signature": "Connection > Rotunda_extension > Tunnel_17-27.5m > Cabin",
+      "bridgeEndMeters": 27.442967
+    }
+  ]
+}
