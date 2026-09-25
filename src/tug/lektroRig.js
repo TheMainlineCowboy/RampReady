@@ -25,10 +25,11 @@ export const MANAGER_KUBOTA_RIG_PROFILE = Object.freeze({
   turningRadius: 3.31,
   trackWidth: 1.31,
   cradleOffset: 1.0,
-  // User visual evidence: the previous Z=-0.48 eye landed in/over the cargo bed.
-  // Keep the verified right-side/eye height, but move the eye forward into the driver station.
-  operatorEye: Object.freeze([0.38, 1.48, 0.30]),
-  operatorLook: Object.freeze([0.38, 1.25, 4.78]),
+  // User visual evidence moved the eye forward out of the cargo bed. The exact
+  // Kubota visual is now corrected from its laterally mirrored source, so the
+  // real left-hand driver station is runtime -X.
+  operatorEye: Object.freeze([-0.38, 1.48, 0.30]),
+  operatorLook: Object.freeze([-0.38, 1.25, 4.78]),
   captureAnchor: Object.freeze([0, 0.34, 1.25]),
   liftTravel: 0,
   bodyBounds: Object.freeze([2.3609509468, 2.0657191277, 2.8736947775]),
