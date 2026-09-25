@@ -28,42 +28,69 @@ function sameSourceAuthority(wed, map) {
 }
 
 
-function restoreA1ExactStaticRotundaTunnelShells(root) {
-  const restored = [];
-  const fixedWalls = [1, 2, 3, 4].map((number) =>
-    root.getObjectByName(`Wall_${number}_Rotunda_extension`));
-
-  if (fixedWalls.some((wall) => !wall)) {
-    throw new Error("A1 exact static Rotunda_extension walls are incomplete");
+function restoreExactStaticPrefixTunnelShells(root, wallEvidence, gate) {
+  const tunnelIndex = wallEvidence.findIndex((entry) =>
+    String(entry.wallName || "").startsWith("Tunnel_"));
+  if (tunnelIndex < 0 || wallEvidence[tunnelIndex + 1]?.wallName !== "Cabin") {
+    throw new Error(`${gate} exact static-prefix shell restore could not resolve tunnel > Cabin`);
   }
 
-  // XP11 Jetway_1_solid.fac uses Segment 4/5/6 as the actual 1.5 m,
-  // 3.0 m, and 6.0 m enclosed static tunnel shells. The importer hides
-  // facade meshes globally because many other segment meshes are only thin
-  // WED/control planes. Restore ONLY these authored 3D shell templates on
-  // A1's four terminal-side Rotunda_extension walls. Keep Segment 3/21/22
-  // control/end planes hidden so the earlier blade-thin wall regression
-  // does not return.
+  const fixedEvidence = wallEvidence.slice(0, tunnelIndex);
+  const allowedFixed = new Set([
+    "Rotunda_extension",
+    "Rotunda_jetway",
+    "Connection",
+  ]);
+  const invalid = fixedEvidence.filter((entry) => !allowedFixed.has(entry.wallName));
+  if (invalid.length) {
+    throw new Error(
+      `${gate} static-prefix shell restore found unsupported walls: ${invalid.map((entry) => entry.wallName).join(", ")}`,
+    );
+  }
+
+  // Segment 4/5/6 are the authored enclosed 1.5/3/6 m tunnel-shell templates
+  // used inside all three fixed-prefix wall types. Keep the thin placement /
+  // end-cap templates hidden; restore only these exact 3D shells. Short fixed
+  // walls may legitimately choose a spelling with no 4/5/6 segment.
   const exactStaticShellName = /^FacadeMesh_(4|5|6)_/;
-  for (const wall of fixedWalls) {
+  const restored = [];
+  for (const entry of fixedEvidence) {
+    const wall = root.getObjectByName(`Wall_${entry.wallNumber}_${entry.wallName}`);
+    if (!wall) {
+      throw new Error(`${gate} exact fixed wall is missing Wall_${entry.wallNumber}_${entry.wallName}`);
+    }
     wall.traverse((node) => {
       if (!node.isMesh || !exactStaticShellName.test(node.name || "")) return;
       node.visible = true;
       node.userData.kphxStockJetwayFacadePlaneHidden = false;
-      node.userData.a1ExactStaticRotundaTunnelShellRestored = true;
-      restored.push(node.name);
+      node.userData.kphxExactStaticPrefixTunnelShellRestored = true;
+      restored.push(`${wall.name}/${node.name}`);
     });
   }
 
-  if (!restored.length) {
-    throw new Error("A1 exact static Rotunda tunnel shell meshes were not found");
+  root.userData.kphxExactStaticPrefixWallCount = fixedEvidence.length;
+  root.userData.kphxExactStaticPrefixTunnelShellCount = restored.length;
+  root.userData.kphxExactStaticPrefixTunnelShells = restored.join("|");
+  root.userData.kphxExactStaticPrefixTunnelAuthority =
+    "XP11-Jetway_1_solid.fac-Segment-4-5-6-on-WED-authored-static-prefix-v2";
+
+  // Preserve the already-established A1 runtime evidence names while A1
+  // remains the visual regression reference.
+  if (gate === "A1") {
+    if (!restored.length) {
+      throw new Error("A1 exact static terminal-side tunnel shells were not found");
+    }
+    root.userData.a1ExactStaticRotundaTunnelShellCount = restored.length;
+    root.userData.a1ExactStaticRotundaTunnelShells = restored.join("|");
+    root.userData.a1ExactStaticRotundaTunnelAuthority =
+      root.userData.kphxExactStaticPrefixTunnelAuthority;
   }
 
-  root.userData.a1ExactStaticRotundaTunnelShellCount = restored.length;
-  root.userData.a1ExactStaticRotundaTunnelShells = restored.join("|");
-  root.userData.a1ExactStaticRotundaTunnelAuthority =
-    "XP11-Jetway_1_solid.fac-Segment-4-5-6-on-WED-104804-fixed-Rotunda_extension";
-  return restored;
+  return Object.freeze({
+    fixedWallCount: fixedEvidence.length,
+    restoredShellCount: restored.length,
+    restored: Object.freeze([...restored]),
+  });
 }
 
 export async function installKphxTerminal4StockJetways(
@@ -167,13 +194,17 @@ export async function installKphxTerminal4StockJetways(
     built.root.userData.sourceWedSha256 = EXPECTED_WED_SHA256;
     built.root.userData.oldAirportJetwayGlbUsed = false;
 
-    if (gateMap.gate === "A1") {
-      // Restore the exact XP11 static terminal-side tunnel shells before
-      // installing the already-locked moving-bridge controller. This changes
-      // visibility only on fixed Rotunda_extension Segment 4/5/6 meshes and
-      // does not alter any A1 animation transform/hierarchy.
-      restoreA1ExactStaticRotundaTunnelShells(built.root);
+    // Restore the exact fixed-prefix shell geometry for every authored T4
+    // placement before any articulation is installed. This is source-driven
+    // by the gate's own WED wall sequence and changes visibility only on exact
+    // Segment 4/5/6 shell meshes.
+    const staticShellEvidence = restoreExactStaticPrefixTunnelShells(
+      built.root,
+      built.wallEvidence,
+      gateMap.gate,
+    );
 
+    if (gateMap.gate === "A1") {
       a1Controller = installA1ExactAutoGateController({
         THREE,
         root: built.root,
@@ -196,6 +227,8 @@ export async function installKphxTerminal4StockJetways(
       wallChoices: wallChoices.map((value) => value + 1),
       wallNames: built.wallEvidence.map((wall) => wall.wallName),
       ringMode: built.facade.ringMode,
+      staticPrefixWallCount: staticShellEvidence.fixedWallCount,
+      restoredStaticShellCount: staticShellEvidence.restoredShellCount,
     });
   }
 
