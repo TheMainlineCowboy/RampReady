@@ -253,7 +253,7 @@ assert(lektroOperatorViewEvidence.state?.modelForwardCorrectionDegrees === 180, 
 
 const launcher = fs.readFileSync("src/components/PushbackTrainer.jsx", "utf8");
 assert(launcher.includes("total: 4"), "Four-stage preload screen contract missing");
-assert(launcher.includes("kphxA1ZdpMarkingsReady"), "Preload screen does not wait for exact A1 markings");
+assert(launcher.includes("kphxT4ZdpMarkingsReady"), "Preload screen does not wait for exact Terminal 4 markings");
 assert(launcher.includes('"manager-kubota-exact"'), "Launcher does not wait for exact manager Kubota");
 assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "training")'), "Launcher training-only availability guard missing");
 assert(launcher.includes('isEquipmentLaunchable(selectedEquipmentId, "inspection")'), "Launcher inspection availability guard missing");
