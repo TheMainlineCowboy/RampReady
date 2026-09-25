@@ -1,5 +1,6 @@
 import { installKphxPackageOwnedObjectLayer } from "./installPackageOwnedObjectLayer.js";
 
+// T4 live runtime contract: 307 GateNumbers + 10 GroundMarkings = 317 exact WED placements.
 export const KPHX_T4_EXACT_GATE_MARKING_AUTHORITY = Object.freeze({
   authority: "KPHX-1.75.1-WED-T4-gate-number-ground-markings-v1",
   gateNumberManifestUrl: "/models/kphx-full-airport/batches/gate-numbers.manifest.json",
