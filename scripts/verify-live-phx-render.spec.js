@@ -41,7 +41,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   ));
 
   const response = await page.goto(
-    `${pageUrl}?release=${expectedSha}&jetwayRigAudit=1`,
+    `${pageUrl}?release=${expectedSha}`,
     {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
@@ -84,10 +84,6 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && d.kphxExactLiveProceduralTerminalMassing === 'false'
       && d.kphxExactLiveLegacyFsxTerminal === 'false'
       && d.terminal4ExactJetwayTextureActive === 'true'
-      && d.t4JetwayRepresentativeAuditStatus === 'PASS'
-      && d.t4JetwayRepresentativeAuditCount === '6'
-      && d.t4JetwayResolvedPlacementCount === '76'
-      && d.t4JetwayLazyFactoryCount === '76'
       && d.tugSource === 'lektro-ap88-tvo914-r187a'
       && d.rigProfile === 'lektro-ap88-tvo914-r187a'
       && d.rigWheelbaseMeters === '2.33934'
@@ -149,6 +145,27 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
       && Number.isFinite(vert)
       && Math.abs(vert - (-1.9158528682264)) <= 0.002;
   }, null, { timeout: 60000, polling: 100 });
+
+  await page.evaluate(() => {
+    const runAudit =
+      window.__RAMPREADY_RUN_T4_JETWAY_REPRESENTATIVE_AUDIT__;
+    if (typeof runAudit !== "function") {
+      throw new Error("Representative T4 jetway audit trigger is unavailable");
+    }
+    return runAudit();
+  });
+  await page.waitForFunction(() => {
+    const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
+    if (d.t4JetwayRepresentativeAuditStatus === 'FAIL') {
+      throw new Error(
+        d.t4JetwayRepresentativeAuditError || 'Representative jetway audit failed',
+      );
+    }
+    return d.t4JetwayRepresentativeAuditStatus === 'PASS'
+      && d.t4JetwayRepresentativeAuditCount === '6'
+      && d.t4JetwayResolvedPlacementCount === '76'
+      && d.t4JetwayLazyFactoryCount === '76';
+  }, null, { timeout: 120000, polling: 100 });
 
   const runtime = await canvas.evaluate(element => ({ ...element.dataset }));
   const representativeAudit = JSON.parse(
