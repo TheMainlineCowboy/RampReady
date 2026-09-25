@@ -165,7 +165,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
   await page.waitForFunction(() => {
     const d = document.querySelector('canvas.trainerCanvas')?.dataset || {};
     return d.lektroOperatorLookUnlocked === 'true'
-      && Number(d.lektroOperatorEyeLocalX) < 0
+      && Number(d.lektroOperatorEyeLocalX) > 0
       && Number.isFinite(Number(d.lektroOperatorCameraX))
       && Number.isFinite(Number(d.lektroOperatorEyeWorldX))
       && Math.abs(Number(d.lektroOperatorCameraX) - Number(d.lektroOperatorEyeWorldX)) <= 0.001;
@@ -176,7 +176,7 @@ test('live RampReady serves the exact locked KPHX runtime', async ({ page }) => 
     pitch: Number(element.dataset.lektroOperatorLookPitch),
     eyeLocalX: Number(element.dataset.lektroOperatorEyeLocalX),
   }));
-  expect(operatorBefore.eyeLocalX).toBeLessThan(0);
+  expect(operatorBefore.eyeLocalX).toBeGreaterThan(0);
 
   await canvas.dispatchEvent('pointerdown', {
     pointerId: 71,
