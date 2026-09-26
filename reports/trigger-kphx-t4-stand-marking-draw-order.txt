@@ -1,0 +1,8 @@
+RampReady exact T4 stand-marking Pages deploy trigger.
+Source fix: 91faf1f9d6dfe5fa05b605a753d3f1c1279a3fcc
+Exact authored stand-marking object families:
+- 62 MisterX_Library/Airport/Ramps/* placements
+- 307 GateNumbers/* placements
+- 10 GroundMarkings/* placements
+Purpose: publish current main after the prior Pages run for 91faf1f9 was cancelled.
+No generic markings, procedural gate paint, pavement geometry, tug physics, jetway mechanics, or locked equipment changed.
