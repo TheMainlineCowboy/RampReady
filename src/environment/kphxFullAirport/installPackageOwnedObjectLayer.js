@@ -69,7 +69,10 @@ export function preparePlacementRoot(root, placement) {
     || placement.resource?.startsWith("GroundMarkings/")
     || placement.resource?.startsWith("GateNumbers/")
   );
-  const markingRenderLiftMeters = exactDrapedMarkingResource ? 0.006 : 0;
+  // X-Plane composites draped OBJ paint in a dedicated markings pass. Browser/mobile
+  // depth precision and GLTF alpha sorting are not equivalent, so keep the authored
+  // X/Z/heading untouched and use only a small render-space Y separation.
+  const markingRenderLiftMeters = exactDrapedMarkingResource ? 0.012 : 0;
   root.position.set(position[0], position[1] + markingRenderLiftMeters, position[2]);
   root.rotation.set(0, yaw, 0);
   root.updateMatrixWorld(true);
@@ -101,6 +104,7 @@ export function preparePlacementRoot(root, placement) {
   });
 
   let drapedMarkingFallbackRenderOrderMeshCount = 0;
+  let drapedMarkingCompatibilityMeshCount = 0;
   root.traverse((node) => {
     if (!node?.isMesh) return;
     node.castShadow = !xPlaneGlobalNoShadow;
@@ -152,8 +156,21 @@ export function preparePlacementRoot(root, placement) {
       // rather than inventing a vertical placement correction.
       if ((authoredLayer || xPlaneDraped) && material) {
         material.polygonOffset = true;
-        material.polygonOffsetFactor = -1;
-        material.polygonOffsetUnits = -1;
+        material.polygonOffsetFactor = exactDrapedMarkingResource ? -4 : -1;
+        material.polygonOffsetUnits = exactDrapedMarkingResource ? -4 : -1;
+
+        // Exact X-Plane draped markings are pavement decals. Match the working
+        // WED surface-marking renderer rather than relying on GLTF's default
+        // single-sided BLEND material state, which can be culled or depth-hidden
+        // on mobile even while the placement is reported as loaded.
+        if (exactDrapedMarkingResource) {
+          material.side = THREE.DoubleSide;
+          material.transparent = true;
+          material.opacity = 1;
+          material.depthTest = true;
+          material.depthWrite = false;
+          drapedMarkingCompatibilityMeshCount += 1;
+        }
         material.needsUpdate = true;
       }
     }
@@ -192,6 +209,12 @@ export function preparePlacementRoot(root, placement) {
     drapedMarkingFallbackRenderOrderMeshCount;
   root.userData.kphxDrapedMarkingFallbackLayerPolicy =
     "xplane-draped-default-markings-compositor-order";
+  root.userData.kphxDrapedMarkingCompatibilityMeshCount =
+    drapedMarkingCompatibilityMeshCount;
+  root.userData.kphxDrapedMarkingCompatibilityPolicy =
+    exactDrapedMarkingResource
+      ? "exact-xplane-draped-object-mobile-depth-compatibility-v2"
+      : "none";
 
   return root;
 }
