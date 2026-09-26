@@ -598,6 +598,8 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.groundPavementAuthority = "loading";
     renderer.domElement.dataset.groundSourceAerialPriority = "loading";
     renderer.domElement.dataset.groundNearfieldDetailOpacity = "loading";
+    renderer.domElement.dataset.kphxExactLiveT4Error = "";
+    renderer.domElement.dataset.runtimeLoadError = "";
     const terminalLoad = installAuthoredTerminal4Visual(THREE, environment)
       .then((terminal) => {
         renderer.domElement.dataset.kphxExactLiveT4 = "ready";
@@ -803,6 +805,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
+        renderer.domElement.dataset.kphxExactLiveT4Error = String(error?.message || error);
         renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "load-error";
@@ -952,6 +955,7 @@ export default function RampReadyStandupTrainer({
       .catch((error) => {
         renderer.domElement.dataset.groundSource = "load-error";
         renderer.domElement.dataset.kphxSurfaceReady = "false";
+        renderer.domElement.dataset.kphxSurfaceLoadError = String(error?.message || error);
         renderer.domElement.dataset.kphxA1ZdpSurfaceReady = "false";
         renderer.domElement.dataset.kphxSurfaceFailureCount = "load-error";
         renderer.domElement.dataset.photoGroundSource = "not-used-exact-kphx-1.75.1-only";
@@ -980,6 +984,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxT4ZdpMarkingsReady = "load-error";
+        renderer.domElement.dataset.kphxT4ZdpMarkingsLoadError = String(error?.message || error);
         renderer.domElement.dataset.kphxT4ZdpMarkingReady = "load-error";
         renderer.domElement.dataset.kphxT4ZdpMarkingFailureCount = "load-error";
         console.error("RampReady exact T4 ZDP markings load failed", error);
@@ -1002,6 +1007,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxMisterXLinesReady = "load-error";
+        renderer.domElement.dataset.kphxMisterXLinesLoadError = String(error?.message || error);
         renderer.domElement.dataset.kphxMisterXLineFailureCount = "load-error";
         console.error("RampReady exact MisterX line load failed", error);
         setMessage(`Exact MisterX ramp markings failed to load: ${error.message}`);
@@ -1099,7 +1105,8 @@ export default function RampReadyStandupTrainer({
           String(environment.userData.authoredTerminal4A1JetwayVerticalResolved === true);
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
       })
-      .catch(() => {
+      .catch((error) => {
+        renderer.domElement.dataset.runtimeLoadError = String(error?.message || error);
         renderer.domElement.dataset.environmentSource = "load-error";
       });
 
@@ -1141,6 +1148,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.tugSource = "load-error";
+        renderer.domElement.dataset.tugLoadError = String(error?.message || error);
         renderer.domElement.dataset.operatorControls = "load-error";
         console.error("RampReady equipment visual load failed", error);
         setMessage(`Equipment model failed to load: ${error.message}`);

@@ -31,6 +31,7 @@ export default function PushbackTrainer() {
     total: 4,
     label: "Preparing simulator…",
     failed: false,
+    errorDetail: "",
   });
   const baselineRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
@@ -65,7 +66,7 @@ export default function PushbackTrainer() {
   const changeEquipment = useCallback(() => {
     stopGyro();
     setLaunchMode("training");
-    setRuntimeLoading({ active: false, completed: 0, total: 4, label: "Preparing simulator…", failed: false });
+    setRuntimeLoading({ active: false, completed: 0, total: 4, label: "Preparing simulator…", failed: false, errorDetail: "" });
     setActiveEquipmentId(null);
   }, [stopGyro]);
 
@@ -76,6 +77,7 @@ export default function PushbackTrainer() {
       total: 4,
       label: "Loading selected equipment…",
       failed: false,
+      errorDetail: "",
     });
   }, []);
 
@@ -127,6 +129,17 @@ export default function PushbackTrainer() {
         data.environmentSource,
       ].includes("load-error");
 
+      const errorDetail = failed
+        ? (
+          data.runtimeLoadError
+          || data.kphxExactLiveT4Error
+          || data.kphxSurfaceLoadError
+          || data.kphxT4ZdpMarkingsLoadError
+          || data.kphxMisterXLinesLoadError
+          || data.tugLoadError
+          || "A required runtime asset failed to load."
+        )
+        : "";
       const completed = [equipmentReady, terminalReady, surfacesReady, markingsReady].filter(Boolean).length;
       let label = "Loading selected equipment…";
       if (equipmentReady && !terminalReady) label = "Loading exact PHX Terminal 4 and jetways…";
@@ -141,8 +154,9 @@ export default function PushbackTrainer() {
           && previous.completed === completed
           && previous.label === label
           && previous.failed === failed
+          && previous.errorDetail === errorDetail
         ) return previous;
-        return { active, completed, total: 4, label, failed };
+        return { active, completed, total: 4, label, failed, errorDetail };
       });
 
       if (completed < 4 && !failed) timer = window.setTimeout(poll, 100);
@@ -269,7 +283,7 @@ export default function PushbackTrainer() {
           <div className="rr-runtime-loading-card">
             <p className="rr-runtime-loading-kicker">RampReady · PHX</p>
             <h1>{runtimeLoading.failed ? "Unable to finish loading" : "Preparing simulator"}</h1>
-            <p>{runtimeLoading.failed ? "A required runtime asset failed to load." : runtimeLoading.label}</p>
+            <p>{runtimeLoading.failed ? (runtimeLoading.errorDetail || "A required runtime asset failed to load.") : runtimeLoading.label}</p>
             <div className="rr-runtime-loading-track" aria-label="Simulator loading progress">
               <span style={{ width: `${loadingPercent}%` }} />
             </div>

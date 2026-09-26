@@ -1,3 +1,4 @@
+import * as THREE_RUNTIME from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { applyExactXp11Obj8MaskCompatibility } from "./obj8RenderCompatibility.js";
 import {
@@ -164,7 +165,7 @@ export function preparePlacementRoot(root, placement) {
         // single-sided BLEND material state, which can be culled or depth-hidden
         // on mobile even while the placement is reported as loaded.
         if (exactDrapedMarkingResource) {
-          material.side = THREE.DoubleSide;
+          material.side = THREE_RUNTIME.DoubleSide;
           material.transparent = true;
           material.opacity = 1;
           material.depthTest = true;
@@ -282,7 +283,10 @@ export async function installKphxPackageOwnedObjectLayer(
   });
 
   if (strict && assetFailures.length) {
-    throw new Error(`KPHX object layer asset loading failed for ${assetFailures.length} unique resources`);
+    const firstFailure = assetFailures[0];
+    throw new Error(
+      `KPHX object layer asset loading failed for ${assetFailures.length} unique resources; first failure ${kphxRuntimeUrl(firstFailure.assetUrl)}: ${firstFailure.message}`,
+    );
   }
 
   const layer = new THREE.Group();
