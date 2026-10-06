@@ -1,15 +1,13 @@
 name: Verify RampReady Live Experience
 
 on:
-  workflow_run:
-    workflows: ["Deploy RampReady to GitHub Pages"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       expected_sha:
         description: Exact deployed commit SHA to verify
         required: true
         type: string
+
 
 permissions:
   contents: read
