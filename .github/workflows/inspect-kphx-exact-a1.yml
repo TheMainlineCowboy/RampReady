@@ -1,14 +1,8 @@
 name: Inspect exact KPHX A1 source
 
 on:
-  push:
-    branches:
-      - agent/install-authored-phx-airport
-    paths:
-      - 'src/environment/kphxExactA1/**'
-      - 'scripts/inspect-kphx-exact-a1-payload.mjs'
-      - '.github/workflows/inspect-kphx-exact-a1.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: read
