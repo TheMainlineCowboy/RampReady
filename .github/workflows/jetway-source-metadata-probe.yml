@@ -1,9 +1,7 @@
 name: Jetway source metadata probe
 
 on:
-  push:
-    branches:
-      - fix/exact-airport-jetway-glb
+  workflow_dispatch:
 
 permissions:
   contents: read
