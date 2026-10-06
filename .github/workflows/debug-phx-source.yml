@@ -1,14 +1,8 @@
 name: Build PHX source aerial
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'scripts/build-phx-photo-mosaic.py'
-      - 'scripts/extract-phx-photo.cpp'
-      - '.github/workflows/debug-phx-source.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
