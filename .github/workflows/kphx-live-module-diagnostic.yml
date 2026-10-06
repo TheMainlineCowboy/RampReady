@@ -1,11 +1,7 @@
 name: KPHX Live Module Diagnostic
 
 on:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - reports/trigger-kphx-live-module-diagnostic.txt
+  workflow_dispatch:
 
 permissions:
   contents: read
