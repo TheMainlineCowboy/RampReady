@@ -2,11 +2,6 @@ name: KPHX T3 Exact Building Shell Capture
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - reports/trigger-kphx-t3-building-shell.txt
 
 permissions:
   contents: write
