@@ -3,11 +3,6 @@ name: KPHX T4 Jetway Overview Verification
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-jetways-overview.yml"
 
 permissions:
   contents: read
