@@ -1,12 +1,8 @@
 name: Probe Fab Exact Airport Jetway
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'scripts/probe-fab-exact-airport-jetway.mjs'
-      - '.github/workflows/probe-fab-exact-airport-jetway.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: read
