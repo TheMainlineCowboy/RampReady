@@ -2,11 +2,6 @@ name: KPHX MisterX Raw Batch 03 GSE
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-raw-batch-03.yml"
 
 permissions:
   contents: write
