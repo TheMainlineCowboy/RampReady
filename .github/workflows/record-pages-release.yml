@@ -1,9 +1,7 @@
 name: Record RampReady Pages release result
 
 on:
-  workflow_run:
-    workflows: ["Deploy RampReady to GitHub Pages"]
-    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: write
