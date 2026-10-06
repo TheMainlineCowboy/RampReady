@@ -3,11 +3,7 @@
 name: Materialize Exact XP11 KPHX Jetways
 
 on:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/materialize-exact-xp11-kphx-jetways.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
