@@ -2,11 +2,6 @@ name: KPHX Full Exact ZDP Surfaces
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-full-zdp-surfaces.yml"
 
 permissions:
   contents: write
