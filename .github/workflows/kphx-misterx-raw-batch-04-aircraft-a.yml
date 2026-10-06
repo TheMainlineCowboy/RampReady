@@ -2,11 +2,6 @@ name: KPHX MisterX Raw Batch 04 Aircraft A
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-raw-batch-04-aircraft-a.yml"
 
 permissions:
   contents: write
