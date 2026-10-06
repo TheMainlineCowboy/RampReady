@@ -2,10 +2,6 @@ name: KPHX T4 MisterX A320 Exact Sources
 
 on:
   workflow_dispatch:
-  push:
-    branches: [kphx-full-airport-import]
-    paths:
-      - ".github/workflows/kphx-t4-misterx-a320-exact.yml"
 
 permissions:
   contents: write
