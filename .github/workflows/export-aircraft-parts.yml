@@ -1,11 +1,8 @@
 name: Export Aircraft Parts
 
 on:
-  push:
-    branches: [fix/authored-aircraft-live]
-    paths:
-      - .github/workflows/export-aircraft-parts.yml
   workflow_dispatch:
+
 
 jobs:
   export:
