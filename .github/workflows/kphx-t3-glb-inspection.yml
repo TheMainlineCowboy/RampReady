@@ -2,11 +2,6 @@ name: KPHX T3 Exact GLB Inspection
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - reports/trigger-kphx-t3-glb-inspection.txt
 
 permissions:
   contents: write
