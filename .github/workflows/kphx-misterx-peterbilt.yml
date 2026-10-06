@@ -2,11 +2,6 @@ name: KPHX MisterX Peterbilt Exact Materialization
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-peterbilt.yml"
 
 permissions:
   contents: write
