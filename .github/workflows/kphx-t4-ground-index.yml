@@ -2,11 +2,6 @@ name: KPHX T4 A1 Ground Index
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-ground-index.yml"
 
 permissions:
   contents: read
