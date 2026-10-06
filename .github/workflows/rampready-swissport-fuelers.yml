@@ -2,11 +2,6 @@ name: RampReady Swissport Fuelers Exact Files
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/rampready-swissport-fuelers.yml"
 
 permissions:
   contents: write
