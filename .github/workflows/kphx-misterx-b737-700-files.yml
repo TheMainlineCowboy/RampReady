@@ -2,11 +2,6 @@ name: KPHX MisterX Boeing 737-700 Exact Files
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-b737-700-files.yml"
 
 permissions:
   contents: write
