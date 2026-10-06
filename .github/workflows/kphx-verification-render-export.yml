@@ -2,11 +2,6 @@ name: KPHX Verification Render Export
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-verification-render-export.yml"
 
 jobs:
   export:
