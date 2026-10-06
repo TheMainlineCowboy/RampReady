@@ -2,11 +2,7 @@
 name: KPHX A1 Exact XP11 Jetway Verification
 
 on:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-a1-exact-jetway-verification.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
