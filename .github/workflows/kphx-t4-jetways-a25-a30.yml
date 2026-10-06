@@ -2,11 +2,6 @@ name: KPHX T4 XP11 Jetways A25-A30
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-jetways-a25-a30.yml"
 
 permissions:
   contents: read
