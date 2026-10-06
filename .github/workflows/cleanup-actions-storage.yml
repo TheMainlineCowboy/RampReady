@@ -2,7 +2,6 @@ name: Cleanup Actions storage
 
 on:
   workflow_dispatch:
-  # Run once per day at 02:17 Arizona time (09:17 UTC), not hourly.
 
 permissions:
   actions: write
