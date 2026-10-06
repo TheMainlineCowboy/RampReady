@@ -1,13 +1,8 @@
 name: Receive exact Airport Jetway binary
 
 on:
-  push:
-    branches:
-      - fix/exact-airport-jetway-glb
-    paths:
-      - 'scripts/receive-exact-jetway-mail-transfer.mjs'
-      - '.github/workflows/receive-exact-jetway-binary.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
