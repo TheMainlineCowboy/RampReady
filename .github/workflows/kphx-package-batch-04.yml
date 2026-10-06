@@ -3,11 +3,6 @@ name: KPHX Package Batch 04 Retry
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-package-batch-04.yml"
 
 permissions:
   contents: write
