@@ -2,11 +2,6 @@ name: KPHX T4 MisterX Exact Materialization
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-misterx-materialize.yml"
 
 permissions:
   contents: write
