@@ -2,11 +2,6 @@ name: KPHX MisterX FedEx AGP Manifest
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-fedex-agp-manifest.yml"
 
 permissions:
   contents: write
