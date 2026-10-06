@@ -3,11 +3,6 @@ name: KPHX T4 All Exact XP11 Jetways
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-jetways-all.yml"
 
 permissions:
   contents: read
