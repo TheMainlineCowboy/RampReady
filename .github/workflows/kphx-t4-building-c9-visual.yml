@@ -2,11 +2,6 @@ name: KPHX T4 C9 Building Visual Check
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-building-c9-visual.yml"
 
 permissions:
   contents: write
