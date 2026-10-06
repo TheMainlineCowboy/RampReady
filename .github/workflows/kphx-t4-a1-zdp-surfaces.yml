@@ -3,11 +3,6 @@ name: KPHX T4 A1 Exact ZDP Surfaces
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-a1-zdp-surfaces.yml"
 
 permissions:
   contents: write
