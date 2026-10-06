@@ -2,14 +2,6 @@ name: Audit exact KPHX jetways and terminal source
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - scripts/audit-kphx-jetways-and-terminal-primitives.mjs
-      - scripts/discover-kphx-freeware-archive.mjs
-      - scripts/recover-kphx-exact-freeware-textures.mjs
-      - .github/workflows/audit-kphx-jetways-terminal.yml
 
 permissions:
   contents: write
