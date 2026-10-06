@@ -1,11 +1,8 @@
 name: Recover Authored Aircraft Git API
 
 on:
-  push:
-    branches: [fix/authored-aircraft-live]
-    paths:
-      - .github/workflows/recover-authored-aircraft-git-api.yml
   workflow_dispatch:
+
 
 permissions:
   contents: write
