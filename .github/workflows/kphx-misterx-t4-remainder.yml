@@ -2,11 +2,6 @@ name: KPHX MisterX T4 Remainder Exact Source
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-misterx-t4-remainder.yml"
 
 permissions:
   contents: write
