@@ -3,11 +3,6 @@ name: KPHX ZDP Exact Object Batch
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-zdp-objects.yml"
 
 permissions:
   contents: write
