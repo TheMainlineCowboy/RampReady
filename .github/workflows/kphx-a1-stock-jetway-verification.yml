@@ -2,11 +2,6 @@ name: Materialize and Verify XP11 A1 Stock Jetway
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-a1-stock-jetway-verification.yml"
 
 permissions:
   contents: write
