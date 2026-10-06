@@ -1,11 +1,7 @@
 name: KPHX Manager Kubota Inspection Check
 
 on:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - reports/trigger-manager-kubota-inspection.txt
+  workflow_dispatch:
 
 permissions:
   contents: write
