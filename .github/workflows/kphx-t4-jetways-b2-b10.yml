@@ -2,11 +2,6 @@ name: KPHX T4 XP11 Jetways B2-B10
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-jetways-b2-b10.yml"
 
 permissions:
   contents: read
