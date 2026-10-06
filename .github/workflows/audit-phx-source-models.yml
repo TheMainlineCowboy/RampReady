@@ -2,11 +2,6 @@ name: Audit PHX Source Models
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - scripts/audit-phx-source-model-library.mjs
-      - .github/workflows/audit-phx-source-models.yml
 
 permissions:
   contents: write
