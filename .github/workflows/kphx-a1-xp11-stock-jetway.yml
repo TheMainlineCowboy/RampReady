@@ -3,11 +3,6 @@ name: KPHX A1 Exact XP11 Stock Jetway
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-a1-xp11-stock-jetway.yml"
 
 permissions:
   contents: write
