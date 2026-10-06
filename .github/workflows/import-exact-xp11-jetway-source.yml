@@ -2,11 +2,6 @@ name: Import Exact XP11 Jetway Source
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/import-exact-xp11-jetway-source.yml"
 
 permissions:
   contents: write
