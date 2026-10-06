@@ -2,15 +2,6 @@ name: KPHX Exact Dependency Index
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-resource-index.yml"
-      - "scripts/index-kphx-external-resources.mjs"
-      - "public/models/kphx/wed-objects.exact.json"
-      - "public/models/kphx/wed-ground.exact.json"
-      - "public/models/kphx/wed-jetways.exact.json"
 
 permissions:
   contents: write
