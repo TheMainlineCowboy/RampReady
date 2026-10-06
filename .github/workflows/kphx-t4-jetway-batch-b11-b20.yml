@@ -2,11 +2,6 @@ name: KPHX T4 Exact Jetway Batch B11-B20
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-jetway-batch-b11-b20.yml"
 
 permissions:
   contents: read
