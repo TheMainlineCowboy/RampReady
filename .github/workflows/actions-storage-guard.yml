@@ -1,13 +1,9 @@
 name: Cleanup Actions storage
 
+# Legacy safety guard. Kept for emergency/manual use only.
+# Automatic cleanup is handled by cleanup-actions-storage.yml once daily.
 on:
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/actions-storage-guard.yml
 
 permissions:
   actions: write
@@ -21,7 +17,7 @@ concurrency:
 jobs:
   purge-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - name: Purge and verify obsolete artifacts, caches, and runs
         env:
