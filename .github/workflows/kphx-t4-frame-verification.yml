@@ -3,11 +3,6 @@ name: KPHX T4 Frame Verification
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-frame-verification.yml"
 
 permissions:
   contents: write
