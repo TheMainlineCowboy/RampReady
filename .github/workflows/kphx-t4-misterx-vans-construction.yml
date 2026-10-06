@@ -2,11 +2,6 @@ name: KPHX T4 MisterX Vans Construction Exact Source
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-misterx-vans-construction.yml"
 
 permissions:
   contents: write
