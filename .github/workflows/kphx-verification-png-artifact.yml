@@ -2,11 +2,6 @@ name: KPHX Verification PNG Artifact
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-verification-png-artifact.yml"
 
 jobs:
   artifact:
