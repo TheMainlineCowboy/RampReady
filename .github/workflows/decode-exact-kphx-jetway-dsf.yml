@@ -2,11 +2,7 @@
 name: Decode Exact KPHX Jetway DSF
 
 on:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/decode-exact-kphx-jetway-dsf.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
