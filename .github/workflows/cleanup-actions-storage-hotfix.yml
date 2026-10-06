@@ -1,10 +1,8 @@
 name: Stop unsafe Actions cleanup attempt
 
 on:
-  push:
-    paths:
-      - .github/workflows/cleanup-actions-storage-hotfix.yml
   workflow_dispatch:
+
 
 permissions:
   contents: read
