@@ -2,11 +2,6 @@ name: Inspect Untouched Airport Jetway GLB
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/inspect-airport-jetway-glb.yml"
 
 permissions:
   contents: write
