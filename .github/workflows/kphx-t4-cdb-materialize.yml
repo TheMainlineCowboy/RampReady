@@ -2,11 +2,6 @@ name: KPHX T4 CDB Exact Materialization
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-cdb-materialize.yml"
 
 permissions:
   contents: write
