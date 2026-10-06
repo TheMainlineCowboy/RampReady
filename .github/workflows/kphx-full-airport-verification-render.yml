@@ -2,11 +2,6 @@ name: KPHX Full Airport Verification Render
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - "reports/trigger-kphx-verifier-render.txt"
 
 permissions:
   contents: write
