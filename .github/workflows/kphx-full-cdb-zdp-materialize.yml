@@ -2,11 +2,6 @@ name: KPHX Full Exact CDB and ZDP Materialization
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-full-cdb-zdp-materialize.yml"
 
 permissions:
   contents: write
