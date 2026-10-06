@@ -1,28 +1,8 @@
 name: Exact Airport Jetway Verification
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '.jetway-geometry-staging-v2/**'
-      - '.jetway-geometry-staging-v5/**'
-      - '.jetway-source-staging/**'
-      - 'scripts/materialize-exact-airport-jetway.mjs'
-      - 'scripts/probe-exact-jetway-source-chunks.mjs'
-      - 'scripts/scan-exact-jetway-history.mjs'
-      - 'scripts/deep-scan-jetway-transfer-history.mjs'
-      - 'scripts/list-jetway-actions-artifacts.mjs'
-      - 'scripts/list-dedicated-jetway-artifacts.mjs'
-      - 'scripts/recover-exact-jetway-from-actions-artifacts.mjs'
-      - 'scripts/recover-exact-jetway-from-pages-artifacts.mjs'
-      - 'scripts/inspect-dedicated-jetway-transfers.mjs'
-      - 'scripts/verify-exact-airport-jetway-runtime.mjs'
-      - 'src/**'
-      - 'public/**'
-      - 'assets/**'
-      - '.github/workflows/exact-airport-jetway-verification.yml'
   workflow_dispatch:
+
 
 permissions:
   actions: read
