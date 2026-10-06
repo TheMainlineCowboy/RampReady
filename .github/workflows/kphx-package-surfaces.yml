@@ -2,11 +2,6 @@ name: KPHX Package Surface Checkpoint
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-package-surfaces.yml"
 
 permissions:
   contents: write
