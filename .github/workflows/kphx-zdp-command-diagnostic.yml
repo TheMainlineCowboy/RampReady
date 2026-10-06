@@ -2,11 +2,6 @@ name: KPHX ZDP Command Diagnostic
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-zdp-command-diagnostic.yml"
 
 permissions:
   contents: write
