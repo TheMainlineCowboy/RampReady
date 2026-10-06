@@ -2,11 +2,6 @@ name: KPHX T4 ZDP Exact Object Materialization
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - ".github/workflows/kphx-t4-zdp-object-materialize.yml"
 
 permissions:
   contents: write
