@@ -2,11 +2,6 @@ name: KPHX Exact Live A1 Check
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - kphx-full-airport-import
-    paths:
-      - reports/trigger-kphx-exact-live-a1.txt
 
 permissions:
   contents: write
