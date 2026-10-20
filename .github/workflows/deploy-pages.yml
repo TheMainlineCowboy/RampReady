@@ -2,6 +2,13 @@ name: Deploy RampReady to GitHub Pages
 
 on:
   workflow_dispatch:
+  # One opt-in A1 preview release after the reviewed mission source lands on main.
+  # Ordinary GitHub Pages visitors continue to see the existing equipment selector.
+  push:
+    branches:
+      - main
+    paths:
+      - src/simulation/a1TurnaroundMission.js
 
 
 permissions:
