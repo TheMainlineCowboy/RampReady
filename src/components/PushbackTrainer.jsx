@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import RampReadyStandupTrainer from "./RampReadyStandupTrainerTerminal4.jsx";
+import A1TurnaroundBoard from "./A1TurnaroundBoard.jsx";
+import { advanceA1Turnaround, createA1TurnaroundMission, isA1ReadyForPushback } from "../simulation/a1TurnaroundMission.js";
 import {
   DEFAULT_EQUIPMENT_ID,
   EQUIPMENT_PROFILES,
@@ -25,6 +27,7 @@ export default function PushbackTrainer() {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(DEFAULT_EQUIPMENT_ID);
   const [activeEquipmentId, setActiveEquipmentId] = useState(null);
   const [launchMode, setLaunchMode] = useState("training");
+  const [mission, setMission] = useState(null);
   const [runtimeLoading, setRuntimeLoading] = useState({
     active: false,
     completed: 0,
@@ -66,6 +69,7 @@ export default function PushbackTrainer() {
   const changeEquipment = useCallback(() => {
     stopGyro();
     setLaunchMode("training");
+    setMission(null);
     setRuntimeLoading({ active: false, completed: 0, total: 4, label: "Preparing simulator…", failed: false, errorDetail: "" });
     setActiveEquipmentId(null);
   }, [stopGyro]);
@@ -82,10 +86,37 @@ export default function PushbackTrainer() {
   }, []);
 
   const launch = useCallback((mode) => {
-    beginRuntimeLoading();
     setLaunchMode(mode);
+    if (mode === "turnaround") {
+      // Defer heavy airport assets until the dispatch board is complete.
+      setMission(createA1TurnaroundMission());
+      setActiveEquipmentId(null);
+      return;
+    }
+    setMission(null);
+    beginRuntimeLoading();
     setActiveEquipmentId(selectedEquipmentId);
   }, [beginRuntimeLoading, selectedEquipmentId]);
+
+  const handleMissionAction = useCallback((action) => {
+    if (!mission) return;
+    const next = advanceA1Turnaround(mission, action);
+    if (next === mission) return;
+    setMission(next);
+    if (action.type === "startPushback" && isA1ReadyForPushback(mission)) {
+      beginRuntimeLoading();
+      setActiveEquipmentId(selectedEquipmentId);
+    } else if (action.type === "restart") {
+      setActiveEquipmentId(null);
+    }
+  }, [mission, beginRuntimeLoading, selectedEquipmentId]);
+
+  const handleMissionProgress = useCallback(({ stage, score, inspectionMode }) => {
+    if (inspectionMode) return;
+    setMission((previous) => previous
+      ? advanceA1Turnaround(previous, { type: "pushbackProgress", stage, score })
+      : previous);
+  }, []);
 
   // Keep the equipment selector as the real default route. The query string is
   // an evidence-only launch request applied after the normal initial state has
@@ -213,6 +244,10 @@ export default function PushbackTrainer() {
     };
   }, [gyroEnabled, activeEquipmentId]);
 
+  if (launchMode === "turnaround" && mission && mission.phase !== "pushback") {
+    return <A1TurnaroundBoard mission={mission} onAction={handleMissionAction} onExit={changeEquipment} />;
+  }
+
   if (!activeEquipmentId) {
     const trainingLaunchable = isEquipmentLaunchable(selectedEquipmentId, "training");
     const inspectionLaunchable = isEquipmentLaunchable(selectedEquipmentId, "inspection");
@@ -256,6 +291,7 @@ export default function PushbackTrainer() {
             </div>
             <div className="rr-launch-actions">
               <button type="button" disabled={!trainingLaunchable} onClick={() => launch("training")}>Start training</button>
+              <button type="button" disabled={!trainingLaunchable} onClick={() => launch("turnaround")}>Gate A1 turnaround</button>
               <button type="button" disabled={!inspectionLaunchable} onClick={() => launch("inspection")}>Drive vehicle / inspect airport</button>
             </div>
           </div>
@@ -274,6 +310,7 @@ export default function PushbackTrainer() {
         initialInspectionMode={launchMode === "inspection"}
         initialInspectionPreset={initialInspectionPreset || "a1"}
         onChangeEquipment={changeEquipment}
+        onMissionProgress={launchMode === "turnaround" ? handleMissionProgress : undefined}
         gyroAvailable={gyroAvailable}
         gyroEnabled={gyroEnabled}
         onToggleGyro={toggleGyro}
