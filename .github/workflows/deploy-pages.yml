@@ -2,6 +2,13 @@ name: Deploy RampReady to GitHub Pages
 
 on:
   workflow_dispatch:
+  # One opt-in A1 preview release after the reviewed mission source lands on main.
+  # Ordinary GitHub Pages visitors continue to see the existing equipment selector.
+  push:
+    branches:
+      - main
+    paths:
+      - src/simulation/a1TurnaroundMission.js
 
 
 permissions:
@@ -233,6 +240,9 @@ jobs:
           set -o pipefail
           mkdir -p live-phx-render-evidence
           npx playwright test --config=playwright.live-phx.config.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
+
+      - name: Verify opt-in A1 mission on live GitHub Pages
+        run: node tests/a1TurnaroundLiveBrowser.mjs
 
       - name: Upload simulator render evidence
         if: always()

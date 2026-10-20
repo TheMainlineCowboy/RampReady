@@ -1,0 +1,31 @@
+.a1-board{min-height:100svh;max-height:100svh;overflow-y:auto;background:radial-gradient(circle at 75% 0%,#283a51 0%,#141e2b 42%,#0c111a 100%);color:#f6f7fb;font-family:inherit}
+.a1-layout{max-width:1120px;margin:0 auto;padding:clamp(18px,4vw,48px) clamp(16px,3vw,32px) 52px}
+.a1-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.a1-eyebrow,.a1-section-label{margin:0 0 10px;color:#f9c553;letter-spacing:.11em;font-size:12px;font-weight:800;text-transform:uppercase}
+.a1-header h1{margin:0;font-size:clamp(30px,5vw,52px);letter-spacing:-.035em;line-height:1.08}
+.a1-subtitle{margin:10px 0 0;color:#c5d0df;font-size:15px}
+.a1-exit{background:#243448;color:#e8eef7;border:1px solid #42556a;border-radius:12px;padding:12px 16px;cursor:pointer;min-height:44px}
+.a1-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.a1-summary>div{display:flex;flex-direction:column;gap:6px;padding:15px 14px;background:#1e2d40;border:1px solid #32465e;border-radius:13px;min-height:75px}
+.a1-summary span{color:#acbbce;font-size:12px}.a1-summary strong{font-size:15px}
+.a1-progress{height:8px;background:#303f52;border-radius:20px;overflow:hidden;margin-bottom:24px}
+.a1-progress span{display:block;background:#f9c553;height:100%;transition:width .25s}
+.a1-briefing,.a1-release,.a1-finished{padding:clamp(20px,3vw,32px);background:#1b293a;border-radius:18px;border:1px solid #364c65;margin-bottom:22px}
+.a1-briefing h2,.a1-release h2,.a1-finished h2{margin:0 0 12px;font-size:clamp(23px,3vw,31px)}
+.a1-briefing p,.a1-release p,.a1-finished p{color:#c5d0df;line-height:1.55}
+.a1-main-action{background:#f9c553;color:#162133;border:0;border-radius:12px;padding:13px 20px;min-height:48px;font-weight:800;cursor:pointer}
+.a1-main-action:disabled{cursor:not-allowed;background:#667386;color:#d0d7e2}
+.a1-tasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 24px}
+.a1-task{display:flex;gap:13px;align-items:flex-start;background:#1c2b3d;border:1px solid #364c65;border-radius:15px;padding:18px;min-width:0}
+.a1-task-number{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:#39506a;color:#fff;font-size:14px;font-weight:800}
+.a1-task-done{border-color:#3f7868;background:#1d3838}.a1-task-done .a1-task-number{background:#2c816b}
+.a1-task-body{min-width:0;flex:1}
+.a1-task h3{margin:2px 0 6px;font-size:16px}
+.a1-task p{margin:0 0 14px;font-size:13px;color:#c1cbd8;line-height:1.45}
+.a1-task button{background:#324c6a;color:#f4f6fa;border:1px solid #527194;border-radius:10px;padding:11px 14px;min-height:42px;cursor:pointer;font-weight:650}
+.a1-task button:disabled{background:#293646;color:#a4b1c1;border-color:#384c61;cursor:not-allowed}
+.a1-final-score{font-size:clamp(48px,7vw,72px);display:block;color:#f9c553}
+.a1-final-score small{font-size:15px;color:#c5d0df}
+.a1-finished-buttons{display:flex;gap:12px;flex-wrap:wrap}
+.a1-disclaimer{font-size:12px;color:#aebed1;line-height:1.5}
+@media(max-width:760px){.a1-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.a1-tasks{grid-template-columns:1fr}.a1-header{gap:12px}.a1-exit{width:100%}.a1-summary>div{min-height:65px}}
