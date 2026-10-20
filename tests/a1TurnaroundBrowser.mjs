@@ -35,8 +35,12 @@ try {
   const page = await browser.newPage({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 1 });
   page.on("pageerror", (error) => errors.push(String(error)));
   await page.goto(base, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Gate A1 turnaround" }).waitFor({ timeout: 30000 });
-  await page.getByRole("button", { name: "Gate A1 turnaround" }).click();
+  await page.getByRole("button", { name: "Start training" }).waitFor({ timeout: 30000 });
+  assert.equal(await page.getByRole("button", { name: /Gate A1 turnaround/ }).count(), 0,
+    "Regular production menu must not expose preview gameplay");
+  await page.goto(base + "?a1Preview=1", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: /Gate A1 turnaround/ }).waitFor({ timeout: 30000 });
+  await page.getByRole("button", { name: /Gate A1 turnaround/ }).click();
   await page.getByRole("heading", { name: "Gate A1 turnaround" }).waitFor();
   await page.getByRole("button", { name: "Accept assignment" }).click();
   const release = page.getByRole("button", { name: "Begin live A1 pushback" });
