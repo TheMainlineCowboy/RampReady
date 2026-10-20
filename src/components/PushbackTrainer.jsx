@@ -13,6 +13,10 @@ import "./equipment-selection.css";
 const RampReadyLektroPrototypeTrainer = RampReadyStandupTrainer;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const VISUAL_INSPECTION_PRESETS = new Set(["a1", "a1Connection", "a14", "b14", "b15"]);
+// Preview is opt-in on GitHub Pages. The normal production equipment selector
+// remains unchanged without the explicit query parameter.
+const A1_TURNAROUND_PREVIEW_ENABLED = typeof window !== "undefined"
+  && new URLSearchParams(window.location.search).get("a1Preview") === "1";
 
 function requestedInspectionPreset() {
   if (typeof window === "undefined") return null;
@@ -291,7 +295,7 @@ export default function PushbackTrainer() {
             </div>
             <div className="rr-launch-actions">
               <button type="button" disabled={!trainingLaunchable} onClick={() => launch("training")}>Start training</button>
-              <button type="button" disabled={!trainingLaunchable} onClick={() => launch("turnaround")}>Gate A1 turnaround</button>
+              {A1_TURNAROUND_PREVIEW_ENABLED && <button type="button" disabled={!trainingLaunchable} onClick={() => launch("turnaround")}>Gate A1 turnaround · Preview</button>}
               <button type="button" disabled={!inspectionLaunchable} onClick={() => launch("inspection")}>Drive vehicle / inspect airport</button>
             </div>
           </div>
