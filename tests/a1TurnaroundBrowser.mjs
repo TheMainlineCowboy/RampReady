@@ -61,7 +61,10 @@ try {
   assert.match(await page.locator(".a1-summary").innerText(), /16\s*\/\s*16/);
   assert.match(await page.locator(".a1-summary").innerText(), /8\s*\/\s*9/);
   fs.mkdirSync("artifacts/a1", { recursive: true });
-  await page.screenshot({ path: "artifacts/a1/a1-ready-mobile.png", fullPage: true });
+  await page.locator(".a1-board").evaluate((element) => { element.scrollTop = 0; });
+  await page.screenshot({ path: "artifacts/a1/a1-mission-header-mobile.png" });
+  await page.locator(".a1-board").evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await page.screenshot({ path: "artifacts/a1/a1-ready-mobile.png" });
   assert.deepEqual(errors, [], "Browser page errors");
   console.log("PASS: actual React equipment selection -> A1 briefing -> recorded baggage -> gated pushback release");
 } finally {
