@@ -11,6 +11,7 @@ on:
       - 'tests/a1TurnaroundMission.test.mjs'
       - 'tests/a1TurnaroundBrowser.mjs'
       - '.github/workflows/a1-turnaround.yml'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 jobs:
   mission-contract-and-build:
