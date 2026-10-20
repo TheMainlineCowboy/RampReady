@@ -9,6 +9,7 @@ on:
       - 'src/components/RampReadyStandupTrainerTerminal4.jsx'
       - 'src/simulation/a1TurnaroundMission.js'
       - 'tests/a1TurnaroundMission.test.mjs'
+      - 'tests/a1TurnaroundBrowser.mjs'
       - '.github/workflows/a1-turnaround.yml'
   workflow_dispatch:
 jobs:
@@ -27,3 +28,17 @@ jobs:
         run: node --test tests/a1TurnaroundMission.test.mjs
       - name: Build review runtime
         run: npx vite build
+      - name: Install temporary Chromium smoke-test dependency
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Smoke-test real A1 mission UI on mobile viewport
+        run: node tests/a1TurnaroundBrowser.mjs
+      - name: Upload UI review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-a1-mobile-preview
+          path: artifacts/a1/*.png
+          if-no-files-found: warn
+          retention-days: 14
