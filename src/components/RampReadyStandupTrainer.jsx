@@ -407,6 +407,11 @@ export default function RampReadyStandupTrainer({
         stageRef.current = 8;
         setStage(8);
         setMessage(`Tug clear. Scenario complete. Score ${Math.round(scoreRef.current)}/100.`);
+        // Final score is sourced from the simulator's authoritative score ref,
+        // not the HUD state, which is intentionally updated at a slower rate.
+        if (typeof onMissionProgress === "function") {
+          onMissionProgress({ stage: 8, score: Math.round(scoreRef.current), inspectionMode: false });
+        }
       }
 
       const drive = driveRef.current;
