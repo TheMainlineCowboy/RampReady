@@ -146,6 +146,7 @@ export default function RampReadyStandupTrainer({
   equipmentId = "lektro-88",
   initialInspectionMode = false,
   onChangeEquipment,
+  onMissionProgress,
   gyroAvailable = true,
   gyroEnabled = false,
   onToggleGyro,
@@ -202,6 +203,14 @@ export default function RampReadyStandupTrainer({
   });
 
   useEffect(() => { stageRef.current = stage; }, [stage]);
+  // Read-only mission telemetry. The simulator retains authority over the
+  // entire tow sequence and its safety score; the operations board cannot
+  // mark a pushback complete by itself.
+  useEffect(() => {
+    if (typeof onMissionProgress === "function") {
+      onMissionProgress({ stage, score: hud.score, inspectionMode });
+    }
+  }, [stage, hud.score, inspectionMode, onMissionProgress]);
   useEffect(() => { cameraRef.current = cameraMode; }, [cameraMode]);
   useEffect(() => { inspectionPresetRef.current = inspectionPreset; }, [inspectionPreset]);
   useEffect(() => {
