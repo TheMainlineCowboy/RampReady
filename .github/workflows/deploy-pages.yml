@@ -241,6 +241,9 @@ jobs:
           mkdir -p live-phx-render-evidence
           npx playwright test --config=playwright.live-phx.config.js --reporter=line 2>&1 | tee live-phx-render-evidence/workflow.log
 
+      - name: Verify opt-in A1 mission on live GitHub Pages
+        run: node tests/a1TurnaroundLiveBrowser.mjs
+
       - name: Upload simulator render evidence
         if: always()
         uses: actions/upload-artifact@v4
