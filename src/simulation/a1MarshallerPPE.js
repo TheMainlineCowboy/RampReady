@@ -41,50 +41,21 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
     if(topIndex>=0)suitMeshes.push({mesh:obj,index:topIndex});
   });
   if(!suitMeshes.length)throw Error("Animated original suit surface unavailable: cannot fit a vest without the source skin");
+  // Overlaying selected triangles produced jagged fluorescent shoulder spikes
+  // even when every triangle vertex stayed within a torso bounding box.
+  // Color the ORIGINAL rigged jacket's torso surface in-place instead.
+  // This retains the source topology, skin weights, seams and shoulder drape,
+  // without adding a separate mesh that intersects animated sleeves.
   let applied=0;
   for(const {mesh,index:matIndex} of suitMeshes){
-    const src=mesh.geometry,xyz=src.getAttribute("position"),normal=src.getAttribute("normal");
-    if(!xyz||!normal||!src.getAttribute("skinIndex")||!src.getAttribute("skinWeight"))throw Error("Source suit lacks skin data");
-    const originalIndices=src.index?.array || Uint32Array.from({length:xyz.count},(_,i)=>i);
-    const chunks=src.groups?.length?src.groups:[{start:0,count:originalIndices.length,materialIndex:0}];
-    const selection=[];
-    for(const part of chunks){
-      if(part.materialIndex!==matIndex)continue;
-      for(let i=part.start;i<part.start+part.count;i+=3){
-        const a=originalIndices[i],b=originalIndices[i+1],c=originalIndices[i+2];
-        const x=(xyz.getX(a)+xyz.getX(b)+xyz.getX(c))/3;
-        const y=(xyz.getY(a)+xyz.getY(b)+xyz.getY(c))/3;
-        // Exactly follow shirt chest/back; exclude upper-arm and lower sleeve.
-        // All three vertices must remain on the torso. The old triangle
-        // centroid test admitted sleeve triangles, producing white spikes at
-        // the armholes as the guide raised both arms.
-        const torso=[a,b,c].every(i=>Math.abs(xyz.getX(i))<.204
-          && xyz.getY(i)>1.012&&xyz.getY(i)<1.405);
-        if(torso)selection.push(a,b,c);
-      }
-    }
-    if(selection.length<90)continue;
-    const g=src.clone();g.setIndex(selection);g.clearGroups();
-    // Cloth surface is slightly offset from the rigged jacket, avoiding
-    // both clipping and the previous oversized barrel/armor silhouette.
-    const p=g.getAttribute("position"),n=g.getAttribute("normal");
-    for(let v=0;v<p.count;v++){
-      p.setXYZ(v,p.getX(v)+n.getX(v)*.0055,
-        p.getY(v)+n.getY(v)*.0055,p.getZ(v)+n.getZ(v)*.0055);
-    }
-    p.needsUpdate=true;
-    g.computeBoundingSphere();geometries.add(g);
-    const vestMat=createA1SafetyVestMaterial(THREE);
-    materials.add(vestMat);
-    const vest=new THREE.SkinnedMesh(g,vestMat);
-    vest.name="Torso-fitted high visibility fabric vest (shared skin weights)";
-    vest.bindMode=mesh.bindMode;
-    vest.position.copy(mesh.position);vest.rotation.copy(mesh.rotation);
-    vest.scale.copy(mesh.scale);vest.bind(mesh.skeleton,mesh.bindMatrix.clone());
-    mesh.parent.add(vest);vest.castShadow=true;vest.receiveShadow=true;
+    const materialsIn=Array.isArray(mesh.material)?mesh.material:[mesh.material];
+    const vestMaterial=createA1SafetyVestMaterial(THREE);
+    materials.add(vestMaterial);
+    const replace=materialsIn.map((material,index)=>index===matIndex?vestMaterial:material);
+    mesh.material=Array.isArray(mesh.material)?replace:replace[0];
     applied++;
   }
-  if(!applied)throw Error("No valid torso surface triangles for fitted vest");
+  if(!applied)throw Error("No original animated jacket surface for fitted vest");
   // Fit every part to measured, skinned skull dimensions. The old fixed
   // offsets let large ear cups float below and outside the real ears.
   const head=bones.head;
