@@ -42,7 +42,7 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}={}){
  const required=["head","spine_03","pelvis",
    "upperarm_l","upperarm_r","lowerarm_l","lowerarm_r","hand_l","hand_r"];
  if(required.some(n=>!bones[n]))throw Error("The real human GLB lacks required arm/hand/head skeleton bones");
- const ppe=installA1MarshallingPPE(THREE,{root,bones});
+ const ppe=installA1MarshallingPPE(THREE,{root,bones,withWands:false});
  const mixer=new THREE.AnimationMixer(root);
  const idle=gltf.animations.find(c=>/idle.standing/i.test(c.name));
  const walk=gltf.animations.find(c=>/walk.relaxed/i.test(c.name));
@@ -55,10 +55,11 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}={}){
  return {
    person,
    setCue:guide.setCue,
+   setDistanceMeters:guide.setDistanceMeters,
    setWalking:guide.setWalking,
    get cue(){return guide.cue;},
    update:guide.update,
-   getPoseMetrics:guide.getMetrics,
+   getPoseMetrics:()=>({...guide.getMetrics(),headsetFit:ppe.headsetFit,vestApplied:ppe.vestApplied}),
    dispose(){
      mixer.stopAllAction();ppe.dispose();
      person.parent?.remove(person);
