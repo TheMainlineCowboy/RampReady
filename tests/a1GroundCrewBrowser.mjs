@@ -27,7 +27,7 @@ try{
  assert.equal(await page.getByRole("button",{name:"Wait for ground crew"}).isDisabled(),true);
  fs.mkdirSync("artifacts/a1-crew",{recursive:true});
  await page.screenshot({path:"artifacts/a1-crew/a1-belt-loader-servicing-mobile.png"});
- await page.waitForFunction(()=>document.querySelector("canvas.trainerCanvas")?.dataset.a1CrewClear==="true",{timeout:120000});
+ await page.waitForFunction(()=>document.querySelector("canvas.trainerCanvas")?.dataset.a1CrewClear==="true",null,{timeout:120000});
  assert.equal(await page.getByRole("button",{name:"Ready",exact:true}).isEnabled(),true);
  const dataset=await canvas.evaluate(el=>({phase:el.dataset.a1CrewPhase,signal:el.dataset.a1CrewSignal,loaderMeters:el.dataset.a1CrewBeltLoaderMeters}));
  assert.equal(dataset.phase,"ready");
