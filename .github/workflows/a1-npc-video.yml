@@ -1,0 +1,41 @@
+name: A1 Real NPC Mobile MP4 Evidence
+on:
+  pull_request:
+    paths:
+      - 'a1-crew-preview.html'
+      - 'tests/a1GroundCrewVideo.mjs'
+      - 'scripts/download-a1-cc0-human-references.mjs'
+      - 'src/simulation/a1RealHumanCrew.js'
+      - 'src/simulation/a1GroundCrewScene.js'
+      - '.github/workflows/a1-npc-video.yml'
+  workflow_dispatch:
+jobs:
+  render-actual-characters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install app
+        run: npm ci
+      - name: Stage exact checksummed human models
+        run: node scripts/download-a1-cc0-human-references.mjs
+      - name: Install temporary browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Capture the moving Three.js crew into a phone-playable MP4
+        run: node tests/a1GroundCrewVideo.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-a1-human-npc-mp4
+          path: |
+            artifacts/a1-crew/*.mp4
+            artifacts/a1-crew/*.png
+          if-no-files-found: warn
+          retention-days: 14
