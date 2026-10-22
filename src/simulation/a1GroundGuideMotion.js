@@ -21,6 +21,13 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
   let renderedDistance=A1_APPROACH_DISTANCE_METERS;
   let cue="hold",walking=false;
   const last={l:null,r:null},signs={};
+  // Important: save shoulder-chain translations. IK is rotation-only;
+  // translation on upper-arm or clavicle bones visually pulls sleeves out
+  // of their sockets and is never a valid marshalling pose.
+  const bindOffsets={};
+  for(const id of ["l","r"]){
+    bindOffsets[id]=bones["upperarm_"+id].position.clone();
+  }
   function localOf(bone){return person.worldToLocal(bone.getWorldPosition(vec()));}
   function signFor(id){
     if(signs[id])return signs[id];
@@ -36,8 +43,12 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // upward; wrists only cross the midline in the last part of the approach.
     const outer=.50*(1-pose.raise);
     const rising=.54*pose.raise;
-    const crossing=-.275*pose.crossed;
-    return start.add(new THREE.Vector3(sign*(outer+crossing),rising-.025,.065));
+    // Cross *forearms* above the forehead, not shoulder joints. Keep the
+    // wrists ahead of the face as they converge so the upper arms remain
+    // seated at the clavicles instead of folding through the neck.
+    const crossing=-.265*pose.crossed;
+    return start.add(new THREE.Vector3(
+      sign*(outer+crossing),rising-.025,.07+.11*pose.crossed));
   }
   function boneToward(bone,child,target){
     bone.updateWorldMatrix(true,true);
@@ -64,11 +75,21 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     const along=(l1*l1-l2*l2+distance*distance)/(2*distance);
     const side=signFor(id);
     const radial=Math.sqrt(Math.max(0,l1*l1-along*along));
-    const bend=pose.crossed>.5
-      ?new THREE.Vector3(side*.24,.10,.13)
-      :new THREE.Vector3(side*.41,-.015,.10);
+    // Never switch elbow pole abruptly at the stop threshold: the old
+    // crossed>.5 branch snapped an arm over a different IK solution and
+    // made the shoulder look dislocated. Interpolate the SAME outward,
+    // anterior elbow plane continuously for the entire tug approach.
+    const bend=new THREE.Vector3(side*.44,-.15,.20)
+      .lerp(new THREE.Vector3(side*.31,.09,.24),pose.crossed);
     const targetBend=person.localToWorld(wristLocal.clone().add(bend)).sub(request);
-    targetBend.addScaledVector(axis,-targetBend.dot(axis)).normalize();
+    targetBend.addScaledVector(axis,-targetBend.dot(axis));
+    if(targetBend.lengthSq()<1e-8){
+      const fallback=person.getWorldQuaternion(quat())
+        .multiply(new THREE.Quaternion());
+      targetBend.set(side,0,.25).applyQuaternion(fallback);
+      targetBend.addScaledVector(axis,-targetBend.dot(axis));
+    }
+    targetBend.normalize();
     const targetElbow=a.clone().addScaledVector(axis,along).addScaledVector(targetBend,radial);
     boneToward(upper,fore,targetElbow);
     boneToward(fore,hand,finish);
@@ -116,6 +137,11 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
         last[id].lerp(desired,1-Math.exp(-dt/.19));
         solve(id,last[id],pose);
         moveWands(id,pose);
+        // Enforce rotational IK. The source arm joint remains at the
+        // shoulder even while the forearm crosses above the head.
+        if(bones["upperarm_"+id].position.distanceTo(bindOffsets[id])>.002){
+          throw Error("Marshaller shoulder joint translated out of socket: "+id);
+        }
       }
     },
     getMetrics(){
@@ -123,7 +149,9 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
       for(const id of ["l","r"]){
         out[id]={shoulder:localOf(bones["upperarm_"+id]).toArray(),
           elbow:localOf(bones["lowerarm_"+id]).toArray(),
-          hand:localOf(bones["hand_"+id]).toArray()};
+          hand:localOf(bones["hand_"+id]).toArray(),
+          shoulderLocalPosition:bones["upperarm_"+id].position.toArray(),
+          shoulderBindPosition:bindOffsets[id].toArray()};
       }
       return out;
     }
