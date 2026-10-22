@@ -22,7 +22,9 @@ try{
  const page=await browser.newPage({viewport:{width:600,height:820},deviceScaleFactor:1});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.goto(base+"a1-single-marshaller.html",{waitUntil:"domcontentloaded"});
- await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.marshallerLoaded==="true",null,{timeout:80000});
+ await page.waitForFunction(()=>["true","error"].includes(document.querySelector("canvas")?.dataset.marshallerLoaded),null,{timeout:50000});
+ const status=await page.locator("canvas").getAttribute("data-marshaller-loaded");
+ if(status==="error")throw Error("Actual NPC model/load error: "+await page.locator("#errors").innerText()+" browser: "+JSON.stringify(errors));
  const width=Number(await page.locator("canvas").getAttribute("data-ear-fit-width"));
  assert.ok(width>.11&&width<.29,"Ear defenders must be fitted to measured human head");
  await page.evaluate(()=>window.__reviewCapture.begin());
