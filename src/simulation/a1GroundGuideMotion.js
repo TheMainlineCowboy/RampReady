@@ -46,11 +46,11 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // leaving no elbow-bend freedom and visually pulling the sleeve away from
     // the shoulder. Crossing needs to happen via bent FOREARMS, not via
     // upper arms pointing inward through the neck.
-    const rising=.35*pose.raise;
+    const rising=.32*pose.raise;
     // Cross *forearms* above the forehead, not shoulder joints. Keep the
     // wrists ahead of the face as they converge so the upper arms remain
     // seated at the clavicles instead of folding through the neck.
-    const crossing=-.24*pose.crossed;
+    const crossing=-.21*pose.crossed;
     return start.add(new THREE.Vector3(
       sign*(outer+crossing),rising-.025,.07+.11*pose.crossed));
   }
