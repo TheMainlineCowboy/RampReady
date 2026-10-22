@@ -102,10 +102,10 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   // Calibrate its ear contact to the full face: the uncorrected estimate put
   // the cups *in the hair*, visibly above both ears in the real render.
   const earsY=fit.earsY-.145;
-  const cupHeight=Math.max(.066,Math.min(.080,fit.height*.52));
+  const cupHeight=Math.max(.080,Math.min(.093,fit.height*.75));
   const cupDepth=cupHeight*.76;
   const cupThickness=.022;
-  const shellWidth=fit.halfWidth+.013;
+  const shellWidth=fit.halfWidth+.021;
   for(const sign of [-1,1]) {
     const x=fit.centerX+sign*(fit.halfWidth-.002);
     // The inner seal physically overlaps the side of the head by 2mm.
@@ -127,16 +127,16 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   for(let i=0;i<=10;i++){
     const u=i/10,theta=Math.PI*(1-u);
     arc.push([fit.centerX+Math.cos(theta)*(shellWidth+.004),
-      earsY+(fit.top-earsY+.046)*Math.sin(theta),
+      earsY+(fit.top-earsY-.020)*Math.sin(theta),
       fit.earZ]);
   }
   tube(headset,"headband resting against crown",arc,.007,dark);
   const mouthY=earsY-cupHeight*.52;
-  const micFront=fit.front+.009;
+  const micFront=fit.front+.065;
   tube(headset,"flexible noise-canceling boom mic",[
     [fit.centerX-shellWidth,earsY-.018,fit.earZ],
     [fit.centerX-fit.halfWidth*.9,earsY-.035,fit.earZ+.024],
-    [fit.centerX-fit.halfWidth*.55,mouthY,fit.front-.006],
+    [fit.centerX-fit.halfWidth*.55,mouthY,fit.front+.035],
     [fit.centerX-.021,mouthY,micFront]
   ],.0055,graphite);
   ellipsoid(headset,"microphone at lip level",seal,
