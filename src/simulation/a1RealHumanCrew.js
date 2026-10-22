@@ -74,7 +74,7 @@ function addWands(THREE,human){
     const bone=human.bones["hand_"+side];
     const wand=new THREE.Mesh(new THREE.CylinderGeometry(.019,.024,.37,12),mat);
     wand.name="Animated illuminated marshal baton";
-    wand.position.set(0,-.15,.04);
+    wand.position.set(0,.255,.055); // Extend beyond the knuckles, not inside the wrist
     wand.rotation.z=.10;
     bone.add(wand);
   }
@@ -145,12 +145,12 @@ export async function installA1RealHumanCrew(THREE,{loader, driverProxy, marshal
     }else if(signal==="approach"){
       // Repeated, controlled beckoning motion with clear separation.
       const pulse=Math.sin(elapsed*4.5)*.12;
-      elbowOffset=[outward*.28,-.04,-.26];
-      handOffset=[outward*.38,-.28+pulse,-.49];
+      elbowOffset=[outward*.26,.08,-.34];
+      handOffset=[outward*.34,-.18+pulse,-.70];
     }else if(signal==="hold"){
       // Stationary signal: arms visible in front and offset from the body.
-      elbowOffset=[outward*.30,.08,-.16];
-      handOffset=[outward*.47,.25,-.35];
+      elbowOffset=[outward*.29,.08,-.25];
+      handOffset=[outward*.39,.26,-.47];
     }else{
       return; // Preserve the original idle/walk animation.
     }
