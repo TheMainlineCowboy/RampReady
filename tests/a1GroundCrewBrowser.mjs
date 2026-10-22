@@ -26,13 +26,15 @@ try{
  await page.getByRole("button",{name:"Wait for ground crew"}).waitFor({timeout:10000});
  assert.equal(await page.getByRole("button",{name:"Wait for ground crew"}).isDisabled(),true);
  fs.mkdirSync("artifacts/a1-crew",{recursive:true});
- await page.screenshot({path:"artifacts/a1-crew/a1-belt-loader-servicing-mobile.png"});
+ await page.waitForTimeout(1200);
+ // Capture the REAL WebGL drawing surface, not the large runtime-loading UI.
+ await canvas.screenshot({path:"artifacts/a1-crew/a1-belt-loader-servicing-mobile.png"});
  await page.waitForFunction(()=>document.querySelector("canvas.trainerCanvas")?.dataset.a1CrewClear==="true",null,{timeout:120000});
  assert.equal(await page.getByRole("button",{name:"Ready",exact:true}).isEnabled(),true);
  const dataset=await canvas.evaluate(el=>({phase:el.dataset.a1CrewPhase,signal:el.dataset.a1CrewSignal,loaderMeters:el.dataset.a1CrewBeltLoaderMeters}));
  assert.equal(dataset.phase,"ready");
  assert.ok(Number(dataset.loaderMeters)>10,"belt loader actually traveled clear");
- await page.screenshot({path:"artifacts/a1-crew/a1-crew-cleared-mobile.png"});
+ await canvas.screenshot({path:"artifacts/a1-crew/a1-crew-cleared-mobile.png"});
  assert.deepEqual(errors,[], "No uncaught errors in the preview runtime");
  console.log("PASS real Three.js preview: NPCs present; belt loader cleared; tug/Ready held until guide arrived",dataset);
 }finally{await browser?.close();server.kill("SIGTERM");}
