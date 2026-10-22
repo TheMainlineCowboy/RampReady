@@ -15,6 +15,7 @@ import {
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
 import { createA1GroundCrewScene } from "../simulation/a1GroundCrewScene.js";
 import "./RampReadyTrainer.css";
+import "./a1-ground-crew.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
 
