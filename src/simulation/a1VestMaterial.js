@@ -29,8 +29,11 @@ export function createA1SafetyVestMaterial(THREE){
       float py=vA1VestPosition.y;
       // Tailored vest outline: narrow toward shoulder openings, wide at
       // the lower chest. Crisp hem/armhole boundaries, not airbrushed dye.
-      float shoulderTaper=smoothstep(1.28,1.465,py);
-      float halfVestWidth=mix(.225,.152,shoulderTaper);
+      // Keep fluorescent/reflective surface OUT of the sleeve caps.
+      // The previous wide second stripe painted both moving shoulder sleeves
+      // silver, accentuating the 'out of socket' look at the crossed stop.
+      float shoulderTaper=smoothstep(1.12,1.415,py);
+      float halfVestWidth=mix(.216,.144,shoulderTaper);
       float torsoX=1.0-smoothstep(halfVestWidth-.004,halfVestWidth+.004,px);
       float hem=smoothstep(1.033,1.043,py);
       float neckline=1.0-smoothstep(1.460,1.475,py);
@@ -51,6 +54,6 @@ export function createA1SafetyVestMaterial(THREE){
       `
     );
   };
-  material.customProgramCacheKey=()=> "a1_original_suit_surface_vest_tailored_edges_v4";
+  material.customProgramCacheKey=()=> "a1_original_suit_surface_vest_sleeve_protected_v5";
   return material;
 }
