@@ -38,13 +38,16 @@ try{
  await page.goto(base+"tests/a1CrewRigPreview.html",{waitUntil:"domcontentloaded"});
  const isolated=page.locator("canvas");
  await isolated.waitFor({timeout:30000});
+ await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1HumanStatus==="ready",null,{timeout:120000});
+ await page.getByRole("button",{name:"Replay ground crew"}).click();
  await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewPhase==="servicing");
- await isolated.screenshot({path:"artifacts/a1-crew/a1-rig-servicing-mobile.png"});
+ await isolated.screenshot({path:"artifacts/a1-crew/a1-real-human-driver-mobile.png"});
  await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewClear==="true",null,{timeout:120000});
  const dataset=await isolated.evaluate(el=>({phase:el.dataset.a1CrewPhase,clear:el.dataset.a1CrewClear}));
  assert.equal(dataset.phase,"ready");
  assert.equal(dataset.clear,"true");
- await isolated.screenshot({path:"artifacts/a1-crew/a1-crew-cleared-mobile.png"});
+ assert.equal(await isolated.getAttribute("data-a1-human-status"),"ready");
+ await isolated.screenshot({path:"artifacts/a1-crew/a1-real-human-marshaller-mobile.png"});
  assert.deepEqual(errors,[], "No uncaught errors in the preview runtime");
  console.log("PASS actual production trainer initial safety gate + real NPC Three.js rig motion and clear state",dataset);
 }finally{await browser?.close();server.kill("SIGTERM");}
