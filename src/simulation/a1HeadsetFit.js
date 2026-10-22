@@ -41,8 +41,11 @@ export function measureHeadForPPE(THREE, {root,head}) {
     bottom=quantile(ys,.08),top=quantile(ys,.95),
     back=quantile(zs,.08),front=quantile(zs,.92);
   const width=right-left,height=top-bottom;
-  if(width<.11||width>.29||height<.16||height>.43)
+  if(width<.11||width>.29||height<.095||height>.43)
     throw Error("Head dimensions outside human range: "+JSON.stringify({width,height,points:points.length}));
+  // This vertical extent is the *head-bone-influenced skin patch*, not the
+  // entire anatomical cranium; hairline and neck often use other bones.
+  // Horizontal face/skull extents are still strong for locating the ear seals.
   // Ear landmark lies slightly behind the face, just below eye level.
   const earsY=bottom+height*.50;
   const earZ=back+(front-back)*.46;
