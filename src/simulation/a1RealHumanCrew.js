@@ -94,15 +94,73 @@ export async function installA1RealHumanCrew(THREE,{loader, driverProxy, marshal
   marshaller.holder.position.copy(marshalProxy.root.position);
   driver.holder.position.copy(driverProxy.root.position);
   driver.holder.rotation.copy(driverProxy.root.rotation);
-  driver.holder.scale.copy(driverProxy.root.scale);
+  // Retain adult body proportions; the 0.8x placeholder scale made the driver
+  // look miniature compared with the vehicle. The hip now rests on the seat.
+  driver.holder.scale.setScalar(1);
+  driver.holder.position.y = 0.08;
   // The driver is seated in the vehicle for the clearance/departure sequence;
   // a pose sampled from the original Sit_Stand clip is held rather than looping.
   driver.actions.sit.play();
   driver.mixer.setTime(driver.sit.duration*.55);
   driver.actions.sit.paused=true;
   driver.mixer.update(0);
+  marshaller.holder.rotation.y = Math.PI; // Face the approaching tug, not the aircraft.
   marshaller.play("idle",0);
   addWands(THREE,marshaller);
+  // Aim the real articulated arm hierarchy at physically meaningful elbow
+  // and wrist positions. Never compound Euler rotations frame-over-frame.
+  const vec = () => new THREE.Vector3();
+  const shoulderWorld=vec(), elbowWorld=vec(), targetWorld=vec();
+  const targetHand=vec(), restLocal=vec(), parentWorld=new THREE.Quaternion();
+  const difference = new THREE.Quaternion();
+  function alignBone(bone, child, target, strength=0.94) {
+    bone.updateWorldMatrix(true,true);
+    bone.getWorldPosition(shoulderWorld);
+    child.getWorldPosition(elbowWorld);
+    const current = elbowWorld.clone().sub(shoulderWorld).normalize();
+    const desired = target.clone().sub(shoulderWorld).normalize();
+    if (current.lengthSq()<.5 || desired.lengthSq()<.5) return;
+    difference.setFromUnitVectors(current, desired);
+    bone.parent.getWorldQuaternion(parentWorld);
+    const rotated = parentWorld.clone().invert().multiply(difference)
+      .multiply(parentWorld).multiply(bone.quaternion.clone());
+    bone.quaternion.slerp(rotated, strength);
+    bone.updateWorldMatrix(true,true);
+  }
+  function guideArm(side, signal, elapsed) {
+    const shoulder=marshaller.bones["upperarm_"+side];
+    const elbow=marshaller.bones["lowerarm_"+side];
+    const wrist=marshaller.bones["hand_"+side];
+    if (!shoulder || !elbow || !wrist) return;
+    marshaller.holder.updateWorldMatrix(true,true);
+    shoulder.getWorldPosition(shoulderWorld);
+    restLocal.copy(shoulderWorld);
+    marshaller.holder.worldToLocal(restLocal);
+    const outward = Math.sign(restLocal.x)|| (side==="l"?-1:1);
+    let elbowOffset, handOffset;
+    if(signal==="stop"){
+      // Two wands above the head, crossed: universal aircraft STOP cue.
+      elbowOffset=[outward*.16,.29,-.20];
+      handOffset=[-restLocal.x+outward*.10,.51,-.31];
+    }else if(signal==="approach"){
+      // Repeated, controlled beckoning motion with clear separation.
+      const pulse=Math.sin(elapsed*4.5)*.12;
+      elbowOffset=[outward*.28,-.04,-.26];
+      handOffset=[outward*.38,-.28+pulse,-.49];
+    }else if(signal==="hold"){
+      // Stationary signal: arms visible in front and offset from the body.
+      elbowOffset=[outward*.30,.08,-.16];
+      handOffset=[outward*.47,.25,-.35];
+    }else{
+      return; // Preserve the original idle/walk animation.
+    }
+    const elbowPoint=marshaller.holder.localToWorld(
+      restLocal.clone().add(new THREE.Vector3(...elbowOffset)));
+    const wristPoint=marshaller.holder.localToWorld(
+      restLocal.clone().add(new THREE.Vector3(...handOffset)));
+    alignBone(shoulder,elbow,elbowPoint);
+    alignBone(elbow,wrist,wristPoint);
+  }
   marshalProxy.root.visible=false;driverProxy.root.visible=false;
   let lastSignal="hold";
   return {
@@ -111,18 +169,8 @@ export async function installA1RealHumanCrew(THREE,{loader, driverProxy, marshal
       const walking=status.marshalWalkProgress>0 && status.marshalWalkProgress<1;
       marshaller.play(walking?"walk":"idle");
       marshaller.update(dt);
-      // Hand motions are applied AFTER the skeletal animation is sampled,
-      // preserving the original legs, spine and weight shifts.
-      for(const side of ["l","r"]){
-        const upper=marshaller.bones["upperarm_"+side];
-        if(!upper)continue;
-        if(status.signal==="approach"){
-          upper.rotation.z += (side==="l" ? -1.00 : 1.00)+Math.sin(status.elapsed*5)*.17;
-        }else if(status.signal==="stop"){
-          upper.rotation.z += side==="l" ? -1.9 : 1.9;
-        }else if(status.signal==="hold"){
-          upper.rotation.z += side==="l" ? -.65 : .65;
-        }
+      if (!walking) {
+        for (const side of ["l","r"]) guideArm(side,status.signal,status.elapsed);
       }
       lastSignal=status.signal;
     },
