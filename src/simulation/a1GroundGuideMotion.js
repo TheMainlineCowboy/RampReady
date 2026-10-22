@@ -1,99 +1,101 @@
-// Single guide-man signals for a GSE driver approaching the aircraft.
-// Reference: IATA IGOM chapter 4.8.3 (guide man, NOT pilot-aircraft marshalling).
-// Vehicle forward: arms slightly aside, repeated upward/backward beckoning.
-// Slow: patting motion. Stop: arms rise to cross above head.
-// Each target is an anatomical wrist target, reached via analytic two-bone IK,
-// then smoothed from the preceding target (no instantaneous pose snapping).
+// Real LEKTRO approach guide: continuously raises both arms as the tug nears.
+// This is based on the user's PHX ramp procedure, not aircraft-to-pilot
+// marshalling cards. At the nose-gear stop point forearms cross overhead.
+// No wand gestures are required for this specific tug positioning workflow.
 export const A1_GUIDE_CUES=Object.freeze(["hold","guide","slow","stop"]);
+export const A1_APPROACH_DISTANCE_METERS=7.0;
+const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
+const smooth=(x)=>{const y=clamp(x,0,1);return y*y*(3-2*y);};
+export function getA1ApproachPose(meters){
+  const distanceMeters=clamp(Number.isFinite(meters)?meters:A1_APPROACH_DISTANCE_METERS,0,A1_APPROACH_DISTANCE_METERS);
+  const progress=1-distanceMeters/A1_APPROACH_DISTANCE_METERS;
+  const raise=smooth(progress);
+  const crossed=smooth((progress-.88)/.12);
+  return {distanceMeters,progress,raise,crossed,
+    phase:distanceMeters<=.2?"nose-gear-stop":progress<.72?"straight-arms":"arms-rising"};
+}
 export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,walkAction,grips}) {
-  const V=()=>new THREE.Vector3(),Q=()=>new THREE.Quaternion();
-  let cue="hold",elapsed=0,walking=false;
-  const cached={l:null,r:null};
-  const sideOf={};
-  const scratch={base:V(),elbow:V(),wrist:V(),pquat:Q(),dquat:Q()};
-  function side(side){
-    if(!sideOf[side]){
-      const b=bones["upperarm_"+side];
-      b.updateWorldMatrix(true,true);
-      const x=person.worldToLocal(b.getWorldPosition(V())).x;
-      sideOf[side]=Math.sign(x)||(side==="l"?-1:1);
-    }
-    return sideOf[side];
+  const vec=()=>new THREE.Vector3(),quat=()=>new THREE.Quaternion();
+  const worldPoint=()=>new THREE.Vector3();
+  let targetDistance=A1_APPROACH_DISTANCE_METERS;
+  let renderedDistance=A1_APPROACH_DISTANCE_METERS;
+  let cue="hold",walking=false;
+  const last={l:null,r:null},signs={};
+  function localOf(bone){return person.worldToLocal(bone.getWorldPosition(vec()));}
+  function signFor(id){
+    if(signs[id])return signs[id];
+    person.updateWorldMatrix(true,true);
+    const x=localOf(bones["upperarm_"+id]).x;
+    signs[id]=Math.sign(x)||(id==="l"?-1:1);
+    return signs[id];
   }
-  function localOf(bone){return person.worldToLocal(bone.getWorldPosition(V()));}
-  function desiredHand(sideLabel,cue,t){
-    const shoulder=localOf(bones["upperarm_"+sideLabel]);
-    const sign=side(sideLabel);
-    if(cue==="hold")return shoulder.add(new THREE.Vector3(sign*.385,-.285,.025));
-    if(cue==="guide"){
-      // Beckon TOWARD the guide, rising from just below shoulder height to
-      // just above shoulder level; no erroneous downward 'guide' gesture.
-      const wave=.5-.5*Math.cos(t*4.6);
-      return shoulder.add(new THREE.Vector3(sign*.27,-.20+wave*.285,.19+wave*.025));
-    }
-    if(cue==="slow"){
-      const pat=.5+.5*Math.cos(t*3.2);
-      return shoulder.add(new THREE.Vector3(sign*.245,-.245-pat*.095,.14));
-    }
-    // Crossed wands overhead, bent at wrists and with both elbows outside
-    // the torso. Not the straight-up un-crossed identify-gate signal.
-    return shoulder.add(new THREE.Vector3(sign*.09,.375,.11));
+  function targetWrist(id,pose){
+    const start=localOf(bones["upperarm_"+id]);
+    const sign=signFor(id);
+    // Arms begin horizontally out at shoulder height. They gradually rotate
+    // upward; wrists only cross the midline in the last part of the approach.
+    const outer=.44*(1-pose.raise);
+    const rising=.54*pose.raise;
+    const crossing=-.275*pose.crossed;
+    return start.add(new THREE.Vector3(sign*(outer+crossing),rising-.025,.065));
   }
-  function rotateToward(bone,child,targetWorld){
+  function boneToward(bone,child,target){
     bone.updateWorldMatrix(true,true);
-    const from=child.getWorldPosition(V()).sub(bone.getWorldPosition(V())).normalize();
-    const to=targetWorld.clone().sub(bone.getWorldPosition(V())).normalize();
-    if(from.lengthSq()<.5||to.lengthSq()<.5)return;
-    const delta=Q().setFromUnitVectors(from,to);
-    const parent=bone.parent.getWorldQuaternion(Q());
-    const localDelta=parent.clone().invert().multiply(delta).multiply(parent);
-    bone.quaternion.premultiply(localDelta);bone.updateWorldMatrix(true,true);
+    const origin=bone.getWorldPosition(vec());
+    const from=child.getWorldPosition(vec()).sub(origin).normalize();
+    const toward=target.clone().sub(origin).normalize();
+    if(from.lengthSq()<.9||toward.lengthSq()<.9)return;
+    const change=quat().setFromUnitVectors(from,toward);
+    const parent=bone.parent.getWorldQuaternion(quat());
+    bone.quaternion.premultiply(parent.clone().invert().multiply(change).multiply(parent));
+    bone.updateWorldMatrix(true,true);
   }
-  function solveArm(sideLabel,targetLocal){
-    const upper=bones["upperarm_"+sideLabel],fore=bones["lowerarm_"+sideLabel],hand=bones["hand_"+sideLabel];
+  function solve(id,wristLocal,pose){
+    const upper=bones["upperarm_"+id],fore=bones["lowerarm_"+id],hand=bones["hand_"+id];
     upper.updateWorldMatrix(true,true);
-    const start=upper.getWorldPosition(V()),elbow=fore.getWorldPosition(V()),wrist=hand.getWorldPosition(V());
-    const upperLen=start.distanceTo(elbow),foreLen=elbow.distanceTo(wrist);
-    if(upperLen<.12||foreLen<.12)return;
-    const destination=person.localToWorld(targetLocal.clone());
-    const toward=destination.clone().sub(start);
-    const requested=toward.length();
-    const reach=Math.min(upperLen+foreLen-.008,Math.max(Math.abs(upperLen-foreLen)+.005,requested));
-    toward.normalize();const target=start.clone().addScaledVector(toward,reach);
-    const axial=(upperLen*upperLen-foreLen*foreLen+reach*reach)/(2*reach);
-    const radial=Math.sqrt(Math.max(0,upperLen*upperLen-axial*axial));
-    // Outward, slightly toward the tug: resolves a unique natural elbow bend
-    // and prevents elbows tunneling into the spine or crossing each other.
-    const sign=side(sideLabel);
-    const bend=cue==="stop"
-      ?new THREE.Vector3(sign*.28,.11,.10)
-      :new THREE.Vector3(sign*.34,-.32,.11);
-    const reference=person.localToWorld(targetLocal.clone().add(bend)).sub(destination);
-    const outward=reference.addScaledVector(toward,-reference.dot(toward)).normalize();
-    const elbowGoal=start.clone().addScaledVector(toward,axial).addScaledVector(outward,radial);
-    rotateToward(upper,fore,elbowGoal);
-    rotateToward(fore,hand,target);
+    const a=upper.getWorldPosition(vec()),b=fore.getWorldPosition(vec()),c=hand.getWorldPosition(vec());
+    const l1=a.distanceTo(b),l2=b.distanceTo(c);
+    if(l1<.12||l2<.12)throw Error("NPC arm bone length implausible");
+    const request=person.localToWorld(wristLocal.clone());
+    const axis=request.clone().sub(a);
+    const distance=clamp(axis.length(),Math.abs(l1-l2)+.003,l1+l2-.003);
+    axis.normalize();
+    const finish=a.clone().addScaledVector(axis,distance);
+    const along=(l1*l1-l2*l2+distance*distance)/(2*distance);
+    const side=signFor(id);
+    const radial=Math.sqrt(Math.max(0,l1*l1-along*along));
+    const bend=pose.crossed>.5
+      ?new THREE.Vector3(side*.24,.10,.13)
+      :new THREE.Vector3(side*.30,-.24,.10);
+    const targetBend=person.localToWorld(wristLocal.clone().add(bend)).sub(request);
+    targetBend.addScaledVector(axis,-targetBend.dot(axis)).normalize();
+    const targetElbow=a.clone().addScaledVector(axis,along).addScaledVector(targetBend,radial);
+    boneToward(upper,fore,targetElbow);
+    boneToward(fore,hand,finish);
   }
-  function aimWands(sideLabel) {
-    const grip=grips[sideLabel];
-    if(!grip)return;
-    const sign=side(sideLabel);
-    let direction;
-    if(cue==="stop")direction=new THREE.Vector3(-sign*.92,.40,.045).normalize();
-    else if(cue==="hold")direction=new THREE.Vector3(sign*.13,.91,.24).normalize();
-    else direction=new THREE.Vector3(sign*.06,.99,.06).normalize();
-    const desiredWorld=person.getWorldQuaternion(Q())
-      .multiply(Q().setFromUnitVectors(new THREE.Vector3(0,1,0),direction));
-    const parentWorld=grip.parent.getWorldQuaternion(Q());
-    grip.quaternion.copy(parentWorld.invert().multiply(desiredWorld));
+  function moveWands(id,pose){
+    const grip=grips[id];if(!grip)return;
+    const side=signFor(id);
+    const lean=pose.crossed;
+    const desired=new THREE.Vector3(-side*.9*lean+side*.05*(1-lean),1-.6*lean,.04).normalize();
+    const rot=person.getWorldQuaternion(quat())
+      .multiply(quat().setFromUnitVectors(new THREE.Vector3(0,1,0),desired));
+    const parent=grip.parent.getWorldQuaternion(quat());
+    grip.quaternion.copy(parent.invert().multiply(rot));
   }
-  function cueSet(next) {
-    if(!A1_GUIDE_CUES.includes(next))throw Error("Unrecognized GSE guide-man cue: "+next);
+  function setDistanceMeters(meters){
+    if(!Number.isFinite(meters))throw Error("Approach distance must be finite");
+    targetDistance=clamp(meters,0,A1_APPROACH_DISTANCE_METERS);
+  }
+  function setCue(next){
+    if(!A1_GUIDE_CUES.includes(next))throw Error("Invalid guide cue "+next);
     cue=next;
+    setDistanceMeters(({hold:7,guide:4.2,slow:1.3,stop:0})[next]);
   }
   return {
-    setCue:cueSet,
     get cue(){return cue;},
+    setCue,setDistanceMeters,
+    get targetDistanceMeters(){return targetDistance;},
     setWalking(next){
       if(!!next===walking)return;
       walking=!!next;
@@ -101,26 +103,29 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
       else{walkAction.fadeOut(.23);idleAction.reset().fadeIn(.23).play();}
     },
     update(dt){
-      dt=Math.min(.05,Math.max(0,Number.isFinite(dt)?dt:0));
-      elapsed+=dt;mixer.update(dt);
+      dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
+      mixer.update(dt);
       if(walking)return;
-      for(const s of ["l","r"]){
-        const intended=desiredHand(s,cue,elapsed);
-        if(!cached[s])cached[s]=localOf(bones["hand_"+s]);
-        // Damping is time-based. On any state change, the hands move smoothly
-        // toward the next pose over multiple frames, not through a hard cut.
-        const blend=1-Math.exp(-dt/.24);
-        cached[s].lerp(intended,blend);
-        solveArm(s,cached[s]);
-        aimWands(s);
+      const alpha=1-Math.exp(-dt/.16);
+      renderedDistance+=(targetDistance-renderedDistance)*alpha;
+      if(Math.abs(targetDistance-renderedDistance)<.002)renderedDistance=targetDistance;
+      const pose=getA1ApproachPose(renderedDistance);
+      for(const id of ["l","r"]){
+        const desired=targetWrist(id,pose);
+        if(!last[id])last[id]=localOf(bones["hand_"+id]);
+        last[id].lerp(desired,1-Math.exp(-dt/.19));
+        solve(id,last[id],pose);
+        moveWands(id,pose);
       }
     },
     getMetrics(){
-      const out={};
-      for(const s of ["l","r"]){
-        out[s]={shoulder:localOf(bones["upperarm_"+s]).toArray(),hand:localOf(bones["hand_"+s]).toArray()};
+      const out={distanceMeters:renderedDistance,targetDistanceMeters:targetDistance,pose:getA1ApproachPose(renderedDistance)};
+      for(const id of ["l","r"]){
+        out[id]={shoulder:localOf(bones["upperarm_"+id]).toArray(),
+          elbow:localOf(bones["lowerarm_"+id]).toArray(),
+          hand:localOf(bones["hand_"+id]).toArray()};
       }
       return out;
-    },
+    }
   };
 }
