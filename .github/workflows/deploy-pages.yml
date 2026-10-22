@@ -9,6 +9,9 @@ on:
       - main
     paths:
       - src/simulation/a1TurnaroundMission.js
+      - src/simulation/a1RealHumanCrew.js
+      - src/simulation/a1GroundCrewScene.js
+      - a1-crew-preview.html
 
 
 permissions:
@@ -52,6 +55,9 @@ jobs:
           git reset --hard "${GITHUB_SHA}"
           git clean -fd
 
+      - name: Stage checksummed CC0 animated humans for opt-in A1 crew preview
+        run: node scripts/download-a1-cc0-human-references.mjs
+
       - name: Stamp exact release commit
         shell: bash
         run: |
@@ -69,6 +75,11 @@ jobs:
           set -euo pipefail
           test -s dist/index.html
           test -s dist/manifest.webmanifest
+          test -s dist/a1-crew-preview.html
+          test -s dist/models/a1-npc-preview/sam-locomotion.glb
+          test -s dist/models/a1-npc-preview/harper-locomotion.glb
+          printf 'glTF' | cmp -n 4 - dist/models/a1-npc-preview/sam-locomotion.glb
+          printf 'glTF' | cmp -n 4 - dist/models/a1-npc-preview/harper-locomotion.glb
           test -s dist/release-commit.txt
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
           test -s "dist/releases/${GITHUB_SHA}.txt"
