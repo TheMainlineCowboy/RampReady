@@ -1,10 +1,11 @@
+import {measureHeadForPPE} from "./a1HeadsetFit.js";
 // Source-faithful, fitted ramp PPE for an existing skin-animated human.
 // Reference authority: actual worker photos, 3M PELTOR headsets (boom/cup/band),
 // and high-visibility workwear. No unlicensed Sketchfab model geometry copied.
 //
 // Rather than cylinders over a body, the vest is extracted from the animated
 // clothing's own torso surface and bound to the exact same skeleton.
-export function installA1MarshallingPPE(THREE,{root,bones}) {
+export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   const geometries=new Set(), materials=new Set();
   const make=(color,roughness=.8,metalness=.02,extra={})=>{
     const m=new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});
@@ -91,29 +92,53 @@ export function installA1MarshallingPPE(THREE,{root,bones}) {
     applied++;
   }
   if(!applied)throw Error("No valid torso surface triangles for fitted vest");
+  // Fit every part to measured, skinned skull dimensions. The old fixed
+  // offsets let large ear cups float below and outside the real ears.
   const head=bones.head;
-  const headset=new THREE.Group();headset.name="Realistic oval-cup ramp radio headset";
-  headset.position.set(0,-.014,0);head.add(headset);
-  // PELTOR-like oval ear cups, compression cushions, outer reinforcing shell,
-  // and separate thin wire/yoke. Not two cylinders attached to temples.
-  for(const sign of [-1,1]){
-    ellipsoid(headset,"soft rubber ear seal",seal,[sign*.094,-.014,0],[.021,.059,.045]);
-    ellipsoid(headset,"neon earmuff acoustic shell",neon,[sign*.117,-.013,0],[.029,.071,.051]);
-    ellipsoid(headset,"outer shell control plate",graphite,[sign*.143,-.012,.006],[.003,.023,.031]);
-    tube(headset,"slim fork and attachment yoke",[
-      [sign*.127,.020,0],[sign*.126,.075,0],[sign*.108,.092,0]
-    ],.007,graphite);
+  const fit=measureHeadForPPE(THREE,{root,head});
+  const headset=new THREE.Group();headset.name="Fitted aviation ramp communications headset";
+  head.add(headset);
+  const cupHeight=Math.min(.102,fit.height*.34);
+  const cupDepth=cupHeight*.76;
+  const cupThickness=.022;
+  const shellWidth=fit.halfWidth+.017;
+  for(const sign of [-1,1]) {
+    const x=fit.centerX+sign*(fit.halfWidth-.002);
+    // The inner seal physically overlaps the side of the head by 2mm.
+    ellipsoid(headset,"ear-contact padded rubber seal",seal,
+      [x,fit.earsY,fit.earZ],[.011,cupHeight*.48,cupDepth*.46]);
+    ellipsoid(headset,"compact high-vis oval defender shell",neon,
+      [fit.centerX+sign*shellWidth,fit.earsY,fit.earZ],
+      [cupThickness,cupHeight*.52,cupDepth*.54]);
+    ellipsoid(headset,"matte headset shell control inset",graphite,
+      [fit.centerX+sign*(shellWidth+.017),fit.earsY-.002,fit.earZ+.004],
+      [.003,cupHeight*.22,cupDepth*.30]);
+    tube(headset,"thin metal cup hanger",[
+      [fit.centerX+sign*(shellWidth+.012),fit.earsY+.025,fit.earZ],
+      [fit.centerX+sign*(shellWidth+.009),fit.earsY+cupHeight*.7,fit.earZ],
+      [fit.centerX+sign*(fit.halfWidth*.78),fit.top+.004,fit.earZ]
+    ],.0045,graphite);
   }
-  tube(headset,"slim padded spring headband",[
-    [-.11,.08,0],[-.092,.142,0],[-.05,.165,0],
-    [0,.169,0],[.05,.165,0],[.092,.142,0],[.11,.08,0]
-  ],.009,dark);
-  tube(headset,"boom microphone stalk",[
-    [-.118,-.032,.014],[-.108,-.063,.052],
-    [-.074,-.083,.103],[-.027,-.091,.136]
-  ],.008,graphite);
-  ellipsoid(headset,"small noise-canceling mic capsule",seal,
-    [-.027,-.091,.136],[.023,.017,.018]);
+  const arc=[];
+  for(let i=0;i<=10;i++){
+    const u=i/10,theta=Math.PI*(1-u);
+    arc.push([fit.centerX+Math.cos(theta)*(shellWidth+.004),
+      fit.earsY+(fit.top-fit.earsY+.012)*Math.sin(theta),
+      fit.earZ]);
+  }
+  tube(headset,"headband resting against crown",arc,.007,dark);
+  const mouthY=fit.earsY-cupHeight*.52;
+  const micFront=fit.front+.009;
+  tube(headset,"flexible noise-canceling boom mic",[
+    [fit.centerX-shellWidth,fit.earsY-.018,fit.earZ],
+    [fit.centerX-fit.halfWidth*.9,fit.earsY-.035,fit.earZ+.024],
+    [fit.centerX-fit.halfWidth*.55,mouthY,fit.front-.006],
+    [fit.centerX-.021,mouthY,micFront]
+  ],.0055,graphite);
+  ellipsoid(headset,"microphone at lip level",seal,
+    [fit.centerX-.021,mouthY,micFront],[.014,.010,.012]);
+  // Runtime review records precise skull/ear coordinates for fit QA.
+  headset.userData.fit=fit;
   // Compact grounded radio on hip, plus antenna: not a floating rectangle.
   const pelvis=bones.pelvis;
   const radio=add(pelvis,new THREE.BoxGeometry(.071,.121,.040),dark,
@@ -132,6 +157,7 @@ export function installA1MarshallingPPE(THREE,{root,bones}) {
     add(grip,new THREE.CylinderGeometry(.020,.020,.250,16),lamp,
       "emitting orange-red illuminated wand",[0,.187,0]);
     ellipsoid(grip,"translucent wand tip",lamp,[0,.324,0],[.021,.023,.021]);
+    grip.visible=withWands;
     grips[side]=grip;
   }
   function dispose(){
@@ -140,5 +166,5 @@ export function installA1MarshallingPPE(THREE,{root,bones}) {
     geometries.forEach(x=>x.dispose());
     materials.forEach(x=>x.dispose());
   }
-  return {grips,vestApplied:applied,dispose};
+  return {grips,vestApplied:applied,headsetFit:fit,headset,dispose};
 }
