@@ -31,11 +31,32 @@ try{
  await page.evaluate(()=>window.__reviewCapture.begin());
  const distances=[7,6,5,4,3,2,1,.5,0];
  let index=0, previous=-Infinity, final;
+ let priorElbows=null;
+ function distance3(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);}
  for(const distance of distances){
   let result;
   for(let i=0;i<10;i++){
    result=await page.evaluate(d=>window.__reviewCapture.render({distance:d,stepCount:4}),distance);
    assert.ok(result.png.length>6000,"Missing actual WebGL canvas frame");
+   // Test across the motion, not just at nine held poses. A snapping elbow
+   // pole makes the sleeve appear torn out of the shoulder at the STOP cue.
+   const measurements=result.metrics;
+   const elbows={};
+   for(const side of ["l","r"]){
+     const m=measurements[side];
+     elbows[side]=m.elbow;
+     assert.ok(distance3(m.shoulderLocalPosition,m.shoulderBindPosition)<.002,
+       "Shoulder attachment changed: "+side);
+     const upperLength=distance3(m.shoulder,m.elbow);
+     const foreLength=distance3(m.elbow,m.hand);
+     assert.ok(upperLength>.16 && upperLength<.43 && foreLength>.16 && foreLength<.43,
+       "Arm rig joint has implausible segment lengths: "+side+" "+upperLength+" "+foreLength);
+     if(priorElbows){
+       assert.ok(distance3(priorElbows[side],m.elbow)<.24,
+         "Sudden IK elbow flip/dislocation: "+side+" at "+distance+"m");
+     }
+   }
+   priorElbows=elbows;
    const buffer=Buffer.from(result.png,"base64");
    fs.writeFileSync(path.join(frames,`frame-${String(index++).padStart(3,"0")}.png`),buffer);
    if(i===9)fs.writeFileSync(path.join(out,`distance-${String(distance).replace(".","_")}m.png`),buffer);
