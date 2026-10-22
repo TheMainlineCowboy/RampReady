@@ -25,6 +25,7 @@ import { KPHX_T4_GATE_POSE_SOURCE } from "../environment/kphxFullAirport/termina
 import { createA1AircraftDockingScenarioPose } from "../environment/kphxFullAirport/a1AircraftDockingAuthority.js";
 import { getRampReadyAircraftDoorProfile, getRenderedAircraftDoorWorldMarker, getRenderedAircraftDoorOutwardWorldDirection } from "../environment/kphxFullAirport/aircraftDoorAuthority.js";
 import "./RampReadyTrainer.css";
+import "./a1-ground-crew.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
 import "./inspection-compact-v30.css";
