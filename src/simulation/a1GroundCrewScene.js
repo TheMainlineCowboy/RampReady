@@ -3,7 +3,7 @@ import { createA1CrewClock } from "./a1GroundCrewTimeline.js";
 // Lightweight articulated NPCs and working service vehicle for the real A1
 // Three.js scene. Geometries are temporary runtime visuals, never changes to
 // a locked LEKTRO, aircraft or baggage-cart source file.
-export function createA1GroundCrewScene(THREE, { scene, aircraft }) {
+export function createA1GroundCrewScene(THREE, { scene, aircraft, realPeople = false }) {
   const sceneRoot = new THREE.Group();
   sceneRoot.name = "A1 NPC ground crew and departing belt loader (preview)";
   sceneRoot.position.copy(aircraft.position);
@@ -93,6 +93,21 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft }) {
   }
   const clock=createA1CrewClock();
   let previousPhase="servicing";
+  let realCrew=null;
+  sceneRoot.userData.realHumanStatus=realPeople?"loading":"disabled";
+  // The real human library is loaded only in the opt-in feature. Until the
+  // two skinned avatars are available, the crew gate cannot authorize a tow.
+  if(realPeople){
+    marshal.root.visible=false;driver.root.visible=false;
+    void import("./a1RealHumanCrew.js")
+      .then(mod=>mod.installA1RealHumanCrew(THREE,{loader,driverProxy:driver,marshalProxy:marshal,sceneRoot}))
+      .then(ready=>{realCrew=ready;sceneRoot.userData.realHumanStatus="ready";})
+      .catch(error=>{
+        sceneRoot.userData.realHumanStatus="error";
+        sceneRoot.userData.realHumanError=String(error);
+        console.error("Real-human A1 NPC load failed",error);
+      });
+  }
   function update(dt,{tugPosition=null,stage=0,inspection=false}={}) {
     sceneRoot.visible = !inspection;
     if(inspection) return clock.snapshot;
@@ -122,6 +137,7 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft }) {
     }else{
       marshal.arms[0].rotation.z=-.08;marshal.arms[1].rotation.z=.08;
     }
+    realCrew?.update(dt,result);
     previousPhase=result.phase;
     sceneRoot.userData.crewState=result.phase;
     return result;
@@ -133,14 +149,19 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft }) {
     clock.reset();loader.position.set(initial.loaderX,0,initial.loaderZ);
     boom.rotation.z=-.21;marshal.root.position.set(initial.marshalX,0,initial.marshalZ);
     sceneRoot.visible=true;
+    realCrew?.reset();
   }
   function dispose(){
+    realCrew?.dispose();
     sceneRoot.parent?.remove(sceneRoot);
     const geometries=new Set(),materials=new Set();
     for(const mesh of objects){geometries.add(mesh.geometry);materials.add(mesh.material);}
     geometries.forEach(g=>g.dispose());
     materials.forEach(m=>m.dispose());
   }
-  return {root:sceneRoot,update,reset,dispose,isClear:()=>clock.snapshot.ready,
-    get status(){return clock.snapshot;}};
+  return {root:sceneRoot,update,reset,dispose,
+    isClear:()=>clock.snapshot.ready && (!realPeople || sceneRoot.userData.realHumanStatus==="ready"),
+    get status(){return clock.snapshot;},
+    get realHumanStatus(){return sceneRoot.userData.realHumanStatus;}};
+
 }
