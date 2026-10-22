@@ -1,0 +1,29 @@
+name: A1 human model provenance and geometry probe
+on:
+  pull_request:
+    paths:
+      - 'tests/a1HumanSourceProbe.mjs'
+      - 'scripts/download-a1-cc0-human-references.mjs'
+      - '.github/workflows/a1-human-probe.yml'
+  workflow_dispatch:
+jobs:
+  source-inspection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch and verify real human GLBs (not illustrations)
+        run: node scripts/download-a1-cc0-human-references.mjs
+      - name: Archive raw source metadata and example meshes for verification
+        run: |
+          ls -lh public/models/a1-npc-preview/*.glb
+          sha256sum public/models/a1-npc-preview/*.glb
+      - name: Save actual source models for subsequent visual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-a1-cc0-human-source-models
+          path: public/models/a1-npc-preview/*.glb
+          retention-days: 7
