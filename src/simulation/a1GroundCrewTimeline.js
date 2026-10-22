@@ -33,7 +33,7 @@ export function computeA1CrewSnapshot(timeSeconds, { tugNoseDistance = 20, pushb
     : t < loaderDeparted ? 'loader-departing'
     : t < marshalOnStation ? 'marshal-positioning'
     : 'ready';
-  const signal = !ready ? 'hold'
+  const signal = !ready || pushbackStage === 0 ? 'hold'
     : pushbackStage > 1 ? 'standby'
     : tugNoseDistance <= 2.5 ? 'stop'
     : 'approach';
