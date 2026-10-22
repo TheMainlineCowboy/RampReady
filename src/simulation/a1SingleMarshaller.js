@@ -65,16 +65,16 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
  const vest=new THREE.Group();vest.name="Lime safety vest following upper spine";
  bones.spine_03.add(vest);
  vest.position.set(0,.075,0);
- const outer=.278;
- const shell=add(vest,mesh(new THREE.CylinderGeometry(.245,outer,.49,32,1,true,Math.PI*.034,Math.PI*1.932),cloth),"Form-fitting open-front hi-vis shell");
+ const outer=.237;
+ const shell=add(vest,mesh(new THREE.CylinderGeometry(.207,outer,.435,32,1,true,Math.PI*.034,Math.PI*1.932),cloth),"Form-fitting open-front hi-vis shell");
  shell.position.y=.015;
  // Two reflective horizontal bands wrap the torso following the vest surface.
  for(const y of [-.105,.10]){
-   const ring=add(vest,mesh(new THREE.CylinderGeometry(.252,outer+.007,.045,32,1,true,Math.PI*.034,Math.PI*1.932),reflection),"Continuous silver torso reflective band",[0,y,0]);
+   const ring=add(vest,mesh(new THREE.CylinderGeometry(.214,outer+.006,.037,32,1,true,Math.PI*.034,Math.PI*1.932),reflection),"Continuous silver torso reflective band",[0,y,0]);
    ring.scale.y=1;
  }
  for(const x of [-.185,.185]){
-   block(vest,"Vertical shoulder reflective tape",.055,.21,.025,reflection,[x,.155,.192]);
+   block(vest,"Vertical shoulder reflective tape",.045,.18,.020,reflection,[x,.145,.174]);
  }
  // Hearing protection moves with head/neck. Supplied photo specifies
  // fluorescent green ear cups, curved headband, boom microphone and cable.
@@ -108,8 +108,8 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
  for(const side of ["l","r"]){
    const g=new THREE.Group();g.name=side+" illuminated wand grip";bones["hand_"+side].add(g);
    g.position.set(0,.14,.045);
-   tube(g,"Ribbed black wand handle",.028,.21,foam,[0,0,0]);
-   const glowing=tube(g,"Red illuminated guide wand",.029,.32,redLight,[0,.26,0]);
+   tube(g,"Ribbed black wand handle",.027,.16,foam,[0,0,0]);
+   const glowing=tube(g,"Red illuminated guide wand",.027,.26,redLight,[0,.21,0]);
    wandMeshes.push(glowing);
  }
  const mixer=new THREE.AnimationMixer(root);
@@ -143,12 +143,12 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
      handTarget=[outward*.46,-.02,.06];
    }else if(gesture==="guide"){
      const sweep=.13*Math.sin(t*4.0);
-     elbowTarget=[outward*.23,-.05,.24];
-     handTarget=[outward*(.32-sweep),-.19,.37];
+     elbowTarget=[outward*.16,.06,.10];
+     handTarget=[outward*(.34-sweep),.045,.15];
    }else if(gesture==="slow"){
      const sweep=.065*Math.sin(t*2.3);
-     elbowTarget=[outward*.21,-.07,.22];
-     handTarget=[outward*(.30-sweep),-.18,.34];
+     elbowTarget=[outward*.16,.02,.10];
+     handTarget=[outward*(.28-sweep),-.04,.16];
    }else{
      elbowTarget=[outward*.18,.20,.15];
      handTarget=[-outward*.08,.42,.26];
