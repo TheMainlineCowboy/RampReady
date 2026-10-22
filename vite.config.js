@@ -17,5 +17,13 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    // Separate, opt-in GLB review route. The main simulator entry remains
+    // unchanged; GitHub Pages can serve both as ordinary static files.
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        a1CrewPreview: fileURLToPath(new URL("./a1-crew-preview.html", import.meta.url)),
+      },
+    },
   },
 });
