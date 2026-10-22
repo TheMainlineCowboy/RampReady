@@ -27,9 +27,13 @@ export function createA1SafetyVestMaterial(THREE){
       // select/discard triangles at an armhole (which creates sharp spikes).
       float px=abs(vA1VestPosition.x);
       float py=vA1VestPosition.y;
-      float torsoX=1.0-smoothstep(.200,.240,px);
-      float hem=smoothstep(1.020,1.073,py);
-      float neckline=1.0-smoothstep(1.415,1.505,py);
+      // Tailored vest outline: narrow toward shoulder openings, wide at
+      // the lower chest. Crisp hem/armhole boundaries, not airbrushed dye.
+      float shoulderTaper=smoothstep(1.28,1.465,py);
+      float halfVestWidth=mix(.225,.152,shoulderTaper);
+      float torsoX=1.0-smoothstep(halfVestWidth-.004,halfVestWidth+.004,px);
+      float hem=smoothstep(1.033,1.043,py);
+      float neckline=1.0-smoothstep(1.460,1.475,py);
       float vestRegion=clamp(torsoX*hem*neckline,0.0,1.0);
       float band1=1.0-smoothstep(.017,.024,abs(py-1.11));
       float band2=1.0-smoothstep(.017,.024,abs(py-1.28));
@@ -47,6 +51,6 @@ export function createA1SafetyVestMaterial(THREE){
       `
     );
   };
-  material.customProgramCacheKey=()=> "a1_original_suit_surface_vest_mask_v3";
+  material.customProgramCacheKey=()=> "a1_original_suit_surface_vest_tailored_edges_v4";
   return material;
 }
