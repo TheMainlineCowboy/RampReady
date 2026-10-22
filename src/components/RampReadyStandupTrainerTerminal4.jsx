@@ -1192,7 +1192,7 @@ export default function RampReadyStandupTrainer({
     const sim = { renderer, scene, camera, environment, rig, aircraft, connection: createConnectionState(), dynamics: createA1SpawnPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
     if (A1_CREW_PREVIEW_ENABLED) {
-      sim.groundCrew = createA1GroundCrewScene(THREE, {scene, aircraft});
+      sim.groundCrew = createA1GroundCrewScene(THREE, {scene, aircraft, realPeople: true});
       renderer.domElement.dataset.a1CrewPreview = "active";
       renderer.domElement.dataset.a1CrewPhase = "servicing";
       renderer.domElement.dataset.a1CrewClear = "false";
@@ -1311,16 +1311,20 @@ export default function RampReadyStandupTrainer({
           tugPosition: rig.root.position, stage: stageRef.current, inspection: inspectionActive,
         });
         renderer.domElement.dataset.a1CrewPhase = crew.phase;
-        renderer.domElement.dataset.a1CrewClear = String(crew.ready);
+        renderer.domElement.dataset.a1CrewClear = String(sim.groundCrew.isClear());
+        renderer.domElement.dataset.a1CrewHumanStatus = sim.groundCrew.realHumanStatus;
         renderer.domElement.dataset.a1CrewBeltLoaderMeters = Math.hypot(crew.loaderX-4.3,crew.loaderZ-3.6).toFixed(2);
         renderer.domElement.dataset.a1CrewSignal = crew.signal;
         if (crew.phase !== sim.lastCrewPhase && !inspectionActive) {
           sim.lastCrewPhase = crew.phase;
           setCrewPhase(crew.phase);
-          if (crew.ready && stageRef.current === 0) {
-            setCrewClear(true);
-            setMessage("Belt loader clear. Ramp guide on station. Complete the check and press Ready.");
-          }
+          // Don't claim clearance until BOTH the physical belt loader and
+          // the animated, rigged human models are ready.
+        }
+        if (sim.groundCrew.isClear() && !sim.lastCrewCleared && stageRef.current === 0) {
+          sim.lastCrewCleared = true;
+          setCrewClear(true);
+          setMessage("Belt loader clear. Real ramp guide on station. Complete the check and press Ready.");
         }
       }
       const jetway = jetwayRef.current;
