@@ -1,0 +1,46 @@
+name: A1 single marshaller visual review
+on:
+  pull_request:
+    paths:
+      - 'a1-single-marshaller.html'
+      - 'src/simulation/a1SingleMarshaller.js'
+      - 'scripts/stage-a1-single-marshaller.mjs'
+      - 'tests/a1SingleMarshallerBrowser.mjs'
+      - 'vite.config.js'
+      - '.github/workflows/a1-single-marshaller.yml'
+  workflow_dispatch:
+jobs:
+  character-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install simulator
+        run: npm ci
+      - name: Verify and stage one CC0 skinned human
+        run: node scripts/stage-a1-single-marshaller.mjs
+      - name: Build actual review and production simulator code
+        run: npx vite build
+      - name: Verify review route and source in compiled app
+        run: |
+          test -s dist/a1-single-marshaller.html
+          test -s dist/models/a1-single-marshal/sam-locomotion.glb
+          printf 'glTF' | cmp -n 4 - dist/models/a1-single-marshal/sam-locomotion.glb
+      - name: Install Chromium headless shell
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium --only-shell
+      - name: Render one human with all four signals
+        run: node tests/a1SingleMarshallerBrowser.mjs
+      - name: Save actual browser frames for independent playback
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-single-marshaller-motion
+          path: artifacts/a1-single-marshaller/
+          if-no-files-found: warn
+          retention-days: 14
