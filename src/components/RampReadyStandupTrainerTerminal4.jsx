@@ -1307,7 +1307,7 @@ export default function RampReadyStandupTrainer({
       sim.last = now;
       const inspectionActive = inspectionRef.current;
       if (sim.groundCrew) {
-        const crew = sim.groundCrew.update(dt, {
+        const crew = sim.groundCrew.update(Math.min(0.35, rawFrameDt), {
           tugPosition: rig.root.position, stage: stageRef.current, inspection: inspectionActive,
         });
         renderer.domElement.dataset.a1CrewPhase = crew.phase;
