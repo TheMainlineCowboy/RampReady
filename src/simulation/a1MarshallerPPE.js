@@ -58,8 +58,8 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
         // All three vertices must remain on the torso. The old triangle
         // centroid test admitted sleeve triangles, producing white spikes at
         // the armholes as the guide raised both arms.
-        const torso=[a,b,c].every(i=>Math.abs(xyz.getX(i))<.238
-          && xyz.getY(i)>1.012&&xyz.getY(i)<1.48);
+        const torso=[a,b,c].every(i=>Math.abs(xyz.getX(i))<.204
+          && xyz.getY(i)>1.012&&xyz.getY(i)<1.405);
         if(torso)selection.push(a,b,c);
       }
     }
