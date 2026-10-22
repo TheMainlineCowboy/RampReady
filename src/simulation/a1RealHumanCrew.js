@@ -5,7 +5,7 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 function sourceUrl(filename) {
-  return new URL("models/a1-npc-preview/" + filename, document.baseURI).href;
+  return new URL(import.meta.env.BASE_URL + "models/a1-npc-preview/" + filename, window.location.origin).href;
 }
 function clipFor(animations, key) {
   return animations.find(clip => key.test(clip.name)) || null;
