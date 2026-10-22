@@ -11,8 +11,8 @@ button[aria-pressed="true"]{background:#e2bf45;color:#17212c;border-color:#fbd77
 #state{font-weight:700;color:#ffe27e}#errors{color:#fda7a7}
 #legend{position:absolute;bottom:12px;left:12px;right:12px;max-width:450px;padding:9px 11px;background:#152633ce;border-radius:9px;font-size:12px}
 </style></head><body>
-<div id="panel"><h1>RampReady — Single A1 marshaller</h1>
-<p>One rigged human. Navy workwear, yellow-green reflective vest, boom-mic ear defenders, radio, tan footwear, orange-red wands. No belt loader or other NPCs.</p>
+<div id="panel"><h1>RampReady — One LEKTRO approach guide</h1>
+<p>One real skeleton-rigged guide with a body-fitted reflective vest and scaled hearing protection. Signals follow the GSE guide-man sequence; no other NPCs.</p>
 <div id="state">Loading real 3D worker…</div><div id="errors"></div>
 <div id="controls">
 <button data-cue="hold" aria-pressed="true">HOLD</button>
@@ -21,7 +21,7 @@ button[aria-pressed="true"]{background:#e2bf45;color:#17212c;border-color:#fbd77
 <button data-cue="stop">STOP</button>
 <button id="auto">Play approach</button>
 </div></div>
-<div id="legend">Visual rigging review only — these gestures must be approved before operational training use.</div>
+<div id="legend">GSE guide-man signals (not aircraft-to-pilot taxi marshalling). Visual prototype only; verify local airline procedures before training use.</div>
 <script type="module">
 import * as THREE from "three";
 import {createA1SingleMarshaller} from "./src/simulation/a1SingleMarshaller.js";
@@ -81,7 +81,7 @@ window.__reviewCapture={
   if(!capture)throw Error("Call begin first");
   setCue(cue);
   for(let i=0;i<stepCount;i++)step(.04);
-  return {png:renderer.domElement.toDataURL("image/png").split(",")[1],cue:mode};
+  return {png:renderer.domElement.toDataURL("image/png").split(",")[1],cue:mode,metrics:agent.getPoseMetrics()};
  },
  end(){capture=false;last=performance.now();}
 };
