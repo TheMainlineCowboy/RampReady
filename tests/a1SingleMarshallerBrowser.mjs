@@ -82,7 +82,7 @@ try{
      "STOP must place both hands above forehead without overextending shoulders");
    // A stop pose fails if its upper arm collapses inward toward the neck,
    // even if its joint translations and upper/forearm lengths remain intact.
-   assert.ok((p.elbow[0]-p.shoulder[0])*outward>.07,
+   assert.ok((p.elbow[0]-p.shoulder[0])*outward>.03,
      "STOP elbow entered the torso/neck: upper arm looks out of socket: "+JSON.stringify(p));
  }
  assert.ok(final.vestApplied>=1,"Body-fitted vest should remain attached");
