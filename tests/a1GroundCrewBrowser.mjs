@@ -35,19 +35,32 @@ try{
  // inspect the SAME production NPC module in a lightweight, isolated camera.
  const productionPhase=await canvas.evaluate(el=>el.dataset.a1CrewPhase);
  assert.ok(productionPhase,"The real airport runtime must update NPC scene state");
- await page.goto(base+"tests/a1CrewRigPreview.html",{waitUntil:"domcontentloaded"});
- const isolated=page.locator("canvas");
+ // Capture an ACTUAL animated playback, not a staged generated image.
+ const qaContext=await browser.newContext({
+   viewport:{width:412,height:915},deviceScaleFactor:1,
+   recordVideo:{dir:"artifacts/a1-crew",size:{width:412,height:915}},
+ });
+ const qa=await qaContext.newPage();
+ qa.on("pageerror",e=>errors.push(String(e)));
+ await qa.goto(base+"tests/a1CrewRigPreview.html",{waitUntil:"domcontentloaded"});
+ const isolated=qa.locator("canvas");
  await isolated.waitFor({timeout:30000});
- await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1HumanStatus==="ready",null,{timeout:120000});
- await page.getByRole("button",{name:"Replay ground crew"}).click();
- await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewPhase==="servicing");
+ await qa.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1HumanStatus==="ready",null,{timeout:120000});
+ await qa.getByRole("button",{name:"Replay ground crew"}).click();
+ await qa.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewPhase==="servicing");
  await isolated.screenshot({path:"artifacts/a1-crew/a1-real-human-driver-mobile.png"});
- await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewClear==="true",null,{timeout:120000});
+ await qa.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1CrewClear==="true",null,{timeout:120000});
  const dataset=await isolated.evaluate(el=>({phase:el.dataset.a1CrewPhase,clear:el.dataset.a1CrewClear}));
  assert.equal(dataset.phase,"ready");
  assert.equal(dataset.clear,"true");
  assert.equal(await isolated.getAttribute("data-a1-human-status"),"ready");
  await isolated.screenshot({path:"artifacts/a1-crew/a1-real-human-marshaller-mobile.png"});
+ await qa.getByRole("button",{name:"Simulate stop"}).click();
+ await qa.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1GuideSignal==="stop");
+ await qa.waitForTimeout(600);
+ await isolated.screenshot({path:"artifacts/a1-crew/a1-real-human-stop-signal-mobile.png"});
+ await qaContext.close();
+ await qa.video().saveAs("artifacts/a1-crew/a1-real-human-motion.webm");
  assert.deepEqual(errors,[], "No uncaught errors in the preview runtime");
- console.log("PASS actual production trainer initial safety gate + real NPC Three.js rig motion and clear state",dataset);
+ console.log("PASS real NPC movement video and stop/approach visual states",dataset);
 }finally{await browser?.close();server.kill("SIGTERM");}
