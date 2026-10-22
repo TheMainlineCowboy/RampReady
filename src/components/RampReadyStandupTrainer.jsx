@@ -467,7 +467,7 @@ export default function RampReadyStandupTrainer({
       let steer = drive.steer;
       if (keysRef.current.has("a") || keysRef.current.has("arrowleft")) steer += 1;
       if (keysRef.current.has("d") || keysRef.current.has("arrowright")) steer -= 1;
-      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current) && (stageRef.current !== 0 || !sim.groundCrew || sim.groundCrew.isClear()));
+      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current) && (!sim.groundCrew || (stageRef.current !== 0 && sim.groundCrew.isClear())));
       const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
       const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));
       const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));
