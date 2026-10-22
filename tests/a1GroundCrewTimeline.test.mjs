@@ -29,10 +29,11 @@ test("marshaller reaches a protected off-center position after GSE clearance", (
   assert.equal(s.marshalWalkProgress,1);
   assert.equal(s.marshalX,A1_CREW_PATH.marshalFinish.x);
   assert.ok(Math.abs(s.marshalX)>3);
-  assert.equal(s.signal,"approach");
+  assert.equal(s.signal,"hold"); // jetway is still connected at pushback stage 0
 });
 test("approach/stop signals depend on tug proximity, never override clearance", () => {
   assert.equal(computeA1CrewSnapshot(2,{tugNoseDistance:.5}).signal,"hold");
+  assert.equal(computeA1CrewSnapshot(20,{tugNoseDistance:6,pushbackStage:0}).signal,"hold");
   assert.equal(computeA1CrewSnapshot(20,{tugNoseDistance:6,pushbackStage:1}).signal,"approach");
   assert.equal(computeA1CrewSnapshot(20,{tugNoseDistance:2,pushbackStage:1}).signal,"stop");
   assert.equal(computeA1CrewSnapshot(20,{tugNoseDistance:2,pushbackStage:3}).signal,"standby");
