@@ -22,7 +22,7 @@ jobs:
       - name: Install project
         run: npm ci
       - name: NPC clearance state machine
-        run: node --test tests/a1GroundCrewTimeline.test.mjs
+        run: node --test tests/a1GroundCrewTimeline.test.mjs tests/a1GroundCrewRig.test.mjs
       - name: Build actual RampReady runtime
         run: npx vite build
       - name: Install temporary browser runner
