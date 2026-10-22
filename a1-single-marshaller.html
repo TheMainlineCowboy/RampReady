@@ -79,9 +79,15 @@ function step(dt){
 }
 window.__reviewCapture={
  begin(){if(!agent)throw Error("3D marshaller not loaded");capture=true;autoplay=false;setDistance(7);return true;},
- render({distance=7,stepCount=3}={}){
+ render({distance=7,stepCount=3,angle=0}={}){
   if(!capture)throw Error("Call begin first");
   setDistance(distance);
+  // Orthographic-ish perspective at profile angle catches floating ear cups
+  // and headset crown-band clearance invisible in head-on review frames.
+  const frontDistance=Math.max(3.0,Math.min(4.45,2.25*innerHeight/innerWidth));
+  const rad=angle*Math.PI/180;
+  camera.position.set(frontDistance*Math.sin(rad),2.05,-frontDistance*Math.cos(rad));
+  camera.lookAt(0,1.04,0);
   for(let i=0;i<stepCount;i++)step(.04);
   return {png:renderer.domElement.toDataURL("image/png").split(",")[1],
     metrics:agent.getPoseMetrics(),distance:approachDistance};
