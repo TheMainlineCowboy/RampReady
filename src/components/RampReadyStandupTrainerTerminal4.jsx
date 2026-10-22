@@ -14,6 +14,7 @@ import {
   stepConnection,
 } from "../simulation/noseGearConnection.js";
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
+import { createA1GroundCrewScene } from "../simulation/a1GroundCrewScene.js";
 import { installRuntimeEquipmentVisual, supportsRuntimeEquipmentVisual } from "../tug/runtimeEquipmentVisual.js";
 import { buildKphxExactLiveEnvironment as buildTerminal4RampEnvironment, installKphxExactLiveTerminal4 as installAuthoredTerminal4Visual } from "../environment/kphxFullAirport/installLiveTerminal4Exact.js";
 import { installKphxPackageOwnedSurfaceLayer } from "../environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js";
@@ -94,6 +95,9 @@ const INSPECTION_PRESETS = Object.freeze({
   b15: Object.freeze({ id: "b15", label: "B15 ramp", x: -18.5, z: 539.2, yaw: -1.5708, cameraYaw: 1.38, cameraDistance: 25 }),
 });
 const INSPECTION_ROUTE_AUTHORITY = "source-gate-apron-presets-with-wide-diagonal-a1-connection-near-wall-b15-a1-a14-b14-b15-v7";
+// Deliberately opt-in until aircraft/GSE clearances are visually approved.
+const A1_CREW_PREVIEW_ENABLED = typeof window !== "undefined"
+  && new URLSearchParams(window.location.search).get("crewPreview") === "1";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function material(color, roughness = 0.62, metalness = 0.05) {
@@ -182,6 +186,8 @@ export default function RampReadyStandupTrainer({
   const keysRef = useRef(new Set());
   const scoreRef = useRef(100);
   const [stage, setStage] = useState(0);
+  const [crewClear, setCrewClear] = useState(!A1_CREW_PREVIEW_ENABLED);
+  const [crewPhase, setCrewPhase] = useState(A1_CREW_PREVIEW_ENABLED ? "servicing" : "disabled");
   const [cameraMode, setCameraMode] = useState("chase");
   const [inspectionMode, setInspectionMode] = useState(false);
   const [inspectionPreset, setInspectionPreset] = useState("a1");
@@ -237,6 +243,9 @@ export default function RampReadyStandupTrainer({
     jetwayRef.current.transitionStartedAt = 0;
     jetwayRef.current.retractionRequested = false;
     jetwayRef.current.controller?.setDeployment(resetJetwayDeployment);
+    sim.groundCrew?.reset();
+    setCrewClear(!A1_CREW_PREVIEW_ENABLED);
+    setCrewPhase(A1_CREW_PREVIEW_ENABLED ? "servicing" : "disabled");
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = -0.64;
     orbitRef.current.pitch = 0.38;
@@ -297,6 +306,11 @@ export default function RampReadyStandupTrainer({
     const next = !inspectionRef.current;
     inspectionRef.current = next;
     setInspectionMode(next);
+    if (simRef.current?.groundCrew) {
+      simRef.current.groundCrew.reset();
+      setCrewClear(false);
+      setCrewPhase("servicing");
+    }
     const sim = simRef.current;
     if (sim) {
       sim.connection = createConnectionState();
@@ -361,6 +375,10 @@ export default function RampReadyStandupTrainer({
     const sim = simRef.current;
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
+      if (A1_CREW_PREVIEW_ENABLED && !sim.groundCrew?.isClear()) {
+        setMessage("Ground crew working: wait for the belt loader to clear and the ramp guide to take position.");
+        return;
+      }
       if (jetwayRef.current.retractionRequested) return;
       const controller = jetwayRef.current.controller;
       if (!controller?.isDoorContactReady?.()) {
@@ -1172,6 +1190,14 @@ export default function RampReadyStandupTrainer({
 
     const sim = { renderer, scene, camera, environment, rig, aircraft, connection: createConnectionState(), dynamics: createA1SpawnPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
+    if (A1_CREW_PREVIEW_ENABLED) {
+      sim.groundCrew = createA1GroundCrewScene(THREE, {scene, aircraft});
+      renderer.domElement.dataset.a1CrewPreview = "active";
+      renderer.domElement.dataset.a1CrewPhase = "servicing";
+      renderer.domElement.dataset.a1CrewClear = "false";
+    } else {
+      renderer.domElement.dataset.a1CrewPreview = "disabled";
+    }
 
     const canvas = renderer.domElement;
     canvas.dataset.a1AircraftHeadingReady = "true";
@@ -1279,6 +1305,23 @@ export default function RampReadyStandupTrainer({
       const dt = Math.min(0.04, rawFrameDt);
       sim.last = now;
       const inspectionActive = inspectionRef.current;
+      if (sim.groundCrew) {
+        const crew = sim.groundCrew.update(dt, {
+          tugPosition: rig.root.position, stage: stageRef.current, inspection: inspectionActive,
+        });
+        renderer.domElement.dataset.a1CrewPhase = crew.phase;
+        renderer.domElement.dataset.a1CrewClear = String(crew.ready);
+        renderer.domElement.dataset.a1CrewBeltLoaderMeters = Math.hypot(crew.loaderX-4.3,crew.loaderZ-3.6).toFixed(2);
+        renderer.domElement.dataset.a1CrewSignal = crew.signal;
+        if (crew.phase !== sim.lastCrewPhase && !inspectionActive) {
+          sim.lastCrewPhase = crew.phase;
+          setCrewPhase(crew.phase);
+          if (crew.ready && stageRef.current === 0) {
+            setCrewClear(true);
+            setMessage("Belt loader clear. Ramp guide on station. Complete the check and press Ready.");
+          }
+        }
+      }
       const jetway = jetwayRef.current;
       if (jetway.controller) {
         const difference = jetway.target - jetway.deployment;
@@ -1651,8 +1694,12 @@ export default function RampReadyStandupTrainer({
         </div>
       </div>
       <p>{message}</p>
+      {A1_CREW_PREVIEW_ENABLED && !inspectionMode &&
+        <p className="rr-crew-sequence" aria-live="polite">
+          Ground crew: <b>{crewClear ? "CLEAR — guide on station" : crewPhase.replaceAll("-", " ")}</b>
+        </p>}
       <div className="rr-hud-actions">
-        {!inspectionMode && [0, 3, 4].includes(stage) && <button className="rr-primary" onClick={advance}>{stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
+        {!inspectionMode && [0, 3, 4].includes(stage) && <button className="rr-primary" disabled={stage === 0 && A1_CREW_PREVIEW_ENABLED && !crewClear} onClick={advance}>{stage === 0 && A1_CREW_PREVIEW_ENABLED && !crewClear ? "Wait for ground crew" : stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
         {!inspectionMode && stage === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={capture}>{hud.ready ? "Capture nose gear" : `Align ${hud.capture.toFixed(1)} m`}</button>}
         {!inspectionMode && stage === 6 && <button className="rr-primary" onClick={lower}>Lower cradle</button>}
         <button className="rr-secondary" onClick={reset}>Reset</button>
