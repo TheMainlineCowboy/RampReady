@@ -65,7 +65,10 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // Outward, slightly toward the tug: resolves a unique natural elbow bend
     // and prevents elbows tunneling into the spine or crossing each other.
     const sign=side(sideLabel);
-    const reference=person.localToWorld(targetLocal.clone().add(new THREE.Vector3(sign*.32,.13,.28))).sub(destination);
+    const bend=cue==="stop"
+      ?new THREE.Vector3(sign*.28,.11,.10)
+      :new THREE.Vector3(sign*.34,-.32,.11);
+    const reference=person.localToWorld(targetLocal.clone().add(bend)).sub(destination);
     const outward=reference.addScaledVector(toward,-reference.dot(toward)).normalize();
     const elbowGoal=start.clone().addScaledVector(toward,axial).addScaledVector(outward,radial);
     rotateToward(upper,fore,elbowGoal);
@@ -76,7 +79,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     if(!grip)return;
     const sign=side(sideLabel);
     let direction;
-    if(cue==="stop")direction=new THREE.Vector3(-sign*.50,.89,.045).normalize();
+    if(cue==="stop")direction=new THREE.Vector3(-sign*.78,.63,.045).normalize();
     else if(cue==="hold")direction=new THREE.Vector3(sign*.13,.91,.24).normalize();
     else direction=new THREE.Vector3(sign*.06,.99,.06).normalize();
     const desiredWorld=person.getWorldQuaternion(Q())
