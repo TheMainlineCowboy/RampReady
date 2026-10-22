@@ -136,7 +136,10 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
    const upper=bones["upperarm_"+side],fore=bones["lowerarm_"+side],hand=bones["hand_"+side];
    upper.getWorldPosition(shoulder);
    const local=person.worldToLocal(shoulder.clone());
-   const outward=side==="l"?-1:1;
+   // Labelled L/R in the source rig doesn't guarantee negative/positive X
+   // after the authored root rotation. Use real shoulder position or the arms
+   // will cross through the worker's torso while guiding.
+   const outward=Math.sign(local.x)||(side==="l"?-1:1);
    let elbowTarget,handTarget;
    if(gesture==="hold"){
      elbowTarget=[outward*.24,-.02,.015];
