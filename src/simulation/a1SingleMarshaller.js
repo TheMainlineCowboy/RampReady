@@ -66,15 +66,15 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
  bones.spine_03.add(vest);
  vest.position.set(0,.075,0);
  const outer=.278;
- const shell=add(vest,mesh(new THREE.CylinderGeometry(.245,outer,.49,28,1,true,Math.PI*.18,Math.PI*1.64),cloth),"Form-fitting open-front hi-vis shell");
+ const shell=add(vest,mesh(new THREE.CylinderGeometry(.245,outer,.49,32,1,true,Math.PI*.034,Math.PI*1.932),cloth),"Form-fitting open-front hi-vis shell");
  shell.position.y=.015;
  // Two reflective horizontal bands wrap the torso following the vest surface.
  for(const y of [-.105,.10]){
-   const ring=add(vest,mesh(new THREE.CylinderGeometry(.252,outer+.007,.045,32,1,true,Math.PI*.18,Math.PI*1.64),reflection),"Continuous silver torso reflective band",[0,y,0]);
+   const ring=add(vest,mesh(new THREE.CylinderGeometry(.252,outer+.007,.045,32,1,true,Math.PI*.034,Math.PI*1.932),reflection),"Continuous silver torso reflective band",[0,y,0]);
    ring.scale.y=1;
  }
  for(const x of [-.185,.185]){
-   block(vest,"Vertical shoulder reflective tape",.055,.24,.025,reflection,[x,.145,-.176]);
+   block(vest,"Vertical shoulder reflective tape",.055,.21,.025,reflection,[x,.155,.192]);
  }
  // Hearing protection moves with head/neck. Supplied photo specifies
  // fluorescent green ear cups, curved headband, boom microphone and cable.
@@ -87,11 +87,21 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
    const pad=add(headset,mesh(new THREE.CylinderGeometry(.069,.069,.08,22),foam),"Noise-sealing ear cushion",[side*.105,-.003,0]);
    pad.rotation.z=Math.PI/2;
  }
- const band=add(headset,mesh(new THREE.TorusGeometry(.14,.020,10,24,Math.PI),black),"Over-head padded defender bridge",[0,.07,0]);
- band.rotation.z=Math.PI/2;
+ const bandPath=new THREE.CatmullRomCurve3([
+   new THREE.Vector3(-.132,.01,0),new THREE.Vector3(-.122,.164,0),
+   new THREE.Vector3(0,.216,0),new THREE.Vector3(.122,.164,0),
+   new THREE.Vector3(.132,.01,0),
+ ]);
+ add(headset,mesh(new THREE.TubeGeometry(bandPath,32,.014,10,false),black),"Properly fitted headband");
  // Articulated mouth microphone, stem from left ear cup.
- const stem=tube(headset,"Boom microphone stem",.012,.16,black,[-.105,-.056,-.094],[Math.PI/2,.18,-.24]);
- add(headset,mesh(new THREE.SphereGeometry(.027,12,8),foam),"Microphone at lips",[-.018,-.100,-.167]);
+ const micPath=new THREE.CatmullRomCurve3([
+   new THREE.Vector3(-.125,-.05,.025),
+   new THREE.Vector3(-.12,-.105,.080),
+   new THREE.Vector3(-.06,-.114,.133),
+   new THREE.Vector3(-.015,-.113,.147)
+ ]);
+ add(headset,mesh(new THREE.TubeGeometry(micPath,18,.011,8,false),black),"Curved mouth boom microphone");
+ add(headset,mesh(new THREE.SphereGeometry(.019,12,8),foam),"Microphone capsule by mouth",[-.015,-.113,.147]);
  const radio=block(bones.pelvis,"Hip-mounted black ground-radio",.10,.20,.065,black,[.17,-.065,-.135]);
  tube(bones.pelvis,"Radio antenna",.009,.21,black,[.17,.075,-.14],[0,0,0]);
  const wandMeshes=[];
@@ -129,19 +139,19 @@ export async function createA1SingleMarshaller(THREE,{scene,height=1.80}){
    const outward=side==="l"?-1:1;
    let elbowTarget,handTarget;
    if(gesture==="hold"){
-     elbowTarget=[outward*.24,-.02,-.045];
-     handTarget=[outward*.46,-.02,-.11];
+     elbowTarget=[outward*.24,-.02,.015];
+     handTarget=[outward*.46,-.02,.06];
    }else if(gesture==="guide"){
      const sweep=.13*Math.sin(t*4.0);
-     elbowTarget=[outward*.21,-.095,-.23];
-     handTarget=[outward*(.27-sweep),-.22,-.34];
+     elbowTarget=[outward*.23,-.05,.24];
+     handTarget=[outward*(.32-sweep),-.19,.37];
    }else if(gesture==="slow"){
      const sweep=.065*Math.sin(t*2.3);
-     elbowTarget=[outward*.20,-.07,-.21];
-     handTarget=[outward*(.26-sweep),-.18,-.34];
+     elbowTarget=[outward*.21,-.07,.22];
+     handTarget=[outward*(.30-sweep),-.18,.34];
    }else{
-     elbowTarget=[outward*.18,.20,-.14];
-     handTarget=[-outward*.08,.42,-.21];
+     elbowTarget=[outward*.18,.20,.15];
+     handTarget=[-outward*.08,.42,.26];
    }
    const worldE=person.localToWorld(local.clone().add(new THREE.Vector3(...elbowTarget)));
    const worldH=person.localToWorld(local.clone().add(new THREE.Vector3(...handTarget)));
