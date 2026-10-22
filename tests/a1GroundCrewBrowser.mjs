@@ -28,7 +28,8 @@ try{
  fs.mkdirSync("artifacts/a1-crew",{recursive:true});
  await page.waitForTimeout(1200);
  // Capture the REAL WebGL drawing surface, not the large runtime-loading UI.
- await canvas.screenshot({path:"artifacts/a1-crew/a1-belt-loader-servicing-mobile.png"});
+ const screenshotBase64 = await canvas.evaluate(element => element.toDataURL("image/png").split(",")[1]);
+ fs.writeFileSync("artifacts/a1-crew/a1-belt-loader-servicing-mobile.png",Buffer.from(screenshotBase64,"base64"));
  // The full KPHX build may remain on its large asset-loading overlay on CI.
  // Verify the actual production canvas is wired and Ready is blocked, then
  // inspect the SAME production NPC module in a lightweight, isolated camera.
