@@ -108,11 +108,8 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
     ellipsoid(headset,"matte headset shell control inset",graphite,
       [fit.centerX+sign*(shellWidth+.017),earsY-.002,earZ+.004],
       [.003,cupHeight*.22,cupDepth*.30]);
-    tube(headset,"thin metal cup hanger",[
-      [fit.centerX+sign*(shellWidth+.012),earsY+.025,earZ],
-      [fit.centerX+sign*(shellWidth+.009),earsY+cupHeight*.7,earZ],
-      [fit.centerX+sign*(fit.halfWidth*.78),fit.top+.004,earZ]
-    ],.0045,graphite);
+    // The padded headband is the only overhead suspension; no duplicated
+    // upright yokes that read as antennae beside the hair.
   }
   const arc=[];
   for(let i=0;i<=10;i++){
