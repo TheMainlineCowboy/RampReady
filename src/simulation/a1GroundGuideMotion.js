@@ -24,7 +24,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
   function desiredHand(sideLabel,cue,t){
     const shoulder=localOf(bones["upperarm_"+sideLabel]);
     const sign=side(sideLabel);
-    if(cue==="hold")return shoulder.add(new THREE.Vector3(sign*.245,-.285,.025));
+    if(cue==="hold")return shoulder.add(new THREE.Vector3(sign*.385,-.285,.025));
     if(cue==="guide"){
       // Beckon TOWARD the guide, rising from just below shoulder height to
       // just above shoulder level; no erroneous downward 'guide' gesture.
@@ -79,7 +79,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     if(!grip)return;
     const sign=side(sideLabel);
     let direction;
-    if(cue==="stop")direction=new THREE.Vector3(-sign*.78,.63,.045).normalize();
+    if(cue==="stop")direction=new THREE.Vector3(-sign*.92,.40,.045).normalize();
     else if(cue==="hold")direction=new THREE.Vector3(sign*.13,.91,.24).normalize();
     else direction=new THREE.Vector3(sign*.06,.99,.06).normalize();
     const desiredWorld=person.getWorldQuaternion(Q())
