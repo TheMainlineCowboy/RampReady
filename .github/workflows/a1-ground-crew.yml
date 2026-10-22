@@ -23,8 +23,8 @@ jobs:
         run: npm ci
       - name: NPC clearance state machine
         run: node --test tests/a1GroundCrewTimeline.test.mjs tests/a1GroundCrewRig.test.mjs
-      - name: Verify source CC0 realistic human GLBs
-        run: node tests/a1HumanSourceProbe.mjs
+      - name: Stage CC0 rigged human assets with checksummed provenance
+        run: node scripts/download-a1-cc0-human-references.mjs
       - name: Build actual RampReady runtime
         run: npx vite build
       - name: Install temporary browser runner
