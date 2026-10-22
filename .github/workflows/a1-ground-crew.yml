@@ -1,0 +1,41 @@
+name: Gate A1 NPC ground crew review
+on:
+  pull_request:
+    paths:
+      - 'src/simulation/a1GroundCrew*.js'
+      - 'src/components/a1-ground-crew.css'
+      - 'src/components/RampReadyStandupTrainer.jsx'
+      - 'src/components/RampReadyStandupTrainerTerminal4.jsx'
+      - 'tests/a1GroundCrew*.mjs'
+      - '.github/workflows/a1-ground-crew.yml'
+  workflow_dispatch:
+jobs:
+  test-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install project
+        run: npm ci
+      - name: NPC clearance state machine
+        run: node --test tests/a1GroundCrewTimeline.test.mjs
+      - name: Build actual RampReady runtime
+        run: npx vite build
+      - name: Install temporary browser runner
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Render and exercise mobile 3D crew preview
+        run: node tests/a1GroundCrewBrowser.mjs
+      - name: Upload real 3D simulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rampready-a1-npc-preview
+          path: artifacts/a1-crew/*.png
+          if-no-files-found: warn
+          retention-days: 14
