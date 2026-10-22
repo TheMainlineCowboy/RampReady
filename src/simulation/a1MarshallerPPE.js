@@ -115,8 +115,8 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   for(let i=0;i<=10;i++){
     const u=i/10,theta=Math.PI*(1-u);
     arc.push([fit.centerX+Math.cos(theta)*(shellWidth+.004),
-      earsY+(fit.top-earsY+.021)*Math.sin(theta),
-      earZ-.064*Math.sin(theta)]);
+      earsY+(fit.top-earsY+.010)*Math.sin(theta),
+      earZ+.015*Math.sin(theta)]);
   }
   tube(headset,"headband resting against crown",arc,.007,dark);
   const mouthY=earsY-cupHeight*.52;
