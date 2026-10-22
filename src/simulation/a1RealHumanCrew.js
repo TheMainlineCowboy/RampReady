@@ -66,7 +66,25 @@ function avatar(THREE, gltf, {targetHeight, highVisColor}) {
   }
   return {holder,bones,mixer,actions,sit,idle,walk,play,
     update(dt){mixer.update(Math.min(dt,.06));},
-    dispose(){mixer.stopAllAction();holder.parent?.remove(holder)}};
+    dispose(){
+      mixer.stopAllAction();
+      holder.parent?.remove(holder);
+      // A1 NPC previews can be restarted repeatedly on Android. Release GLB
+      // geometries/materials and embedded textures, not just scene references.
+      const geometries=new Set(),materials=new Set(),textures=new Set();
+      holder.traverse(node=>{
+        if(node.geometry)geometries.add(node.geometry);
+        const all=Array.isArray(node.material)?node.material:[node.material];
+        for(const m of all){
+          if(!m)continue;
+          materials.add(m);
+          for(const val of Object.values(m)) if(val?.isTexture)textures.add(val);
+        }
+      });
+      geometries.forEach(x=>x.dispose());
+      materials.forEach(x=>x.dispose());
+      textures.forEach(x=>x.dispose());
+    }};
 }
 function addWands(THREE,human){
   const mat=new THREE.MeshStandardMaterial({color:0xff9b2c,emissive:0xa94308,emissiveIntensity:.85,roughness:.32});
