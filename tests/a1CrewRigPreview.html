@@ -37,7 +37,7 @@ document.getElementById("reset").onclick=()=>{crew.reset()};
 let last=performance.now();
 function draw(now){
 const dt=Math.min(.35,Math.max(0,(now-last)/1000));last=now;
-const state=crew.update(dt,{tugPosition:new THREE.Vector3(0,0,-8),stage:0});
+const state=crew.update(dt,{tugPosition:new THREE.Vector3(0,0,-8),stage:crew.isClear()?1:0});
 phase.innerHTML=`<strong>${state.phase}</strong> · Loader moved ${Math.hypot(state.loaderX-4.3,state.loaderZ-3.6).toFixed(1)} m<br>Guide: ${state.signal} · Approach ${state.ready?"CLEAR":"HOLD"}`;
 // Review camera follows the two actionable parts of the same physical scene:
  // operator and belt at the beginning; signaling guide after service clears.
