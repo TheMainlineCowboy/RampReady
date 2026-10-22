@@ -17,5 +17,11 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        singleMarshaller: fileURLToPath(new URL("./a1-single-marshaller.html", import.meta.url)),
+      },
+    },
   },
 });
