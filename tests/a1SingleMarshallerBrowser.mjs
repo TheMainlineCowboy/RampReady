@@ -21,6 +21,7 @@ try{
  browser=await chromium.launch({headless:true,args:["--enable-webgl","--enable-unsafe-swiftshader","--use-gl=angle","--use-angle=swiftshader"]});
  const page=await browser.newPage({viewport:{width:600,height:820},deviceScaleFactor:1});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
+ page.on("console",message=>{if(message.type()==="error")errors.push("WebGL/console: "+message.text());});
  await page.goto(base+"a1-single-marshaller.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>["true","error"].includes(document.querySelector("canvas")?.dataset.marshallerLoaded),null,{timeout:50000});
  const status=await page.locator("canvas").getAttribute("data-marshaller-loaded");
