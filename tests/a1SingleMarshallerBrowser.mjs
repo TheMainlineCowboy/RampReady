@@ -31,6 +31,23 @@ try{
   for(let n=0;n<count;n++){
    const render=await page.evaluate(c=>window.__reviewCapture.render({cue:c,stepCount:4}),cue);
    assert.equal(render.cue,cue);
+   // Physical check: during guide/slow, each hand must remain outside its
+   // own shoulder; crossed arms are not a valid toward-guide signal.
+   if((cue==="guide"||cue==="slow") && n>10){
+     for(const side of ["l","r"]){
+       const pose=render.metrics[side];
+       const dx=pose.hand[0]-pose.shoulder[0];
+       assert.ok(Math.sign(dx)===Math.sign(pose.shoulder[0]),
+         cue+" crosses body: "+JSON.stringify(render.metrics));
+     }
+   }
+   if(cue==="stop" && n>14){
+     for(const side of ["l","r"]){
+       const pose=render.metrics[side];
+       assert.ok(pose.hand[1]>pose.shoulder[1]+.24,
+         "STOP wrists must rise overhead: "+JSON.stringify(pose));
+     }
+   }
    const buffer=Buffer.from(render.png,"base64");
    assert.ok(buffer.length>5000,"Expected rendered nonempty PNG");
    const filename=`frame-${String(index).padStart(3,"0")}.png`;
