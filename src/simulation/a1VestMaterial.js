@@ -23,20 +23,30 @@ export function createA1SafetyVestMaterial(THREE){
     shader.fragmentShader=shader.fragmentShader.replace(
       "#include <color_fragment>",
       `#include <color_fragment>
-      float band1 = 1.0-smoothstep(.019,.024,abs(vA1VestPosition.y-1.11));
-      float band2 = 1.0-smoothstep(.019,.024,abs(vA1VestPosition.y-1.28));
-      float front = smoothstep(.045,.078,vA1VestPosition.z);
-      float suspender = front*(1.0-smoothstep(.019,.024,
-         abs(abs(vA1VestPosition.x)-.137)))*smoothstep(1.23,1.27,vA1VestPosition.y);
-      float trim = max(max(band1,band2),suspender);
-      vec3 fluorescent = vec3(.68,.82,.11);
-      vec3 retro = vec3(.77,.79,.76);
-      diffuseColor.rgb=mix(fluorescent,retro,trim);
-      float opening=front*(1.0-smoothstep(.016,.023,abs(vA1VestPosition.x)));
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.035,.07,.10),opening);
+      // Dress the underlying, continuously skinned workwear surface. Never
+      // select/discard triangles at an armhole (which creates sharp spikes).
+      float px=abs(vA1VestPosition.x);
+      float py=vA1VestPosition.y;
+      float torsoX=1.0-smoothstep(.200,.240,px);
+      float hem=smoothstep(1.020,1.073,py);
+      float neckline=1.0-smoothstep(1.415,1.505,py);
+      float vestRegion=clamp(torsoX*hem*neckline,0.0,1.0);
+      float band1=1.0-smoothstep(.017,.024,abs(py-1.11));
+      float band2=1.0-smoothstep(.017,.024,abs(py-1.28));
+      float front=smoothstep(.045,.080,vA1VestPosition.z);
+      float shoulderTape=front*(1.0-smoothstep(.018,.026,
+           abs(px-.137)))*smoothstep(1.215,1.27,py);
+      float reflective=max(max(band1,band2),shoulderTape);
+      vec3 navy=vec3(.085,.128,.205);
+      vec3 fluorescent=vec3(.65,.82,.10);
+      vec3 retro=vec3(.78,.80,.77);
+      vec3 cloth=mix(fluorescent,retro,reflective);
+      float zip=front*(1.0-smoothstep(.014,.022,px));
+      cloth=mix(cloth,navy,zip);
+      diffuseColor.rgb=mix(navy,cloth,vestRegion);
       `
     );
   };
-  material.customProgramCacheKey=()=> "a1_skin_fitted_hi_vis_bands_v2";
+  material.customProgramCacheKey=()=> "a1_original_suit_surface_vest_mask_v3";
   return material;
 }
