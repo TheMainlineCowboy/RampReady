@@ -31,6 +31,8 @@ const sun=new THREE.DirectionalLight(0xfff3e0,2.7);sun.position.set(-3,8,-4);sce
 const rim=new THREE.DirectionalLight(0xcadfff,1.2);rim.position.set(4,6,8);scene.add(rim);
 const plane=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshStandardMaterial({color:0x6c7074,roughness:.92}));
 plane.rotation.x=-Math.PI/2;plane.position.y=-.015;scene.add(plane);
+const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,32),new THREE.MeshBasicMaterial({color:0x30383e,transparent:true,opacity:.22,depthWrite:false}));
+contact.rotation.x=-Math.PI/2;contact.scale.set(1,.68,1);contact.position.y=.002;scene.add(contact);
 const paint=new THREE.Mesh(new THREE.PlaneGeometry(.055,21),new THREE.MeshBasicMaterial({color:0xd4b745}));
 paint.rotation.x=-Math.PI/2;paint.position.set(0,.002,-9);scene.add(paint);
 const camera=new THREE.PerspectiveCamera(46,1,.1,100);
@@ -38,8 +40,8 @@ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:tru
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));document.body.appendChild(renderer.domElement);
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;
- const distance=Math.max(4.1,Math.min(7.5,3.25*h/w));
- camera.position.set(0,2.25,-distance);camera.lookAt(0,1.10,0);camera.updateProjectionMatrix();}
+ const distance=Math.max(3.0,Math.min(4.45,2.25*h/w));
+ camera.position.set(0,2.05,-distance);camera.lookAt(0,1.04,0);camera.updateProjectionMatrix();}
 window.addEventListener("resize",resize);resize();
 const display=document.getElementById("state");const buttons=[...document.querySelectorAll("[data-cue]")];let agent=null,mode="hold",autoplay=false,approachTime=0;
 const setCue=(cue)=>{
