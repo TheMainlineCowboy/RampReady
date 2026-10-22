@@ -13,6 +13,7 @@ import {
   stepConnection,
 } from "../simulation/noseGearConnection.js";
 import { createProceduralLektroRig, validateTugRig } from "../tug/lektroRig.js";
+import { createA1GroundCrewScene } from "../simulation/a1GroundCrewScene.js";
 import "./RampReadyTrainer.css";
 import "./procedure-gates.css";
 import "./mobile-runtime-recovery.css";
@@ -30,6 +31,9 @@ const STAGES = [
   "Drive the tug clear",
   "Scenario complete",
 ];
+// Deliberately opt-in until aircraft/GSE clearances are visually approved.
+const A1_CREW_PREVIEW_ENABLED = typeof window !== "undefined"
+  && new URLSearchParams(window.location.search).get("crewPreview") === "1";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function material(color, roughness = 0.62, metalness = 0.05) {
@@ -117,6 +121,8 @@ export default function RampReadyStandupTrainer({
   const keysRef = useRef(new Set());
   const scoreRef = useRef(100);
   const [stage, setStage] = useState(0);
+  const [crewClear, setCrewClear] = useState(!A1_CREW_PREVIEW_ENABLED);
+  const [crewPhase, setCrewPhase] = useState(A1_CREW_PREVIEW_ENABLED ? "servicing" : "disabled");
   const [cameraMode, setCameraMode] = useState("chase");
   const [inspectionMode, setInspectionMode] = useState(false);
   const [direction, setDirection] = useState("FWD");
@@ -163,6 +169,9 @@ export default function RampReadyStandupTrainer({
     sim.rig.setLiftProgress(0);
     sim.aircraft.position.set(0, 0, NOSE_START_Z);
     sim.aircraft.rotation.y = 0;
+    sim.groundCrew?.reset();
+    setCrewClear(!A1_CREW_PREVIEW_ENABLED);
+    setCrewPhase(A1_CREW_PREVIEW_ENABLED ? "servicing" : "disabled");
     driveRef.current = { throttle: 0, steer: 0, brake: false, direction: 1 };
     orbitRef.current.yaw = 2.5;
     orbitRef.current.pitch = 0.38;
@@ -181,6 +190,11 @@ export default function RampReadyStandupTrainer({
     const next = !inspectionRef.current;
     inspectionRef.current = next;
     setInspectionMode(next);
+    if (simRef.current?.groundCrew) {
+      simRef.current.groundCrew.reset();
+      setCrewClear(false);
+      setCrewPhase("servicing");
+    }
     const sim = simRef.current;
     if (sim) {
       sim.connection = createConnectionState();
@@ -212,6 +226,10 @@ export default function RampReadyStandupTrainer({
     const sim = simRef.current;
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
+      if (A1_CREW_PREVIEW_ENABLED && !sim.groundCrew?.isClear()) {
+        setMessage("Ground crew working: wait for the belt loader to clear and the ramp guide to take position.");
+        return;
+      }
       stageRef.current = 1;
       setStage(1);
       setMessage("Approach directly from the front and stop inside the capture envelope.");
@@ -293,6 +311,14 @@ export default function RampReadyStandupTrainer({
 
     const sim = { renderer, scene, camera, rig, aircraft, connection: createConnectionState(), dynamics: createPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
+    if (A1_CREW_PREVIEW_ENABLED) {
+      sim.groundCrew = createA1GroundCrewScene(THREE, {scene, aircraft});
+      renderer.domElement.dataset.a1CrewPreview = "active";
+      renderer.domElement.dataset.a1CrewPhase = "servicing";
+      renderer.domElement.dataset.a1CrewClear = "false";
+    } else {
+      renderer.domElement.dataset.a1CrewPreview = "disabled";
+    }
 
     const canvas = renderer.domElement;
     const syncCameraDataset = () => {
@@ -375,6 +401,23 @@ export default function RampReadyStandupTrainer({
       const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
       sim.last = now;
       const inspectionActive = inspectionRef.current;
+      if (sim.groundCrew) {
+        const crew = sim.groundCrew.update(dt, {
+          tugPosition: rig.root.position, stage: stageRef.current, inspection: inspectionActive,
+        });
+        renderer.domElement.dataset.a1CrewPhase = crew.phase;
+        renderer.domElement.dataset.a1CrewClear = String(crew.ready);
+        renderer.domElement.dataset.a1CrewBeltLoaderMeters = Math.hypot(crew.loaderX-4.3,crew.loaderZ-3.6).toFixed(2);
+        renderer.domElement.dataset.a1CrewSignal = crew.signal;
+        if (crew.phase !== sim.lastCrewPhase && !inspectionActive) {
+          sim.lastCrewPhase = crew.phase;
+          setCrewPhase(crew.phase);
+          if (crew.ready && stageRef.current === 0) {
+            setCrewClear(true);
+            setMessage("Belt loader clear. Ramp guide on station. Complete the check and press Ready.");
+          }
+        }
+      }
       const before = connectionMetrics(sim);
       const clearDistance = Math.hypot(rig.root.position.x - aircraft.position.x, rig.root.position.z - aircraft.position.z);
       if (inspectionActive) {
@@ -588,8 +631,12 @@ export default function RampReadyStandupTrainer({
         </div>
       </div>
       <p>{message}</p>
+      {A1_CREW_PREVIEW_ENABLED && !inspectionMode &&
+        <p className="rr-crew-sequence" aria-live="polite">
+          Ground crew: <b>{crewClear ? "CLEAR — guide on station" : crewPhase.replaceAll("-", " ")}</b>
+        </p>}
       <div className="rr-hud-actions">
-        {!inspectionMode && [0, 3, 4].includes(stage) && <button className="rr-primary" onClick={advance}>{stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
+        {!inspectionMode && [0, 3, 4].includes(stage) && <button className="rr-primary" disabled={stage === 0 && A1_CREW_PREVIEW_ENABLED && !crewClear} onClick={advance}>{stage === 0 && A1_CREW_PREVIEW_ENABLED && !crewClear ? "Wait for ground crew" : stage === 0 ? "Ready" : stage === 3 ? "Clearance" : "Brake released"}</button>}
         {!inspectionMode && stage === 1 && <button className={hud.ready ? "rr-primary" : "rr-primary rr-disabled"} disabled={!hud.ready} onClick={capture}>{hud.ready ? "Capture nose gear" : `Align ${hud.capture.toFixed(1)} m`}</button>}
         {!inspectionMode && stage === 6 && <button className="rr-primary" onClick={lower}>Lower cradle</button>}
         <button className="rr-secondary" onClick={reset}>Reset</button>
