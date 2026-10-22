@@ -76,8 +76,15 @@ try{
   final=pose;
  }
  assert.ok(final.pose.crossed>.98,"At the nose gear, stop animation must cross forearms");
- for(const s of ["l","r"])assert.ok(final[s].hand[1]>final[s].shoulder[1]+.34,
-    "STOP must cross the hands over the head");
+ for(const side of ["l","r"]){
+   const p=final[side],outward=Math.sign(p.shoulder[0]);
+   assert.ok(p.hand[1]>p.shoulder[1]+.28,
+     "STOP must place both hands above forehead without overextending shoulders");
+   // A stop pose fails if its upper arm collapses inward toward the neck,
+   // even if its joint translations and upper/forearm lengths remain intact.
+   assert.ok((p.elbow[0]-p.shoulder[0])*outward>.07,
+     "STOP elbow entered the torso/neck: upper arm looks out of socket: "+JSON.stringify(p));
+ }
  assert.ok(final.vestApplied>=1,"Body-fitted vest should remain attached");
  // Side-on view is mandatory: front views can hide ear cups floating forward
  // of the head or detached from the skull.
