@@ -399,11 +399,12 @@ export default function RampReadyStandupTrainer({
     const desiredCamera = new THREE.Vector3();
     let frame = 0;
     const tick = (now) => {
-      const dt = Math.min(0.04, Math.max(0.001, (now - sim.last) / 1000));
+      const rawFrameDt = Math.max(0.001, (now - sim.last) / 1000);
+      const dt = Math.min(0.04, rawFrameDt);
       sim.last = now;
       const inspectionActive = inspectionRef.current;
       if (sim.groundCrew) {
-        const crew = sim.groundCrew.update(dt, {
+        const crew = sim.groundCrew.update(Math.min(0.35, rawFrameDt), {
           tugPosition: rig.root.position, stage: stageRef.current, inspection: inspectionActive,
         });
         renderer.domElement.dataset.a1CrewPhase = crew.phase;
