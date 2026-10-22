@@ -34,7 +34,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     const sign=signFor(id);
     // Arms begin horizontally out at shoulder height. They gradually rotate
     // upward; wrists only cross the midline in the last part of the approach.
-    const outer=.44*(1-pose.raise);
+    const outer=.50*(1-pose.raise);
     const rising=.54*pose.raise;
     const crossing=-.275*pose.crossed;
     return start.add(new THREE.Vector3(sign*(outer+crossing),rising-.025,.065));
@@ -66,7 +66,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     const radial=Math.sqrt(Math.max(0,l1*l1-along*along));
     const bend=pose.crossed>.5
       ?new THREE.Vector3(side*.24,.10,.13)
-      :new THREE.Vector3(side*.30,-.24,.10);
+      :new THREE.Vector3(side*.41,-.015,.10);
     const targetBend=person.localToWorld(wristLocal.clone().add(bend)).sub(request);
     targetBend.addScaledVector(axis,-targetBend.dot(axis)).normalize();
     const targetElbow=a.clone().addScaledVector(axis,along).addScaledVector(targetBend,radial);
