@@ -57,6 +57,11 @@ try{
  for(const s of ["l","r"])assert.ok(final[s].hand[1]>final[s].shoulder[1]+.34,
     "STOP must cross the hands over the head");
  assert.ok(final.vestApplied>=1,"Body-fitted vest should remain attached");
+ // Side-on view is mandatory: front views can hide ear cups floating forward
+ // of the head or detached from the skull.
+ const profile=await page.evaluate(()=>window.__reviewCapture.render({distance:7,stepCount:70,angle:90}));
+ fs.writeFileSync(path.join(out,"earfit-profile.png"),Buffer.from(profile.png,"base64"));
+ assert.ok(profile.png.length>6000,"Missing ear-protector profile render");
  assert.deepEqual(errors,[],"Browser must have no uncaught errors");
  await page.evaluate(()=>window.__reviewCapture.end());
  console.log(JSON.stringify({passed:true,frames:index,states:distances,humanModel:"CC0 actual skinned person; one NPC; distance linked",output:out}));
