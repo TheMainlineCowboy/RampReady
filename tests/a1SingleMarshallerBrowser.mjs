@@ -23,40 +23,39 @@ try{
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.goto(base+"a1-single-marshaller.html",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>document.querySelector("canvas")?.dataset.marshallerLoaded==="true",null,{timeout:80000});
- assert.equal(await page.locator("canvas").getAttribute("data-marshaller-loaded"),"true");
+ const width=Number(await page.locator("canvas").getAttribute("data-ear-fit-width"));
+ assert.ok(width>.11&&width<.29,"Ear defenders must be fitted to measured human head");
  await page.evaluate(()=>window.__reviewCapture.begin());
- const plan=[["hold",10],["guide",25],["slow",20],["stop",25]];
- let index=0;
- for(const [cue,count] of plan){
-  for(let n=0;n<count;n++){
-   const render=await page.evaluate(c=>window.__reviewCapture.render({cue:c,stepCount:4}),cue);
-   assert.equal(render.cue,cue);
-   // Physical check: during guide/slow, each hand must remain outside its
-   // own shoulder; crossed arms are not a valid toward-guide signal.
-   if((cue==="guide"||cue==="slow") && n>10){
-     for(const side of ["l","r"]){
-       const pose=render.metrics[side];
-       const dx=pose.hand[0]-pose.shoulder[0];
-       assert.ok(Math.sign(dx)===Math.sign(pose.shoulder[0]),
-         cue+" crosses body: "+JSON.stringify(render.metrics));
-     }
-   }
-   if(cue==="stop" && n>14){
-     for(const side of ["l","r"]){
-       const pose=render.metrics[side];
-       assert.ok(pose.hand[1]>pose.shoulder[1]+.24,
-         "STOP wrists must rise overhead: "+JSON.stringify(pose));
-     }
-   }
-   const buffer=Buffer.from(render.png,"base64");
-   assert.ok(buffer.length>5000,"Expected rendered nonempty PNG");
-   const filename=`frame-${String(index).padStart(3,"0")}.png`;
-   fs.writeFileSync(path.join(frames,filename),buffer);
-   if(n===Math.floor(count/2))fs.writeFileSync(path.join(out,`${cue}.png`),buffer);
-   index++;
+ const distances=[7,6,5,4,3,2,1,.5,0];
+ let index=0, previous=-Infinity, final;
+ for(const distance of distances){
+  let result;
+  for(let i=0;i<10;i++){
+   result=await page.evaluate(d=>window.__reviewCapture.render({distance:d,stepCount:4}),distance);
+   assert.ok(result.png.length>6000,"Missing actual WebGL canvas frame");
+   const buffer=Buffer.from(result.png,"base64");
+   fs.writeFileSync(path.join(frames,`frame-${String(index++).padStart(3,"0")}.png`),buffer);
+   if(i===9)fs.writeFileSync(path.join(out,`distance-${String(distance).replace(".","_")}m.png`),buffer);
   }
+  const pose=result.metrics;
+  const yRising=(pose.l.hand[1]-pose.l.shoulder[1]+pose.r.hand[1]-pose.r.shoulder[1])/2;
+  assert.ok(yRising>=previous-.065,"Arms went down when tug approached "+distance+" m; wrist data "+JSON.stringify(pose));
+  previous=yRising;
+  if(distance>1.5){
+   for(const hand of ["l","r"]){
+    const p=pose[hand];assert.ok(Math.sign(p.hand[0])===Math.sign(p.shoulder[0]),
+      "Approach arm crosses torso before stop "+distance+"m");
+   }
+  }
+  console.log(JSON.stringify({distance,actual:pose.distanceMeters,progress:pose.pose.progress,
+    handAboveShoulder:yRising,skullWidth:pose.headsetFit.width}));
+  final=pose;
  }
+ assert.ok(final.pose.crossed>.98,"At the nose gear, stop animation must cross forearms");
+ for(const s of ["l","r"])assert.ok(final[s].hand[1]>final[s].shoulder[1]+.34,
+    "STOP must cross the hands over the head");
+ assert.ok(final.vestApplied>=1,"Body-fitted vest should remain attached");
+ assert.deepEqual(errors,[],"Browser must have no uncaught errors");
  await page.evaluate(()=>window.__reviewCapture.end());
- assert.deepEqual(errors,[],"No browser errors");
- console.log(JSON.stringify({passed:true,frames:index,states:plan.map(x=>x[0]),humanModel:"CC0 rigged Sam; one NPC only",output:out}));
+ console.log(JSON.stringify({passed:true,frames:index,states:distances,humanModel:"CC0 actual skinned person; one NPC; distance linked",output:out}));
 }finally{await browser?.close();server.kill("SIGTERM");}
