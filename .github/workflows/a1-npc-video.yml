@@ -37,5 +37,6 @@ jobs:
           path: |
             artifacts/a1-crew/*.mp4
             artifacts/a1-crew/*.png
+            artifacts/a1-crew/video/*.png
           if-no-files-found: warn
           retention-days: 14
