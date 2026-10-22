@@ -7,6 +7,7 @@ const out=path.resolve("public/models/a1-npc-preview");
 await mkdir(out,{recursive:true});
 const refs=[
  {file:"sam-locomotion.glb",url:"https://www.innerscene.com/api/library/locomotion-collection-sam-3d-person-animated-dc23800f/download",license:"CC0",purpose:"animated marshaller reference"},
+ {file:"harper-locomotion.glb",url:"https://www.innerscene.com/api/library/locomotion-collection-harper-3d-person-animated-797e1e2a/download",license:"CC0",purpose:"animated belt-loader driver"},
  {file:"drew-hivis.glb",url:"https://www.innerscene.com/api/library/drew-3d-person-construction-worker-with-hard-hat-and-hi-vis-a4aa98af/download",license:"CC0",purpose:"phototextured PPE reference"},
 ];
 for(const ref of refs){
@@ -29,5 +30,5 @@ for(const ref of refs){
    animations:data.animations?.map(a=>({name:a.name,channels:a.channels?.length}))||[],
    origin:ref.url};
  console.log(JSON.stringify(report));
- if(ref.file==="sam-locomotion.glb" && (!report.skins||report.animations.length<3))throw Error("sam not a suitable animated rig");
+ if(ref.file.includes("locomotion") && (!report.skins||report.animations.length<3))throw Error(ref.file+" not a suitable animated rig");
 }
