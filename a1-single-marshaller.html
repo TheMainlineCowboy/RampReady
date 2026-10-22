@@ -50,10 +50,15 @@ buttons.forEach(b=>b.addEventListener("click",()=>{autoplay=false;setCue(b.datas
 document.getElementById("auto").addEventListener("click",()=>{
  autoplay=true;approachTime=0;setCue("hold");
 });
-try{
- agent=await createA1SingleMarshaller(THREE,{scene,height:1.80});
- renderer.domElement.dataset.marshallerLoaded="true";setCue("hold");
-}catch(error){console.error(error);document.getElementById("errors").textContent=String(error);renderer.domElement.dataset.marshallerLoaded="error";}
+createA1SingleMarshaller(THREE,{scene,height:1.80})
+ .then(ready=>{
+   agent=ready;renderer.domElement.dataset.marshallerLoaded="true";setCue("hold");
+ })
+ .catch(error=>{
+   console.error(error);
+   document.getElementById("errors").textContent=String(error);
+   renderer.domElement.dataset.marshallerLoaded="error";
+ });
 let capture=false,last=performance.now();
 function step(dt){
  if(agent){
