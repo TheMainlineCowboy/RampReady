@@ -42,11 +42,15 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // Arms begin horizontally out at shoulder height. They gradually rotate
     // upward; wrists only cross the midline in the last part of the approach.
     const outer=.50*(1-pose.raise);
-    const rising=.54*pose.raise;
+    // The old +0.54m wrist lift nearly fully extended both arm chains,
+    // leaving no elbow-bend freedom and visually pulling the sleeve away from
+    // the shoulder. Crossing needs to happen via bent FOREARMS, not via
+    // upper arms pointing inward through the neck.
+    const rising=.45*pose.raise;
     // Cross *forearms* above the forehead, not shoulder joints. Keep the
     // wrists ahead of the face as they converge so the upper arms remain
     // seated at the clavicles instead of folding through the neck.
-    const crossing=-.265*pose.crossed;
+    const crossing=-.285*pose.crossed;
     return start.add(new THREE.Vector3(
       sign*(outer+crossing),rising-.025,.07+.11*pose.crossed));
   }
@@ -79,9 +83,14 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // crossed>.5 branch snapped an arm over a different IK solution and
     // made the shoulder look dislocated. Interpolate the SAME outward,
     // anterior elbow plane continuously for the entire tug approach.
-    const bend=new THREE.Vector3(side*.44,-.15,.20)
-      .lerp(new THREE.Vector3(side*.31,.09,.24),pose.crossed);
-    const targetBend=person.localToWorld(wristLocal.clone().add(bend)).sub(request);
+    // Pole reference is based on the FIXED shoulder, not the moving wrist.
+    // A wrist-relative elbow pole followed the crossed hands inward above
+    // the face, making the entire humerus look displaced. The elbow should
+    // stay OUTSIDE its shoulder while the forearms cross above the forehead.
+    const shoulderLocal=localOf(upper);
+    const outwardPole=new THREE.Vector3(side*.41,-.025,.11)
+      .lerp(new THREE.Vector3(side*.48,.18,.16),pose.crossed);
+    const targetBend=person.localToWorld(shoulderLocal.add(outwardPole)).sub(a);
     targetBend.addScaledVector(axis,-targetBend.dot(axis));
     if(targetBend.lengthSq()<1e-8){
       const fallback=person.getWorldQuaternion(quat())
