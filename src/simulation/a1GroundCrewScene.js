@@ -116,7 +116,7 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft }) {
       marshal.arms[0].rotation.z=-.95;marshal.arms[1].rotation.z=.95;
     }else if(result.signal==="approach"){
       const bob=Math.sin(result.elapsed*6)*.32;
-      marshal.arms[0].rotation.z=-.40+bob;marshal.arms[1].rotation.z=.40-bob;
+      marshal.arms[0].rotation.z=-2.15+bob;marshal.arms[1].rotation.z=2.15-bob;
     }else if(result.signal==="stop"){
       marshal.arms[0].rotation.z=2.55;marshal.arms[1].rotation.z=-2.55;
     }else{
