@@ -26,7 +26,7 @@ jobs:
       - name: Install temporary browser test dependencies
         run: |
           npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium --only-shell
       - name: Capture the moving Three.js crew into a phone-playable MP4
         run: node tests/a1GroundCrewVideo.mjs
       - name: Upload evidence
