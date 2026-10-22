@@ -94,6 +94,7 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft, realPeople = f
   const clock=createA1CrewClock();
   let previousPhase="servicing";
   let realCrew=null;
+  let disposed=false;
   sceneRoot.userData.realHumanStatus=realPeople?"loading":"disabled";
   // The real human library is loaded only in the opt-in feature. Until the
   // two skinned avatars are available, the crew gate cannot authorize a tow.
@@ -101,7 +102,10 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft, realPeople = f
     marshal.root.visible=false;driver.root.visible=false;
     void import("./a1RealHumanCrew.js")
       .then(mod=>mod.installA1RealHumanCrew(THREE,{loader,driverProxy:driver,marshalProxy:marshal,sceneRoot}))
-      .then(ready=>{realCrew=ready;sceneRoot.userData.realHumanStatus="ready";})
+      .then(ready=>{
+        if (disposed) { ready.dispose(); return; }
+        realCrew=ready;sceneRoot.userData.realHumanStatus="ready";
+      })
       .catch(error=>{
         sceneRoot.userData.realHumanStatus="error";
         sceneRoot.userData.realHumanError=String(error);
@@ -152,6 +156,7 @@ export function createA1GroundCrewScene(THREE, { scene, aircraft, realPeople = f
     realCrew?.reset();
   }
   function dispose(){
+    disposed=true;
     realCrew?.dispose();
     sceneRoot.parent?.remove(sceneRoot);
     const geometries=new Set(),materials=new Set();
