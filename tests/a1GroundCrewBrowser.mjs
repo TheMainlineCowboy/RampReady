@@ -42,7 +42,7 @@ try{
  });
  const qa=await qaContext.newPage();
  qa.on("pageerror",e=>errors.push(String(e)));
- await qa.goto(base+"tests/a1CrewRigPreview.html",{waitUntil:"domcontentloaded"});
+ await qa.goto(base+"a1-crew-preview.html",{waitUntil:"domcontentloaded"});
  const isolated=qa.locator("canvas");
  await isolated.waitFor({timeout:30000});
  await qa.waitForFunction(()=>document.querySelector("canvas")?.dataset.a1HumanStatus==="ready",null,{timeout:120000});
