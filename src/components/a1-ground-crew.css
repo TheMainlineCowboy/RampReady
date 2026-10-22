@@ -1,0 +1,22 @@
+/* Opt-in 3D ground crew predeparture module; no production HUD changes
+   when ?crewPreview=1 is absent. */
+.rr-hud .rr-crew-sequence {
+  border: 1px solid rgba(255,209,102,.42);
+  background: rgba(29,38,44,.9);
+  border-radius: 10px;
+  margin-top: 9px;
+  padding: 9px 11px;
+  font-size: 13px;
+  text-transform: none;
+  color: #e9f2f7;
+}
+.rr-crew-sequence b {
+  color: #fbd36e;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-size: 12px;
+}
+.rr-hud-actions .rr-primary:disabled {
+  opacity: .56;
+  cursor: not-allowed;
+}
