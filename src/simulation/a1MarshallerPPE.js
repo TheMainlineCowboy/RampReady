@@ -1,3 +1,4 @@
+import {createA1SafetyVestMaterial} from "./a1VestMaterial.js";
 import {measureHeadForPPE} from "./a1HeadsetFit.js";
 // Source-faithful, fitted ramp PPE for an existing skin-animated human.
 // Reference authority: actual worker photos, 3M PELTOR headsets (boom/cup/band),
@@ -62,27 +63,14 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
     // Cloth surface is slightly offset from the rigged jacket, avoiding
     // both clipping and the previous oversized barrel/armor silhouette.
     const p=g.getAttribute("position"),n=g.getAttribute("normal");
-    const colors=new Float32Array(p.count*3);
-    const color=new THREE.Color();
     for(let v=0;v<p.count;v++){
       p.setXYZ(v,p.getX(v)+n.getX(v)*.0055,
         p.getY(v)+n.getY(v)*.0055,p.getZ(v)+n.getZ(v)*.0055);
-      const x=p.getX(v),y=p.getY(v),z=p.getZ(v);
-      // Front of the original jacket looks along positive model Z.
-      const front=z>.065;
-      const openFront=front&&Math.abs(x)<.024;
-      const horizontal=(Math.abs(y-1.11)<.026||Math.abs(y-1.28)<.029);
-      const vertical=front && Math.abs(Math.abs(x)-.137)<.026 && y>1.26;
-      const edge=front&&Math.abs(Math.abs(x)-.037)<.014;
-      if(openFront)color.setRGB(.025,.05,.075);
-      else if(horizontal||vertical)color.setRGB(.72,.76,.75);
-      else if(edge)color.setRGB(.65,.76,.19);
-      else color.setRGB(.59,.76,.08);
-      colors[v*3]=color.r;colors[v*3+1]=color.g;colors[v*3+2]=color.b;
     }
-    g.setAttribute("color",new THREE.BufferAttribute(colors,3));p.needsUpdate=true;
+    p.needsUpdate=true;
     g.computeBoundingSphere();geometries.add(g);
-    const vestMat=make(0xffffff,.92,.0,{vertexColors:true,side:THREE.DoubleSide});
+    const vestMat=createA1SafetyVestMaterial(THREE);
+    materials.add(vestMat);
     const vest=new THREE.SkinnedMesh(g,vestMat);
     vest.name="Torso-fitted high visibility fabric vest (shared skin weights)";
     vest.bindMode=mesh.bindMode;
