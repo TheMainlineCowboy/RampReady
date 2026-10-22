@@ -98,10 +98,10 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   const fit=measureHeadForPPE(THREE,{root,head});
   const headset=new THREE.Group();headset.name="Fitted aviation ramp communications headset";
   head.add(headset);
-  const cupHeight=Math.min(.102,fit.height*.34);
+  const cupHeight=Math.max(.066,Math.min(.080,fit.height*.52));
   const cupDepth=cupHeight*.76;
   const cupThickness=.022;
-  const shellWidth=fit.halfWidth+.017;
+  const shellWidth=fit.halfWidth+.013;
   for(const sign of [-1,1]) {
     const x=fit.centerX+sign*(fit.halfWidth-.002);
     // The inner seal physically overlaps the side of the head by 2mm.
@@ -123,7 +123,7 @@ export function installA1MarshallingPPE(THREE,{root,bones,withWands=false}) {
   for(let i=0;i<=10;i++){
     const u=i/10,theta=Math.PI*(1-u);
     arc.push([fit.centerX+Math.cos(theta)*(shellWidth+.004),
-      fit.earsY+(fit.top-fit.earsY+.012)*Math.sin(theta),
+      fit.earsY+(fit.top-fit.earsY+.046)*Math.sin(theta),
       fit.earZ]);
   }
   tube(headset,"headband resting against crown",arc,.007,dark);
