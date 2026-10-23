@@ -19,15 +19,23 @@ try{
  await page.getByRole("button",{name:"Start training",exact:true}).click();
  await page.waitForFunction(()=>{
   const c=document.querySelector("canvas.trainerCanvas");
-  const failed=document.body.textContent?.includes("Unable to finish loading");
-  return failed||c?.dataset?.kphxSurfaceReady==="true";
+  const failed=document.querySelector(".rr-runtime-loading-card h1")?.textContent?.includes("Unable to finish loading");
+  return failed||(
+    c?.dataset?.kphxSurfaceReady==="true" &&
+    c?.dataset?.kphxExactLiveT4==="ready" &&
+    c?.dataset?.kphxT4ZdpMarkingsReady==="true" &&
+    c?.dataset?.kphxMisterXLinesReady==="true"
+  );
  },null,{timeout:180000});
+ let overlayCleared=true;
+ try{await page.locator(".rr-runtime-loading").waitFor({state:"hidden",timeout:16000});}
+ catch{overlayCleared=false;}
  const data=await page.evaluate(()=>{
   const c=document.querySelector("canvas.trainerCanvas");
   return {error:document.querySelector(".rr-runtime-loading-card")?.innerText,
     status:c?.dataset||{},url:location.href};
  });
- const report={data,failedRequests:failures,consoleErrors:consoles,assetRequestCount:requests.length,
+ const report={data,overlayCleared,failedRequests:failures,consoleErrors:consoles,assetRequestCount:requests.length,
    uniqueAssetRequests:[...new Set(requests)].slice(0,180)};
  fs.writeFileSync(out+"/report.json",JSON.stringify(report,null,2));
  await page.screenshot({path:out+"/live-mobile-surface-result.png",fullPage:true});
@@ -37,5 +45,5 @@ try{
   canvas:((({runtimeLoadError,kphxExactLiveT4Error,lastFailedAssetUrl,kphxSurfaceReady})=>
     ({runtimeLoadError,kphxExactLiveT4Error,lastFailedAssetUrl,kphxSurfaceReady}))(data.status||{})),
  },null,2));
- if(failures.length||data.error?.includes("Unable to finish loading"))process.exitCode=1;
+ if(!overlayCleared||data.error?.includes("Unable to finish loading")||data.status?.kphxExactLiveT4!=="ready"||data.status?.kphxSurfaceReady!=="true")process.exitCode=1;
 }finally{await browser.close();}
