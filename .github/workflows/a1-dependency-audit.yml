@@ -1,0 +1,44 @@
+name: A1 Complete Asset Dependency Audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-a1-runtime-asset-dependencies.mjs'
+      - 'tests/a1LiveSceneryDiagnostics.mjs'
+      - 'src/environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js'
+      - '.github/workflows/a1-dependency-audit.yml'
+  workflow_dispatch:
+jobs:
+  verify-a1-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Audit all transitively referenced terminal/scenery buffers and images in repository
+        run: node scripts/audit-a1-runtime-asset-dependencies.mjs
+      - name: Verify original simulator compiles with improved errors
+        run: npx vite build
+      - name: Audit live GitHub Pages GET/HEAD accessibility for EVERY referenced A1 asset
+        if: always()
+        run: node scripts/audit-a1-runtime-asset-dependencies.mjs --live
+      - name: Install actual Chromium browser
+        if: always()
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium --only-shell
+      - name: Reproduce original loading error on live mobile simulator
+        if: always()
+        run: node tests/a1LiveSceneryDiagnostics.mjs
+      - name: Preserve complete diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-scene-dependency-and-browser-failures
+          path: artifacts/a1-*/
+          retention-days: 7
+          if-no-files-found: warn
