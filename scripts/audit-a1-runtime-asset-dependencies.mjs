@@ -29,6 +29,9 @@ const surfaceSets=[
  ["surfaces",()=>true],
  ["t4-a1-zdp-surfaces",()=>true],
  ["full-zdp-surfaces",name=>name.startsWith("ZDP_Library/markings/")],
+ // Also loaded by the Terminal 4 MisterX surface-batch path. Omitting these
+ // caused deploy's "all assets verified" check to miss 20 required PNGs.
+ ["surface-batches/misterx",()=>true],
 ];
 const urls=new Map();
 function add(url,why,expectSize=null,expectSha=null) {
