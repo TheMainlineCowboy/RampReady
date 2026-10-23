@@ -50,6 +50,17 @@ function add(url,why,expectSize=null,expectSha=null) {
 function readPublic(url){return fs.readFileSync(path.join(publicRoot,url.slice(1)));}
 const missing=[],invalid=[],oversize=[],liveErrors=[];
 function imageUris(j){return (j.images||[]).map(i=>i.uri).filter(Boolean);}
+function decodeGltf(assetUrl) {
+ const bytes=readPublic(assetUrl);
+ if(assetUrl.endsWith(".gltf"))return JSON.parse(bytes.toString("utf8"));
+ if(assetUrl.endsWith(".glb")){
+  if(bytes.toString("ascii",0,4)!=="glTF")throw Error("GLB magic mismatch: "+assetUrl);
+  const jsonLength=bytes.readUInt32LE(12);
+  if(bytes.toString("ascii",16,20)!=="JSON")throw Error("Missing JSON chunk: "+assetUrl);
+  return JSON.parse(bytes.subarray(20,20+jsonLength).toString("utf8"));
+ }
+ throw Error("Unsupported 3D asset: "+assetUrl);
+}
 for(const [manifestFile,needed] of manifestSets) {
  const uri="/models/kphx-full-airport/"+manifestFile;
  add(uri,"object manifest");
@@ -60,7 +71,7 @@ for(const [manifestFile,needed] of manifestSets) {
  assert.ok(placements.length>0,"No selected WED objects in "+uri);
  for(const assetUrl of new Set(placements.map(x=>x.assetUrl))) {
   add(assetUrl,"3D model used by "+manifestFile);
-  const src=JSON.parse(readPublic(assetUrl));
+  const src=decodeGltf(assetUrl);
   const dir=path.posix.dirname(assetUrl);
   for(const b of src.buffers||[])if(b.uri)add(dir+"/"+b.uri,"GLTF buffer of "+assetUrl,b.byteLength);
   for(const img of imageUris(src))add(dir+"/"+img,"GLTF image of "+assetUrl);
@@ -112,17 +123,30 @@ for(const entry of urls.values()){
  const digest=crypto.createHash("sha256").update(fs.readFileSync(full)).digest("hex");
  if(digest!==entry.expectSha)invalid.push({...entry,detail:"surface image SHA mismatch"});
 }
+let transientResponses=0;
 async function checkOne(e){
- const link=new URL(e.url.replace(/^\//,""),base).href;
- try{
-  const res=await fetch(link,{method:"HEAD",signal:AbortSignal.timeout(19000),
-    headers:{"Cache-Control":"no-cache"}});
-  let size=Number(res.headers.get("content-length")||0);
-  if(!res.ok)throw Error("HTTP "+res.status+" "+res.statusText);
-  if(size>0 && e.expectSize!=null && size!==e.expectSize)
-    throw Error("live "+size+" bytes != original "+e.expectSize);
-  return null;
- }catch(err){return {url:e.url,error:String(err),why:e.why.slice(0,4)};}
+ const link=new URL(e.url.slice(1),base).href;
+ let lastError;
+ for(let attempt=0;attempt<4;attempt++){
+  try{
+   const res=await fetch(link,{method:"HEAD",signal:AbortSignal.timeout(17000),
+     headers:{"Cache-Control":"no-cache"}});
+   const size=Number(res.headers.get("content-length")||0);
+   if(!res.ok){
+    if([429,500,502,503,504].includes(res.status))transientResponses++;
+    else throw Object.assign(new Error("Permanent HTTP "+res.status),{permanent:true});
+    throw new Error("HTTP "+res.status+" "+res.statusText);
+   }
+   if(size>0 && e.expectSize!=null && size!==e.expectSize)
+     throw Object.assign(new Error("live "+size+" bytes != source "+e.expectSize),{permanent:true});
+   return null;
+  }catch(err){
+   lastError=err;
+   if(err.permanent)break;
+   if(attempt<3)await new Promise(resolve=>setTimeout(resolve,(attempt+1)*700));
+  }
+ }
+ return {url:e.url,error:String(lastError),why:e.why.slice(0,4)};
 }
 if(live){
  let todo=[...urls.values()],index=0;
@@ -136,7 +160,7 @@ if(live){
 }
 const report={
  mode:live?"live-and-local":dist?"dist-local":"local",
- checkedUrls:urls.size,checkedBytes,
+ checkedUrls:urls.size,checkedBytes,transientResponses,
  missing,invalid,liveErrors,byExtension:{},
  sampleUrls:[...urls.values()].slice(0,18),
 };
@@ -148,6 +172,6 @@ fs.mkdirSync(path.dirname(reportPath),{recursive:true});
 fs.writeFileSync(reportPath,JSON.stringify(report,null,2));
 console.log(JSON.stringify({status:missing.length||invalid.length||liveErrors.length?"FAIL":"PASS",
   checkedUrls:report.checkedUrls,checkedBytes,missing:missing.length,
-  invalid:invalid.length,liveErrors:liveErrors.length,
+  invalid:invalid.length,liveErrors:liveErrors.length,transientResponses,
   byExtension:report.byExtension,sampleFailures:[...missing,...invalid,...liveErrors].slice(0,15)},null,2));
 if(missing.length||invalid.length||liveErrors.length)process.exitCode=1;
