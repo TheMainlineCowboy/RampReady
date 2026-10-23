@@ -1,0 +1,57 @@
+name: A1 Android complete scene and mobile asset smoke
+on:
+  pull_request:
+    paths:
+      - 'src/environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js'
+      - 'src/components/RampReadyStandupTrainerTerminal4.jsx'
+      - 'scripts/stage-a1-mobile-surface-textures.mjs'
+      - 'tests/a1AndroidFullRuntimeSmoke.mjs'
+      - '.github/workflows/a1-android-scene-smoke.yml'
+  workflow_dispatch:
+jobs:
+  android-real-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked simulator plus ephemeral browser and image tools
+        run: |
+          npm ci
+          npm install --no-save --no-package-lock sharp playwright
+          npx playwright install chromium --only-shell
+      - name: Generate exact-source mobile image derivatives
+        run: node scripts/stage-a1-mobile-surface-textures.mjs
+      - name: Stage licensed and verified 3D vehicle and NPC models
+        run: |
+          node scripts/materialize-standup-tug-runtime.mjs
+          node scripts/stage-a1-single-marshaller.mjs
+      - name: Build actual GitHub Pages production site
+        run: npx vite build
+      - name: Verify all generated mobile images in compiled site
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('artifacts/a1-mobile-textures/report.json','utf8'));
+          if(report.count<5||report.savedPct<50)throw Error('Insufficient mobile texture derivation');
+          for(const x of report.files){
+            const path='dist'+x.mobile;
+            if(!fs.existsSync(path)||fs.statSync(path).size!==x.mobileBytes)
+              throw Error('Missing compiled mobile source derivative: '+path);
+          }
+          console.log('VERIFIED',report.count,'mobile texture derivatives;',report.savedPct,'% smaller packaged textures');
+          NODE
+      - name: Simulated Android real WebGL complete A1 scene loads
+        timeout-minutes: 9
+        run: node tests/a1AndroidFullRuntimeSmoke.mjs
+      - name: Save real browser screenshot, failed requests and mobile source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a1-android-mobile-scene-evidence
+          path: artifacts/a1-mobile-*/
+          if-no-files-found: warn
+          retention-days: 14

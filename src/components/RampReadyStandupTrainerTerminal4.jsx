@@ -973,6 +973,12 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.kphxSurfaceLineMeshCount = String((packageData.lineMeshCount ?? 0) + (zdpData.lineMeshCount ?? 0));
         renderer.domElement.dataset.kphxSurfaceMaterialCount = String((packageData.materialCount ?? 0) + (zdpData.materialCount ?? 0));
         renderer.domElement.dataset.kphxSurfaceFailureCount = String(failures.length);
+        renderer.domElement.dataset.kphxSurfaceMobileTextureCount = String(
+          (packageData.mobileTextureCount||0)+(zdpData.mobileTextureCount||0)
+        );
+        renderer.domElement.dataset.kphxSurfaceOriginalTextureCount = String(
+          (packageData.sourceTextureCount||0)+(zdpData.sourceTextureCount||0)
+        );
         renderer.domElement.dataset.kphxA1ZdpSurfaceReady = String(zdpData.ready === true);
         renderer.domElement.dataset.kphxA1ZdpSurfacePolygonCount = String(zdpData.polygonCount ?? 0);
         renderer.domElement.dataset.kphxA1ZdpOpaqueBaseUnderlayCount = String(zdpData.opaqueBaseUnderlayCount ?? 0);

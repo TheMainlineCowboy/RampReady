@@ -19,7 +19,9 @@ on:
       - src/components/RampReadyStandupTrainerTerminal4.jsx
       - src/components/PushbackTrainer.jsx
       - tests/a1ThreeEquipmentLiveBrowser.mjs
+      - tests/a1AndroidFullRuntimeSmoke.mjs
       - scripts/audit-a1-runtime-asset-dependencies.mjs
+      - scripts/stage-a1-mobile-surface-textures.mjs
       - src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js
       - src/environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js
       - scripts/prepare-terminal4-runtime.mjs
@@ -71,6 +73,12 @@ jobs:
       - name: Audit complete exact-A1 scenery dependency graph before Pages packaging
         run: node scripts/audit-a1-runtime-asset-dependencies.mjs
 
+      - name: Install build-only image resampler
+        run: npm install --no-save --no-package-lock sharp
+
+      - name: Stage lower-memory mobile PHX surface textures from original source
+        run: node scripts/stage-a1-mobile-surface-textures.mjs
+
       - name: Reconstruct verified stand-up tug from checked-in payload parts
         run: node scripts/materialize-standup-tug-runtime.mjs
 
@@ -108,6 +116,16 @@ jobs:
           printf 'glTF' | cmp -n 4 - dist/models/manager-kubota/RampReady-manager-Kubota-exact.glb
           test -s dist/models/kphx-full-airport/batches/structures.manifest.json
           test -s dist/models/kphx-full-airport/surfaces/manifest.json
+          node --input-type=module <<'MOBILE'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('artifacts/a1-mobile-textures/report.json','utf8'));
+          if(r.count<5||r.savedPct<50)throw Error('Mobile texture tier incomplete');
+          for(const x of r.files){
+            if(!fs.existsSync('dist'+x.mobile))throw Error('Mobile PNG not bundled: '+x.mobile);
+            if(fs.statSync('dist'+x.mobile).size!==x.mobileBytes)throw Error('Mobile PNG corrupted: '+x.mobile);
+          }
+          console.log('Verified mobile texture derivatives',r.count,r.savedPct+'% lower bytes');
+          MOBILE
           test -s dist/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json
           node --input-type=module <<'TUG'
           import fs from 'node:fs';
@@ -176,7 +194,7 @@ jobs:
   verify-live-site:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       EXPECTED_SHA: ${{ github.sha }}
@@ -321,6 +339,14 @@ jobs:
       - name: Install Chromium for live simulator render
         run: npx playwright install --with-deps chromium
 
+      - name: Verify simulated Android phone loads complete LIVE A1 scene
+        timeout-minutes: 8
+        run: node tests/a1AndroidFullRuntimeSmoke.mjs
+
+      - name: Verify LIVE simulator loading for all 3 vehicles in 5 supported modes
+        timeout-minutes: 16
+        run: node tests/a1ThreeEquipmentLiveBrowser.mjs
+
       - name: Verify the rendered Sky Harbor simulator scene
         shell: bash
         run: |
@@ -331,10 +357,6 @@ jobs:
       - name: Verify opt-in A1 mission on live GitHub Pages
         run: node tests/a1TurnaroundLiveBrowser.mjs
 
-      - name: Verify real simulator loading for all 3 vehicles and 5 supported modes
-        timeout-minutes: 12
-        run: node tests/a1ThreeEquipmentLiveBrowser.mjs
-
       - name: Upload simulator render evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -343,6 +365,7 @@ jobs:
           path: |
             live-phx-render-evidence/
             artifacts/a1-asset-audit/
+            artifacts/a1-mobile-load/
             test-results/
           if-no-files-found: warn
           retention-days: 1
