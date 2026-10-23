@@ -94,6 +94,13 @@ jobs:
           # Fail before deployment if its runtime GLB is missing or corrupted.
           test -s dist/models/standup-tug.glb
           printf 'glTF' | cmp -n 4 - dist/models/standup-tug.glb
+          test -s dist/models/lektro-88/LEKTRO_AP88_TVO914.glb
+          printf 'glTF' | cmp -n 4 - dist/models/lektro-88/LEKTRO_AP88_TVO914.glb
+          test -s dist/models/manager-kubota/RampReady-manager-Kubota-exact.glb
+          printf 'glTF' | cmp -n 4 - dist/models/manager-kubota/RampReady-manager-Kubota-exact.glb
+          test -s dist/models/kphx-full-airport/batches/structures.manifest.json
+          test -s dist/models/kphx-full-airport/surfaces/manifest.json
+          test -s dist/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json
           node --input-type=module <<'TUG'
           import fs from 'node:fs';
           import crypto from 'node:crypto';
@@ -241,6 +248,29 @@ jobs:
           test "${tug_verified}" = true
           printf 'glTF' | cmp -n 4 - /tmp/live-aircraft.glb
           printf 'glTF' | cmp -n 4 - /tmp/live-standup-tug.glb
+
+          # All three selector options and BOTH modes need the same deployed
+          # asset URLs. Compare live bytes to the exact checked-in originals.
+          for model in "lektro-88/LEKTRO_AP88_TVO914.glb" "manager-kubota/RampReady-manager-Kubota-exact.glb"; do
+            expected="public/models/${model}"
+            actual="/tmp/live-$(basename "${model}")"
+            curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+              -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+              -o "${actual}" "${PAGE_URL}models/${model}?sha=${EXPECTED_SHA}"
+            printf 'glTF' | cmp -n 4 - "${actual}"
+            cmp --silent "${expected}" "${actual}"
+            echo "Verified live equipment: ${model} ($(stat -c%s "${actual}") bytes)"
+          done
+
+          # Shared PHX manifests are needed irrespective of chosen vehicle.
+          for manifest in "kphx-full-airport/batches/structures.manifest.json" "kphx-full-airport/surfaces/manifest.json" "kphx-full-airport/t4-a1-zdp-surfaces/manifest.json"; do
+            live_file="/tmp/$(basename "$(dirname "${manifest}")")-$(basename "${manifest}")"
+            curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+              -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+              -o "${live_file}" "${PAGE_URL}models/${manifest}?sha=${EXPECTED_SHA}"
+            cmp --silent "public/models/${manifest}" "${live_file}"
+            echo "Verified shared scenery: ${manifest}"
+          done
 
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
             -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
