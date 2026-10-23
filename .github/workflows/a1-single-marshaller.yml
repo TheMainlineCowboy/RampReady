@@ -51,6 +51,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install chromium --only-shell
+      - name: Verify unchanged gesture timing against real nose-gear capture threshold
+        run: node tests/a1GuideDistanceSchedule.mjs
       - name: Verify hands and rising arm signals in real WebGL
         run: node tests/a1SingleMarshallerBrowser.mjs
       - name: Save actual browser frames for independent playback

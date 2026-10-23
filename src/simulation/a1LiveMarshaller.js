@@ -2,7 +2,8 @@
 // the capture HEAD (not the tug centre), then leave on foot after capture.
 // Never use the rejected belt-loader/two-NPC build or marshalling wands.
 import {createA1SingleMarshaller} from "./a1SingleMarshaller.js";
-import {A1_APPROACH_DISTANCE_METERS,A1_STOP_CAPTURE_METERS} from "./a1GroundGuideMotion.js";
+import {A1_APPROACH_DISTANCE_METERS} from "./a1GroundGuideMotion.js";
+import {A1_CAPTURE_STOP_METERS,mapA1CaptureDistanceToMotionDistance} from "./a1GuideDistanceSchedule.js";
 
 const WALK_METERS_PER_SECOND=1.05;
 const EPSILON=.025;
@@ -14,6 +15,7 @@ export function installA1LiveMarshaller(THREE,{
 }){
   let disposed=false,agent=null,status="loading",error="";
   let phase="waiting",approachMeters=A1_APPROACH_DISTANCE_METERS;
+  let physicalDistanceMeters=Number.NaN,approachEntryMeters=Number.NaN;
   const capture=new THREE.Vector3(),gear=new THREE.Vector3();
   const atGuide=new THREE.Vector3(),atEntry=new THREE.Vector3();
   let guideHeading=0;
@@ -45,6 +47,7 @@ export function installA1LiveMarshaller(THREE,{
   }
   function resetToWaiting(){
     phase="waiting";approachMeters=A1_APPROACH_DISTANCE_METERS;
+    physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
     if(!agent)return;
     agent.person.visible=false;
     agent.person.position.copy(atEntry);
@@ -111,19 +114,29 @@ export function installA1LiveMarshaller(THREE,{
       }
       if(phase!=="guiding")return;
       gear.copy(aircraft.position);
-      // Same capture anchor and world-space offset used by connectionMetrics
-      // and requestCapture (including the vertical difference).
+      // This is exactly the distance used to authorize nose-gear capture.
       rig.getCaptureWorld(capture);
-      approachMeters=Math.min(A1_APPROACH_DISTANCE_METERS,gear.distanceTo(capture));
-      // Keep the fully crossed stop for the capture-and-secure stage.
-      if(stage===2)approachMeters=Math.min(approachMeters,A1_STOP_CAPTURE_METERS);
-      agent.setDistanceMeters(approachMeters);
+      physicalDistanceMeters=gear.distanceTo(capture);
+      if(!Number.isFinite(approachEntryMeters)){
+        approachEntryMeters=Math.max(physicalDistanceMeters,A1_CAPTURE_STOP_METERS+1);
+      }
+      // Do not change any shoulder, wrist, elbow, or palm animation keys:
+      // remap physical travel onto the existing 7m gesture sequence instead.
+      approachMeters=mapA1CaptureDistanceToMotionDistance(
+        physicalDistanceMeters,approachEntryMeters,A1_APPROACH_DISTANCE_METERS
+      );
+      const atStop=physicalDistanceMeters<=A1_CAPTURE_STOP_METERS||stage===2;
+      if(atStop)approachMeters=0;
+      // Catch up only when the tug is physically in its capture envelope.
+      // The leading eased schedule normally finishes without this override.
+      agent.setDistanceMeters(approachMeters,atStop);
       agent.update(dt);
     },
     get status(){return status;},
     get phase(){return phase;},
     get approachMeters(){return approachMeters;},
-    get stopPoseReady(){return phase==="guiding"&&approachMeters<=A1_STOP_CAPTURE_METERS;},
+    get physicalDistanceMeters(){return physicalDistanceMeters;},
+    get stopPoseReady(){return phase==="guiding"&&approachMeters<=0;},
     get error(){return error;},
     dispose(){disposed=true;agent?.dispose();agent=null;},
   };
