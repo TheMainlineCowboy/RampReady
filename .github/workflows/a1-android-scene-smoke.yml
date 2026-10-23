@@ -6,6 +6,8 @@ on:
       - 'src/components/RampReadyStandupTrainerTerminal4.jsx'
       - 'scripts/stage-a1-mobile-surface-textures.mjs'
       - 'tests/a1AndroidFullRuntimeSmoke.mjs'
+      - 'src/simulation/a1LiveMarshaller.js'
+      - 'tests/a1MarshallerWalkTiming.mjs'
       - '.github/workflows/a1-android-scene-smoke.yml'
   workflow_dispatch:
 jobs:
@@ -44,7 +46,9 @@ jobs:
           }
           console.log('VERIFIED',report.count,'mobile texture derivatives;',report.savedPct,'% smaller packaged textures');
           NODE
-      - name: Simulated Android real WebGL complete A1 scene loads
+      - name: Verify Sam walking pace, complete endpoint turning, and no stage-one delay
+        run: node tests/a1MarshallerWalkTiming.mjs
+      - name: Simulated Android real WebGL complete A1 scene loads AND stage-two entry
         timeout-minutes: 9
         run: node tests/a1AndroidFullRuntimeSmoke.mjs
       - name: Save real browser screenshot, failed requests and mobile source evidence

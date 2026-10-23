@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import { installA1LiveMarshaller } from "../simulation/a1LiveMarshaller.js";
-import { evaluateA1ApproachGate } from "../simulation/a1MarshallerWorkflowGate.js";
+import { evaluateA1ApproachGate,isA1JetwayParked } from "../simulation/a1MarshallerWorkflowGate.js";
 import { JACKKNIFE_WARNING, createPushbackState, stepPushbackDynamics } from "../simulation/pushbackDynamics.js";
 import {
   CONNECTION_PHASES,
@@ -400,7 +400,7 @@ export default function RampReadyStandupTrainer({
     if (!sim || inspectionRef.current || stageRef.current !== 1) return;
     if (a1MarshallerRef.current?.readyToGuide !== true ||
         jetwayRef.current.deployment > 0.0005 ||
-        jetwayRef.current.controller?.getState?.() !== "parked") {
+        !isA1JetwayParked(jetwayRef.current.controller)) {
       setMessage("Capture locked: jetway must be parked and marshaller guiding.");
       return;
     }
@@ -1377,18 +1377,7 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwaySupportTrianglePartitionExact = String(jetway.controller.isSupportTrianglePartitionExact?.() === true);
         renderer.domElement.dataset.a1JetwayFixedWallMotionMaxMeters = Number(jetway.controller.getFixedWallMotionMaxMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayFixedWallRotationMaxRadians = Number(jetway.controller.getFixedWallRotationMaxRadians?.() ?? Number.NaN).toFixed(9);
-        if (!inspectionActive && jetway.retractionRequested && stageRef.current === 0) {
-          const gate = evaluateA1ApproachGate(jetway, a1MarshallerRef.current);
-          if (gate.ready) {
-            jetway.retractionRequested = false;
-            stageRef.current = 1;
-            setStage(1);
-            setMessage("Jetway fully parked. Marshaller in position. Approach the nose gear at idle speed.");
-          } else if (sim.lastA1GateMessage !== gate.reason) {
-            sim.lastA1GateMessage = gate.reason;
-            setMessage(gate.reason);
-          }
-        }
+        // The A1 readiness gate runs after the real human rig updates below.
       }
       const before = connectionMetrics(sim);
       const clearDistance = Math.hypot(rig.root.position.x - aircraft.position.x, rig.root.position.z - aircraft.position.z);
@@ -1642,14 +1631,31 @@ export default function RampReadyStandupTrainer({
         });
       }
       a1Marshaller.update(dt);
+      // Match the actual character's END-OF-FRAME arrival state rather than
+      // relying on the previous render frame (which may be seconds old on
+      // mobile software WebGL). Step 2 should unlock immediately here.
+      if (!inspectionActive && jetway.retractionRequested && stageRef.current === 0) {
+        const gate = evaluateA1ApproachGate(jetway, a1MarshallerRef.current);
+        if (gate.ready) {
+          jetway.retractionRequested = false;
+          stageRef.current = 1;
+          setStage(1);
+          setMessage("Jetway fully parked. Marshaller in position. Approach the nose gear at idle speed.");
+        } else if (sim.lastA1GateMessage !== gate.reason) {
+          sim.lastA1GateMessage = gate.reason;
+          setMessage(gate.reason);
+        }
+      }
       canvas.dataset.a1MarshallerStatus=a1Marshaller.status;
       canvas.dataset.a1MarshallerPhase=a1Marshaller.phase;
       canvas.dataset.a1MarshallerCaptureDistanceMeters=Number.isFinite(a1Marshaller.physicalDistanceMeters)?a1Marshaller.physicalDistanceMeters.toFixed(3):"waiting";
       canvas.dataset.a1MarshallerMotionDistanceMeters=a1Marshaller.approachMeters.toFixed(3);
       canvas.dataset.a1MarshallerStopReady=String(a1Marshaller.stopPoseReady);
       canvas.dataset.a1MarshallerReadyToGuide=String(a1Marshaller.readyToGuide);
+      canvas.dataset.a1StageRef=String(stageRef.current);
+      canvas.dataset.a1RetractionRequested=String(jetway.retractionRequested);
       canvas.dataset.a1ApproachGateReady=String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
-      canvas.dataset.a1JetwayCompletelyParked=String(jetway.deployment<=0.0005&&jetway.controller?.getState?.()==="parked");
+      canvas.dataset.a1JetwayCompletelyParked=String(jetway.deployment<=0.0005&&isA1JetwayParked(jetway.controller));
       canvas.dataset.a1MarshallerMode="single-no-wands-distance-driven-provisional";
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);

@@ -5,8 +5,11 @@ import {createA1SingleMarshaller} from "./a1SingleMarshaller.js";
 import {A1_APPROACH_DISTANCE_METERS} from "./a1GroundGuideMotion.js";
 import {A1_CAPTURE_STOP_METERS,mapA1CaptureDistanceToMotionDistance} from "./a1GuideDistanceSchedule.js";
 
-const WALK_METERS_PER_SECOND=1.05;
-const EPSILON=.025;
+// Keep Sam's authored walk.relaxed animation; the earlier 11.5m route
+// artificially delayed Stage 2 and made the character wander beside the jet.
+export const A1_WALK_ENTRY_DISTANCE_METERS=4.8;
+export const A1_WALK_SPEED_METERS_PER_SECOND=1.30;
+const TURN_DURATION_MS=320;
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 
 export function installA1LiveMarshaller(THREE,{
@@ -20,40 +23,40 @@ export function installA1LiveMarshaller(THREE,{
   const atGuide=new THREE.Vector3(),atEntry=new THREE.Vector3();
   let guideHeading=0;
 
-  const faceDirection=(target,dt,finishHeading=null)=>{
-    const delta=target.clone().sub(agent.person.position);delta.y=0;
-    const wanted=finishHeading??Math.atan2(delta.x,delta.z);
-    const difference=Math.atan2(Math.sin(wanted-agent.person.rotation.y),Math.cos(wanted-agent.person.rotation.y));
-    agent.person.rotation.y+=difference*clamp(dt*7,0,1);
-  };
-  function walkTo(target,dt,finalHeading=null){
-    const travel=target.clone().sub(agent.person.position);
-    travel.y=0;
-    const distance=travel.length();
-    if(distance>EPSILON){
-      const step=Math.min(distance,WALK_METERS_PER_SECOND*clamp(dt,0,.05));
-      agent.person.position.addScaledVector(travel,step/distance);
-      // Natural turn into the operating position, rather than walking
-      // sideways or instantly snapping 180 degrees at the destination.
-      if(finalHeading!==null && distance<.95)faceDirection(target,dt,finalHeading);
-      else faceDirection(target,dt);
-    }
-    if(distance<=EPSILON+WALK_METERS_PER_SECOND*dt){
-      agent.person.position.copy(target);
-      if(finalHeading!==null)agent.person.rotation.y=finalHeading;
-      return true;
-    }
+  // The authored GLB's walk cycle moves the legs; world translation is
+  // separate. Only turn while STATIONARY so she cannot crab-walk sideways.
+  let walkInHeading=0,walkOutHeading=0;
+  const headingFromTo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
+  let phaseStartedAt=0,turnFrom=0,lastRealUpdateAt=performance.now();
+  function startPhase(name,now){
+    phase=name;phaseStartedAt=now;turnFrom=agent.person.rotation.y;
+  }
+  function rotateStandingTo(target,now){
+    const arc=Math.atan2(Math.sin(target-turnFrom),Math.cos(target-turnFrom));
+    const t=clamp((now-phaseStartedAt)/TURN_DURATION_MS,0,1);
+    const eased=t*t*(3-2*t);
+    agent.person.rotation.y=turnFrom+arc*eased;
+    if(t>=1){agent.person.rotation.y=target;return true;}
     return false;
   }
+  function walkTo(from,to,now){
+    // Authoritative 1.3 m/s "walk.relaxed" GLB gait moves IN PLACE.
+    // World motion is elapsed-time based, never based on the 40ms frame cap.
+    const meters=from.distanceTo(to);
+    const fraction=clamp((now-phaseStartedAt)*A1_WALK_SPEED_METERS_PER_SECOND/
+      Math.max(.001,1000*meters),0,1);
+    agent.person.position.lerpVectors(from,to,fraction);
+    return fraction>=1;
+  }
   function resetToWaiting(){
-    phase="waiting";approachMeters=A1_APPROACH_DISTANCE_METERS;
+    phase="waiting";phaseStartedAt=0;approachMeters=A1_APPROACH_DISTANCE_METERS;
     physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
     if(!agent)return;
     // Park visibly at a remote ramp-side staging point. Never pop into the
     // guide position when the deployment sequence reaches Step 2.
     agent.person.visible=!readInspection();
     agent.person.position.copy(atEntry);
-    agent.person.rotation.y=guideHeading;
+    agent.person.rotation.y=walkInHeading;
     agent.setWalking(false);
     agent.setDistanceMeters(A1_APPROACH_DISTANCE_METERS);
   }
@@ -68,11 +71,14 @@ export function installA1LiveMarshaller(THREE,{
       aircraft.position.x+approachX*.95+sideX*1.15,0,
       aircraft.position.z+approachZ*.95+sideZ*1.15
     );
-    // Entry begins from the safe outer ramp side, not inside the tug path.
-    // Walk about 11m during the real A1 jetway retraction, not 4.8m
-    // from a position that can be visible in the operator's view.
-    atEntry.copy(atGuide).add(new THREE.Vector3(sideX*11.5,0,sideZ*11.5));
+    // Start alongside the aircraft, clear of the tug path. A 4.8m walk at
+    // 1.30 m/s completes in ~3.7 seconds (jetway departure ~4.2s).
+    atEntry.copy(atGuide).add(new THREE.Vector3(
+      sideX*A1_WALK_ENTRY_DISTANCE_METERS,0,sideZ*A1_WALK_ENTRY_DISTANCE_METERS
+    ));
     guideHeading=Math.PI+yaw;
+    walkInHeading=headingFromTo(atEntry,atGuide);
+    walkOutHeading=headingFromTo(atGuide,atEntry);
     resetToWaiting();
     status="ready";
   }).catch(e=>{status="error";error=String(e);console.error("A1 marshaller failed",e);});
@@ -80,7 +86,11 @@ export function installA1LiveMarshaller(THREE,{
   return {
     update(dt){
       if(disposed||!agent)return;
-      dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
+      const now=performance.now();
+      const realDelta=clamp((now-lastRealUpdateAt)/1000,0,1);
+      lastRealUpdateAt=now;
+      // Real elapsed time also advances Sam's walk cycle at the correct speed.
+      dt=Math.max(realDelta,clamp(Number.isFinite(dt)?dt:0,0,.05));
       const stage=readStage();
       if(readInspection()){
         if(phase!=="waiting")resetToWaiting();
@@ -94,26 +104,38 @@ export function installA1LiveMarshaller(THREE,{
         return;
       }
       if(phase==="waiting"&&(retracting||stage===1||stage===2)){
-        phase="entering";agent.person.visible=true;agent.setWalking(true);
+        startPhase("entering",now);agent.person.visible=true;agent.setWalking(true);
       }
       if(phase==="entering"){
-        const arrived=walkTo(atGuide,dt,guideHeading);
+        const arrived=walkTo(atEntry,atGuide,now);
         agent.update(dt);
         if(arrived){
-          phase="guiding";
+          startPhase("turning-to-guide",now);
           agent.setWalking(false);
         }
         return;
       }
+      if(phase==="turning-to-guide"){
+        const facing=rotateStandingTo(guideHeading,now);
+        agent.update(dt);
+        if(facing)phase="guiding";
+        return;
+      }
       if(stage>=3&&phase==="guiding"){
-        phase="leaving";agent.setWalking(true);
+        startPhase("turning-to-exit",now);
+        agent.setWalking(false);
+      }
+      if(phase==="turning-to-exit"){
+        const facing=rotateStandingTo(walkOutHeading,now);
+        agent.update(dt);
+        if(facing){startPhase("leaving",now);agent.setWalking(true);}
+        return;
       }
       if(phase==="leaving"){
-        const departed=walkTo(atEntry,dt);
+        const departed=walkTo(atGuide,atEntry,now);
         agent.update(dt);
         if(departed){
-          // Remain physically present, idle at the safe apron staging point.
-          // Hiding here made her visibly disappear in an open ramp scene.
+          // Stop at the apron edge, then remain present rather than vanishing.
           phase="finished";agent.setWalking(false);
         }
         return;
@@ -142,6 +164,8 @@ export function installA1LiveMarshaller(THREE,{
     get status(){return status;},
     get phase(){return phase;},
     get readyToGuide(){return status==="ready"&&phase==="guiding"&&agent?.person.visible===true;},
+    get metersToGuide(){return agent?Math.hypot(agent.person.position.x-atGuide.x,agent.person.position.z-atGuide.z):Number.NaN;},
+    get entryDurationSeconds(){return A1_WALK_ENTRY_DISTANCE_METERS/A1_WALK_SPEED_METERS_PER_SECOND;},
     get approachMeters(){return approachMeters;},
     get physicalDistanceMeters(){return physicalDistanceMeters;},
     get stopPoseReady(){return phase==="guiding"&&approachMeters<=0;},

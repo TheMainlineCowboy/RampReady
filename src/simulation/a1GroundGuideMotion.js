@@ -144,8 +144,11 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
       else{walkAction.fadeOut(.23);idleAction.reset().fadeIn(.23).play();}
     },
     update(dt){
-      dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
-      mixer.update(dt);
+      const animationDt=clamp(Number.isFinite(dt)?dt:0,0,1);
+      // Retain the original arm interpolation cap, but play the authored
+      // walk clip at wall-clock speed even when WebGL renders slowly.
+      dt=Math.min(animationDt,.05);
+      mixer.update(animationDt);
       if(walking)return;
       // If the collision/capture authority confirms the tug is at its stop,
       // do not leave the signal lagging the tug by another second.
