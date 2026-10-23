@@ -4,18 +4,20 @@ import {spawn} from "node:child_process";
 import fs from "node:fs";
 import {chromium} from "playwright";
 import assert from "node:assert/strict";
-const base="http://127.0.0.1:4198/RampReady/";
+// Test local packaged site in PR and the *real* Pages URL after deployment.
+const live=Boolean(process.env.PAGE_URL);
+const base=live?new URL(".",process.env.PAGE_URL.endsWith("/")?process.env.PAGE_URL:process.env.PAGE_URL+"/").href:"http://127.0.0.1:4198/RampReady/";
 const out="artifacts/a1-mobile-load";
 fs.mkdirSync(out,{recursive:true});
-const server=spawn(process.execPath,["node_modules/vite/bin/vite.js","preview",
+const server=live?null:spawn(process.execPath,["node_modules/vite/bin/vite.js","preview",
  "--host","127.0.0.1","--port","4198","--strictPort"],{stdio:["ignore","pipe","pipe"]});
-let startup="";for(const stream of [server.stdout,server.stderr])stream.on("data",x=>startup+=String(x));
+let startup="";if(server)for(const stream of [server.stdout,server.stderr])stream.on("data",x=>startup+=String(x));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let browser;
 try{
  let ready=false;
  for(let i=0;i<100;i++){
-  if(server.exitCode!==null)throw Error("Vite preview exited: "+startup);
+  if(server&&server.exitCode!==null)throw Error("Vite preview exited: "+startup);
   try{const response=await fetch(base);if(response.ok){ready=true;break;}}catch{}
   await sleep(180);
  }
@@ -75,4 +77,4 @@ try{
   try{await page.screenshot({path:out+"/real-android-webgl.png",timeout:8000,animations:"disabled"});}
   catch(err){console.warn("Optional browser screenshot timed out; actual scene assertions passed:",String(err).slice(0,240));}
  }finally{await page.close();await ctx.close();}
-}finally{await browser?.close();server.kill("SIGTERM");}
+}finally{await browser?.close();server?.kill("SIGTERM");}
