@@ -49,28 +49,53 @@ function resourceAssetUrl(resource, image) {
   return `${resource.outputBaseUrl}/${image.outputName}`;
 }
 
-async function loadTexture(THREE, loader, url, { color = true } = {}) {
+// Mobile GPUs run out of memory if every high-resolution WED decal and
+// asphalt image is decoded simultaneously at its desktop 2K/4K size.
+// Build stages *derived* -mobile.png images from the exact original sources;
+// there is no change to the approved WED polygons, texture coordinates,
+// geometry or source files. Desktop continues using original resolution.
+function mobileSurfaceTextureUrl(image, sourceUrl) {
+  if (!sourceUrl?.endsWith(".png")) return null;
+  const longest=Math.max(Number(image?.width)||0,Number(image?.height)||0);
+  if(longest<=1024)return null;
+  const coarse=typeof window!=="undefined" &&
+    (window.matchMedia?.("(pointer: coarse)")?.matches ||
+     (typeof navigator!=="undefined" && (navigator.maxTouchPoints>0 ||
+      (navigator.deviceMemory>0 && navigator.deviceMemory<=4))));
+  return coarse?sourceUrl.replace(/\.png$/,"-mobile.png"):null;
+}
+
+async function loadTexture(THREE, loader, url, { color = true, fallbackUrl = null } = {}) {
   if (!url) return null;
-  const resolved=kphxRuntimeUrl(url);
   let lastError=null;
-  for(let attempt=0;attempt<4;attempt++){
-    // GitHub Pages occasionally returned 503 for valid PNGs. Use a new query
-    // on retries so a transient CDN response cannot poison a texture cache.
-    const assetUrl=attempt===0?resolved:
-      resolved+(resolved.includes("?")?"&":"?")+`rr_retry=${attempt}`;
-    try{
-      const texture=await loader.loadAsync(assetUrl);
-      texture.wrapS=THREE.RepeatWrapping;
-      texture.wrapT=THREE.RepeatWrapping;
-      texture.colorSpace=color?THREE.SRGBColorSpace:THREE.NoColorSpace;
-      texture.needsUpdate=true;
-      return texture;
-    }catch(error){
-      lastError=error;
-      if(attempt<3)await new Promise(done=>setTimeout(done,[350,950,1900][attempt]));
+  const candidates=[url,...(fallbackUrl && fallbackUrl!==url?[fallbackUrl]:[])];
+  // Mobile variants are intentionally generated at release time. Should a
+  // stale local dev preview lack them, use its original texture, not an
+  // invisible white surface or a false "loaded" success.
+  for(const candidate of candidates){
+    const resolved=kphxRuntimeUrl(candidate);
+    const tries=candidate!==url?2:4;
+    for(let attempt=0;attempt<tries;attempt++){
+      const assetUrl=attempt===0?resolved:
+        resolved+(resolved.includes("?")?"&":"?")+`rr_retry=${attempt}`;
+      try{
+        const texture=await loader.loadAsync(assetUrl);
+        texture.wrapS=THREE.RepeatWrapping;
+        texture.wrapT=THREE.RepeatWrapping;
+        texture.colorSpace=color?THREE.SRGBColorSpace:THREE.NoColorSpace;
+        texture.needsUpdate=true;
+        texture.userData={...(texture.userData||{}),
+          rampReadyTextureTier:candidate===url && fallbackUrl?"mobile-1024":"source",
+          rampReadyTextureSource:kphxRuntimeUrl(fallbackUrl||url)};
+        return texture;
+      }catch(error){
+        lastError=error;
+        if(attempt<tries-1)await new Promise(done=>
+          setTimeout(done,[350,950,1900][Math.min(attempt,2)]));
+      }
     }
   }
-  throw new Error(`Texture failed after 4 attempts at ${resolved}: ${lastError?.message||String(lastError)}`);
+  throw new Error(`Surface texture load failed; attempted ${candidates.map(kphxRuntimeUrl).join(" and ")}; last error: ${lastError?.message||String(lastError)}`);
 }
 
 function polygonUv(point, headingDegrees, scaleMeters) {
@@ -334,7 +359,10 @@ async function createArtMaterial(THREE, textureLoader, textureCache, art, fallba
     const identity = image.outputSha256 || image.outputDecodedRgbaSha256 || url;
     const key = `${identity}|${color ? "srgb" : "linear"}`;
     if (!textureCache.has(key)) {
-      textureCache.set(key, loadTexture(THREE, textureLoader, url, { color }));
+      const mobile=mobileSurfaceTextureUrl(image,url);
+      textureCache.set(key,loadTexture(THREE,textureLoader,mobile||url,{
+        color,fallbackUrl:mobile?url:null
+      }));
     }
     return textureCache.get(key);
   };
