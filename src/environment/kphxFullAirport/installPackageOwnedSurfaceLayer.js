@@ -615,7 +615,21 @@ export async function installKphxPackageOwnedSurfaceLayer(
   if (strict && failures.length) {
     materials.forEach((material) => material.dispose());
     layer.traverse((child) => child.geometry?.dispose?.());
-    throw new Error(`KPHX package surface layer failed for ${failures.length} WED placements`);
+    // WED placements often share the same texture. Reporting only a count hid
+    // the single missing PNG/decoder error behind 32 repeated placement fails.
+    const distinct = [...new Map(failures.map(f=>[
+      `${f.type}:${f.resource}:${f.message}`,f
+    ])).values()];
+    const leading=distinct.slice(0,8).map(f=>
+      `${f.type} ${f.resource}: ${f.message}`
+    ).join(" | ");
+    const example=failures[0];
+    const art=manifest.resources?.[example.resource];
+    const asset=art?.texture && resourceAssetUrl(art,art.texture);
+    throw new Error(
+      `KPHX surface layer failed ${failures.length} WED placements, ${distinct.length} distinct causes: ${leading}`
+      + (asset?` (first texture ${kphxRuntimeUrl(asset)})`:"")
+    );
   }
 
   environment.add(layer);
