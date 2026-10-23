@@ -4,7 +4,7 @@ assert.equal(A1_WALK_ENTRY_DISTANCE_METERS,4.8);
 assert.ok(A1_WALK_SPEED_METERS_PER_SECOND>=1.2 && A1_WALK_SPEED_METERS_PER_SECOND<=1.5);
 assert.ok(A1_WALK_ENTRY_DISTANCE_METERS/A1_WALK_SPEED_METERS_PER_SECOND<4.2,"Guide must finish walking before the jetway reaches parked state");
 const src=(await import("node:fs")).readFileSync("src/simulation/a1LiveMarshaller.js","utf8");
-assert.ok(src.includes('phase="turning-to-guide"')&&src.includes('phase="turning-to-exit"'),"Rotation must occur at walking endpoints");
+assert.ok(src.includes('startPhase("turning-to-guide",now)')&&src.includes('startPhase("turning-to-exit",now)'),"Rotation must occur at walking endpoints");
 assert.ok(!src.includes("walkTo(atGuide,dt,guideHeading)"),"The marshaller must not turn sideways while still taking strides");
 assert.ok(!src.includes("distance<.95"),"No sideways rotation during last metre");
 assert.ok(src.includes("walkInHeading=headingFromTo(atEntry,atGuide)"),"Entry must start facing the walking direction");
