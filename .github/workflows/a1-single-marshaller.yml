@@ -30,6 +30,8 @@ jobs:
         run: npm ci
       - name: Verify and stage one CC0 skinned human
         run: node scripts/stage-a1-single-marshaller.mjs
+      - name: Inspect unchanged AP88 R187A operator-panel node hierarchy
+        run: node scripts/inspect-ap88-operator-layout.mjs
       - name: Build actual review and production simulator code
         run: npx vite build
       - name: Verify review route and source in compiled app
@@ -49,6 +51,10 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install chromium --only-shell
+      - name: Verify complete jetway and walking-marshaller stage gate
+        run: node tests/a1MarshallerWorkflowGate.mjs && node tests/a1MarshallerWorkflowIntegration.mjs
+      - name: Verify unchanged gesture timing against real nose-gear capture threshold
+        run: node tests/a1GuideDistanceSchedule.mjs
       - name: Verify hands and rising arm signals in real WebGL
         run: node tests/a1SingleMarshallerBrowser.mjs
       - name: Save actual browser frames for independent playback

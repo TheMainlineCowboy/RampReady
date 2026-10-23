@@ -1,45 +1,151 @@
-// Accepted-for-now A1 crew guide. ONE rigged human, NO wands.
-// Runtime geometry comes from the established WED/ACF nose-gear and tug poses;
-// it is non-collidable visual guidance, not a safety-authority replacement.
+// One real rigged A1 marshaller. Enter during jetway retraction, guide from
+// the capture HEAD (not the tug centre), then leave on foot after capture.
+// Never use the rejected belt-loader/two-NPC build or marshalling wands.
 import {createA1SingleMarshaller} from "./a1SingleMarshaller.js";
 import {A1_APPROACH_DISTANCE_METERS} from "./a1GroundGuideMotion.js";
+import {A1_CAPTURE_STOP_METERS,mapA1CaptureDistanceToMotionDistance} from "./a1GuideDistanceSchedule.js";
 
-export function installA1LiveMarshaller(THREE,{scene,aircraft,rig,readStage,readInspection}){
+const WALK_METERS_PER_SECOND=1.05;
+const EPSILON=.025;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+
+export function installA1LiveMarshaller(THREE,{
+  scene,aircraft,rig,readStage,readInspection,
+  readJetwayRetracting=()=>false,
+}){
   let disposed=false,agent=null,status="loading",error="";
-  const gear=new THREE.Vector3(),tug=new THREE.Vector3();
+  let phase="waiting",approachMeters=A1_APPROACH_DISTANCE_METERS;
+  let physicalDistanceMeters=Number.NaN,approachEntryMeters=Number.NaN;
+  const capture=new THREE.Vector3(),gear=new THREE.Vector3();
+  const atGuide=new THREE.Vector3(),atEntry=new THREE.Vector3();
+  let guideHeading=0;
+
+  const faceDirection=(target,dt,finishHeading=null)=>{
+    const delta=target.clone().sub(agent.person.position);delta.y=0;
+    const wanted=finishHeading??Math.atan2(delta.x,delta.z);
+    const difference=Math.atan2(Math.sin(wanted-agent.person.rotation.y),Math.cos(wanted-agent.person.rotation.y));
+    agent.person.rotation.y+=difference*clamp(dt*7,0,1);
+  };
+  function walkTo(target,dt,finalHeading=null){
+    const travel=target.clone().sub(agent.person.position);
+    travel.y=0;
+    const distance=travel.length();
+    if(distance>EPSILON){
+      const step=Math.min(distance,WALK_METERS_PER_SECOND*clamp(dt,0,.05));
+      agent.person.position.addScaledVector(travel,step/distance);
+      // Natural turn into the operating position, rather than walking
+      // sideways or instantly snapping 180 degrees at the destination.
+      if(finalHeading!==null && distance<.95)faceDirection(target,dt,finalHeading);
+      else faceDirection(target,dt);
+    }
+    if(distance<=EPSILON+WALK_METERS_PER_SECOND*dt){
+      agent.person.position.copy(target);
+      if(finalHeading!==null)agent.person.rotation.y=finalHeading;
+      return true;
+    }
+    return false;
+  }
+  function resetToWaiting(){
+    phase="waiting";approachMeters=A1_APPROACH_DISTANCE_METERS;
+    physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
+    if(!agent)return;
+    // Park visibly at a remote ramp-side staging point. Never pop into the
+    // guide position when the deployment sequence reaches Step 2.
+    agent.person.visible=!readInspection();
+    agent.person.position.copy(atEntry);
+    agent.person.rotation.y=guideHeading;
+    agent.setWalking(false);
+    agent.setDistanceMeters(A1_APPROACH_DISTANCE_METERS);
+  }
+
   void createA1SingleMarshaller(THREE,{scene,height:1.80}).then(created=>{
     if(disposed){created.dispose();return;}
     agent=created;
-    // Aircraft user coordinates are authoritative for the A1 nose-gear stop,
-    // and its heading gives the tug approach direction.
     const yaw=aircraft.rotation.y;
     const sideX=Math.cos(yaw),sideZ=-Math.sin(yaw);
     const approachX=-Math.sin(yaw),approachZ=-Math.cos(yaw);
-    created.person.position.set(
-      aircraft.position.x + approachX*0.95+sideX*1.15,
-      0,
-      aircraft.position.z + approachZ*0.95+sideZ*1.15
+    atGuide.set(
+      aircraft.position.x+approachX*.95+sideX*1.15,0,
+      aircraft.position.z+approachZ*.95+sideZ*1.15
     );
-    created.person.rotation.y=Math.PI+yaw;
-    created.person.visible=false;
+    // Entry begins from the safe outer ramp side, not inside the tug path.
+    // Walk about 11m during the real A1 jetway retraction, not 4.8m
+    // from a position that can be visible in the operator's view.
+    atEntry.copy(atGuide).add(new THREE.Vector3(sideX*11.5,0,sideZ*11.5));
+    guideHeading=Math.PI+yaw;
+    resetToWaiting();
     status="ready";
-  }).catch(e=>{status="error";error=String(e);console.error("A1 accepted marshaller failed",e);});
+  }).catch(e=>{status="error";error=String(e);console.error("A1 marshaller failed",e);});
+
   return {
     update(dt){
       if(disposed||!agent)return;
-      const stage=readStage(),inspection=readInspection();
-      const visible=!inspection&&(stage===1||stage===2);
-      agent.person.visible=visible;
-      if(!visible)return;
-      gear.set(aircraft.position.x,0,aircraft.position.z);
-      tug.set(rig.root.position.x,0,rig.root.position.z);
-      // 7m -> arms spread, closing distance -> arms rise, gear stop -> crossed.
-      const distance=Math.min(A1_APPROACH_DISTANCE_METERS,gear.distanceTo(tug));
-      agent.setDistanceMeters(distance);
+      dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
+      const stage=readStage();
+      if(readInspection()){
+        if(phase!=="waiting")resetToWaiting();
+        return;
+      }
+      const retracting=readJetwayRetracting();
+      // Step 0 remains invisible until the actual jetway retraction starts.
+      // Stay visible at step 1 so slower device loads never cause a teleported guide.
+      if(stage===0&&!retracting){
+        if(phase!=="waiting")resetToWaiting();
+        return;
+      }
+      if(phase==="waiting"&&(retracting||stage===1||stage===2)){
+        phase="entering";agent.person.visible=true;agent.setWalking(true);
+      }
+      if(phase==="entering"){
+        const arrived=walkTo(atGuide,dt,guideHeading);
+        agent.update(dt);
+        if(arrived){
+          phase="guiding";
+          agent.setWalking(false);
+        }
+        return;
+      }
+      if(stage>=3&&phase==="guiding"){
+        phase="leaving";agent.setWalking(true);
+      }
+      if(phase==="leaving"){
+        const departed=walkTo(atEntry,dt);
+        agent.update(dt);
+        if(departed){
+          // Remain physically present, idle at the safe apron staging point.
+          // Hiding here made her visibly disappear in an open ramp scene.
+          phase="finished";agent.setWalking(false);
+        }
+        return;
+      }
+      if(phase==="finished"){agent.update(dt);return;}
+      if(phase!=="guiding")return;
+      gear.copy(aircraft.position);
+      // This is exactly the distance used to authorize nose-gear capture.
+      rig.getCaptureWorld(capture);
+      physicalDistanceMeters=gear.distanceTo(capture);
+      if(!Number.isFinite(approachEntryMeters)){
+        approachEntryMeters=Math.max(physicalDistanceMeters,A1_CAPTURE_STOP_METERS+1);
+      }
+      // Do not change any shoulder, wrist, elbow, or palm animation keys:
+      // remap physical travel onto the existing 7m gesture sequence instead.
+      approachMeters=mapA1CaptureDistanceToMotionDistance(
+        physicalDistanceMeters,approachEntryMeters,A1_APPROACH_DISTANCE_METERS
+      );
+      const atStop=physicalDistanceMeters<=A1_CAPTURE_STOP_METERS||stage===2;
+      if(atStop)approachMeters=0;
+      // Catch up only when the tug is physically in its capture envelope.
+      // The leading eased schedule normally finishes without this override.
+      agent.setDistanceMeters(approachMeters,atStop);
       agent.update(dt);
     },
-    dispose(){disposed=true;agent?.dispose();agent=null;},
     get status(){return status;},
+    get phase(){return phase;},
+    get readyToGuide(){return status==="ready"&&phase==="guiding"&&agent?.person.visible===true;},
+    get approachMeters(){return approachMeters;},
+    get physicalDistanceMeters(){return physicalDistanceMeters;},
+    get stopPoseReady(){return phase==="guiding"&&approachMeters<=0;},
     get error(){return error;},
+    dispose(){disposed=true;agent?.dispose();agent=null;},
   };
 }

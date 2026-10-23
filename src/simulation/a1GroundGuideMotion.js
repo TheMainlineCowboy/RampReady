@@ -21,6 +21,9 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
   const worldPoint=()=>new THREE.Vector3();
   let targetDistance=A1_APPROACH_DISTANCE_METERS;
   let renderedDistance=A1_APPROACH_DISTANCE_METERS;
+  // Timing override only at an actual aligned stop. All arm IK/pose geometry
+  // below is byte-for-byte the same as the previously integrated marshaller.
+  let immediateStop=false;
   let cue="hold",walking=false;
   const last={l:null,r:null},signs={};
   const palms=createA1OpenPalmPose(THREE,{person,bones});
@@ -120,9 +123,10 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     const parent=grip.parent.getWorldQuaternion(quat());
     grip.quaternion.copy(parent.invert().multiply(rot));
   }
-  function setDistanceMeters(meters){
+  function setDistanceMeters(meters, snapAtCapture=false){
     if(!Number.isFinite(meters))throw Error("Approach distance must be finite");
     targetDistance=clamp(meters,0,A1_APPROACH_DISTANCE_METERS);
+    immediateStop=!!snapAtCapture && targetDistance<=0;
   }
   function setCue(next){
     if(!A1_GUIDE_CUES.includes(next))throw Error("Invalid guide cue "+next);
@@ -143,14 +147,20 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
       dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
       mixer.update(dt);
       if(walking)return;
-      const alpha=1-Math.exp(-dt/.16);
-      renderedDistance+=(targetDistance-renderedDistance)*alpha;
-      if(Math.abs(targetDistance-renderedDistance)<.002)renderedDistance=targetDistance;
+      // If the collision/capture authority confirms the tug is at its stop,
+      // do not leave the signal lagging the tug by another second.
+      if(immediateStop)renderedDistance=0;
+      else{
+        const alpha=1-Math.exp(-dt/.16);
+        renderedDistance+=(targetDistance-renderedDistance)*alpha;
+        if(Math.abs(targetDistance-renderedDistance)<.002)renderedDistance=targetDistance;
+      }
       const pose=getA1ApproachPose(renderedDistance);
       for(const id of ["l","r"]){
         const desired=targetWrist(id,pose);
         if(!last[id])last[id]=localOf(bones["hand_"+id]);
-        last[id].lerp(desired,1-Math.exp(-dt/.19));
+        if(immediateStop)last[id].copy(desired);
+        else last[id].lerp(desired,1-Math.exp(-dt/.19));
         solve(id,last[id],pose);
         // Solve wrist roll from actual finger bones AFTER the arm is posed.
         // Fingers follow the forearm, both PALMS face the oncoming tug.
