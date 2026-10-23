@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
+import { installA1LiveMarshaller } from "../simulation/a1LiveMarshaller.js";
 import { JACKKNIFE_WARNING, createPushbackState, stepPushbackDynamics } from "../simulation/pushbackDynamics.js";
 import {
   CONNECTION_PHASES,
@@ -1172,6 +1173,13 @@ export default function RampReadyStandupTrainer({
 
     const sim = { renderer, scene, camera, environment, rig, aircraft, connection: createConnectionState(), dynamics: createA1SpawnPushbackState(), last: performance.now(), lastHud: 0 };
     simRef.current = sim;
+    // User-approved provisional ONE guide, driven by actual tug distance.
+    // This is intentionally not the rejected loader/two-NPC sequence.
+    const a1Marshaller = installA1LiveMarshaller(THREE,{
+      scene,aircraft,rig,
+      readStage:()=>stageRef.current,
+      readInspection:()=>inspectionRef.current,
+    });
 
     const canvas = renderer.domElement;
     canvas.dataset.a1AircraftHeadingReady = "true";
@@ -1580,6 +1588,9 @@ export default function RampReadyStandupTrainer({
           aircraft: aircraftSource,
         });
       }
+      a1Marshaller.update(dt);
+      canvas.dataset.a1MarshallerStatus=a1Marshaller.status;
+      canvas.dataset.a1MarshallerMode="single-no-wands-distance-driven-provisional";
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
     };
@@ -1593,6 +1604,7 @@ export default function RampReadyStandupTrainer({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
       canvas.removeEventListener("wheel", handleWheel);
+      a1Marshaller.dispose();
       dispose(scene);
       renderer.dispose();
       simRef.current = null;
