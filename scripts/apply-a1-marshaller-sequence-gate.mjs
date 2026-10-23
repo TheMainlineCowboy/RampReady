@@ -51,7 +51,7 @@ export function applyA1MarshallerSequenceGate(
     '    if (!sim || inspectionRef.current || stageRef.current !== 1) return;\n    sim.connection = requestCapture',
     `    if (!sim || inspectionRef.current || stageRef.current !== 1) return;
     if (a1MarshallerRef.current?.readyToGuide !== true ||
-        jetwayRef.current.deployment > 0.0005 ||
+        jetwayRef.current.deployment > 0.005 ||
         !isA1JetwayParked(jetwayRef.current.controller)) {
       setMessage("Capture locked: jetway must be parked and marshaller guiding.");
       return;
@@ -117,7 +117,7 @@ export function applyA1MarshallerSequenceGate(
       canvas.dataset.a1StageRef = String(stageRef.current);
       canvas.dataset.a1RetractionRequested = String(jetway.retractionRequested);
       canvas.dataset.a1ApproachGateReady = String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
-      canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.0005&&isA1JetwayParked(jetway.controller));`,
+      canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.005&&isA1JetwayParked(jetway.controller));`,
     "telemetry");
   code=substitute(code,
     '      a1Marshaller.dispose();',

@@ -1,7 +1,8 @@
 // Shared authoritative transition requirement for the A1 pushback approach.
 // Only enter the nose-gear alignment step once BOTH the rendered jetway is
 // fully parked and the real one-person marshaller has walked into place.
-export const A1_JETWAY_PARKED_TOLERANCE=0.0005;
+// The actual A1 controller declares parked when deployment <=0.005.
+export const A1_JETWAY_PARKED_TOLERANCE=0.005;
 // Final visual controller uses "parked-clear-of-aircraft", not "parked".
 export function isA1JetwayParked(controller){
   return /^parked(?:-|$)/.test(controller?.getState?.()??"");

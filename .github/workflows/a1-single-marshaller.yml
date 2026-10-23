@@ -51,6 +51,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install chromium --only-shell
+      - name: Check natural curved walk and no sidestep into final guide pose
+        run: node tests/a1MarshallerWalkRoute.mjs
       - name: Verify complete jetway and walking-marshaller stage gate
         run: node tests/a1MarshallerWorkflowGate.mjs && node tests/a1MarshallerWorkflowIntegration.mjs
       - name: Verify unchanged gesture timing against real nose-gear capture threshold

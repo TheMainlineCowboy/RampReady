@@ -4,6 +4,7 @@
 import {createA1SingleMarshaller} from "./a1SingleMarshaller.js";
 import {A1_APPROACH_DISTANCE_METERS} from "./a1GroundGuideMotion.js";
 import {A1_CAPTURE_STOP_METERS,mapA1CaptureDistanceToMotionDistance} from "./a1GuideDistanceSchedule.js";
+import {createA1MarshallerWalkRoute} from "./a1MarshallerWalkRoute.js";
 
 // Keep Sam's authored walk.relaxed animation; the earlier 11.5m route
 // artificially delayed Stage 2 and made the character wander beside the jet.
@@ -21,7 +22,7 @@ export function installA1LiveMarshaller(THREE,{
   let physicalDistanceMeters=Number.NaN,approachEntryMeters=Number.NaN;
   const capture=new THREE.Vector3(),gear=new THREE.Vector3();
   const atGuide=new THREE.Vector3(),atEntry=new THREE.Vector3();
-  let guideHeading=0;
+  let guideHeading=0,walkRoute=null,approachBlendStarted=false,departureBlendStarted=false;
 
   // The authored GLB's walk cycle moves the legs; world translation is
   // separate. Only turn while STATIONARY so she cannot crab-walk sideways.
@@ -39,24 +40,34 @@ export function installA1LiveMarshaller(THREE,{
     if(t>=1){agent.person.rotation.y=target;return true;}
     return false;
   }
-  function walkTo(from,to,now){
-    // Authoritative 1.3 m/s "walk.relaxed" GLB gait moves IN PLACE.
-    // World motion is elapsed-time based, never based on the 40ms frame cap.
-    const meters=from.distanceTo(to);
-    const fraction=clamp((now-phaseStartedAt)*A1_WALK_SPEED_METERS_PER_SECOND/
-      Math.max(.001,1000*meters),0,1);
-    agent.person.position.lerpVectors(from,to,fraction);
-    return fraction>=1;
+  function travelCurve(now,reversed=false){
+    if(!walkRoute)return true;
+    const durationMs=1000*walkRoute.meters/A1_WALK_SPEED_METERS_PER_SECOND;
+    const traveled=clamp((now-phaseStartedAt)/durationMs,0,1);
+    // Use arc-length sampling to match the authored clip's 1.3m/s pace.
+    // The final 0.3m blends to idle WHILE the feet are still translating.
+    const remaining=(1-traveled)*walkRoute.meters;
+    if(!reversed && !approachBlendStarted && remaining<.32){
+      approachBlendStarted=true;agent.setWalking(false);
+    }
+    if(reversed && !departureBlendStarted && remaining<.32){
+      departureBlendStarted=true;agent.setWalking(false);
+    }
+    agent.person.position.copy(reversed
+      ?walkRoute.reversePosition(traveled):walkRoute.position(traveled));
+    agent.person.rotation.y=reversed
+      ?walkRoute.reverseHeading(traveled):walkRoute.heading(traveled);
+    return traveled>=1;
   }
   function resetToWaiting(){
-    phase="waiting";phaseStartedAt=0;approachMeters=A1_APPROACH_DISTANCE_METERS;
+    phase="waiting";phaseStartedAt=0;approachBlendStarted=false;departureBlendStarted=false;approachMeters=A1_APPROACH_DISTANCE_METERS;
     physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
     if(!agent)return;
     // Park visibly at a remote ramp-side staging point. Never pop into the
     // guide position when the deployment sequence reaches Step 2.
     agent.person.visible=!readInspection();
     agent.person.position.copy(atEntry);
-    agent.person.rotation.y=walkInHeading;
+    agent.person.rotation.y=walkRoute?.heading(0)??walkInHeading;
     agent.setWalking(false);
     agent.setDistanceMeters(A1_APPROACH_DISTANCE_METERS);
   }
@@ -77,8 +88,9 @@ export function installA1LiveMarshaller(THREE,{
       sideX*A1_WALK_ENTRY_DISTANCE_METERS,0,sideZ*A1_WALK_ENTRY_DISTANCE_METERS
     ));
     guideHeading=Math.PI+yaw;
-    walkInHeading=headingFromTo(atEntry,atGuide);
-    walkOutHeading=headingFromTo(atGuide,atEntry);
+    walkRoute=createA1MarshallerWalkRoute(THREE,atEntry,atGuide,guideHeading);
+    walkInHeading=walkRoute.heading(0);
+    walkOutHeading=walkRoute.reverseHeading(0);
     resetToWaiting();
     status="ready";
   }).catch(e=>{status="error";error=String(e);console.error("A1 marshaller failed",e);});
@@ -107,18 +119,15 @@ export function installA1LiveMarshaller(THREE,{
         startPhase("entering",now);agent.person.visible=true;agent.setWalking(true);
       }
       if(phase==="entering"){
-        const arrived=walkTo(atEntry,atGuide,now);
+        const arrived=travelCurve(now,false);
         agent.update(dt);
         if(arrived){
-          startPhase("turning-to-guide",now);
           agent.setWalking(false);
+          // Arrival heading is already the guide heading; NO sidestep or
+          // last-moment on-the-spot rotation while the walk clip fades.
+          agent.person.rotation.y=guideHeading;
+          phase="guiding";
         }
-        return;
-      }
-      if(phase==="turning-to-guide"){
-        const facing=rotateStandingTo(guideHeading,now);
-        agent.update(dt);
-        if(facing)phase="guiding";
         return;
       }
       if(stage>=3&&phase==="guiding"){
@@ -132,7 +141,7 @@ export function installA1LiveMarshaller(THREE,{
         return;
       }
       if(phase==="leaving"){
-        const departed=walkTo(atGuide,atEntry,now);
+        const departed=travelCurve(now,true);
         agent.update(dt);
         if(departed){
           // Stop at the apron edge, then remain present rather than vanishing.
@@ -165,7 +174,8 @@ export function installA1LiveMarshaller(THREE,{
     get phase(){return phase;},
     get readyToGuide(){return status==="ready"&&phase==="guiding"&&agent?.person.visible===true;},
     get metersToGuide(){return agent?Math.hypot(agent.person.position.x-atGuide.x,agent.person.position.z-atGuide.z):Number.NaN;},
-    get entryDurationSeconds(){return A1_WALK_ENTRY_DISTANCE_METERS/A1_WALK_SPEED_METERS_PER_SECOND;},
+    get entryDurationSeconds(){return (walkRoute?.meters??A1_WALK_ENTRY_DISTANCE_METERS)/A1_WALK_SPEED_METERS_PER_SECOND;},
+    get walkHeading(){return agent?.person.rotation.y??Number.NaN;},
     get approachMeters(){return approachMeters;},
     get physicalDistanceMeters(){return physicalDistanceMeters;},
     get stopPoseReady(){return phase==="guiding"&&approachMeters<=0;},
