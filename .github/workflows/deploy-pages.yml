@@ -19,6 +19,9 @@ on:
       - src/components/RampReadyStandupTrainerTerminal4.jsx
       - src/components/PushbackTrainer.jsx
       - tests/a1ThreeEquipmentLiveBrowser.mjs
+      - scripts/audit-a1-runtime-asset-dependencies.mjs
+      - src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js
+      - src/environment/kphxFullAirport/installPackageOwnedSurfaceLayer.js
       - scripts/prepare-terminal4-runtime.mjs
       - scripts/stage-a1-single-marshaller.mjs
       - .github/workflows/deploy-pages.yml
@@ -64,6 +67,9 @@ jobs:
           set -euo pipefail
           git reset --hard "${GITHUB_SHA}"
           git clean -fd
+
+      - name: Audit complete exact-A1 scenery dependency graph before Pages packaging
+        run: node scripts/audit-a1-runtime-asset-dependencies.mjs
 
       - name: Reconstruct verified stand-up tug from checked-in payload parts
         run: node scripts/materialize-standup-tug-runtime.mjs
@@ -301,6 +307,9 @@ jobs:
           echo "Verified exact live RampReady release ${EXPECTED_SHA} at ${PAGE_URL}"
           echo "Verified all 21 native-resolution Sky Harbor ground tiles live and byte-identical."
 
+      - name: Audit ALL deployed A1 GLTF buffers and texture references
+        run: node scripts/audit-a1-runtime-asset-dependencies.mjs --live
+
       - name: Set up Node.js for live simulator render
         uses: actions/setup-node@v4
         with:
@@ -333,6 +342,7 @@ jobs:
           name: rampready-live-phx-render-${{ github.sha }}
           path: |
             live-phx-render-evidence/
+            artifacts/a1-asset-audit/
             test-results/
           if-no-files-found: warn
           retention-days: 1
