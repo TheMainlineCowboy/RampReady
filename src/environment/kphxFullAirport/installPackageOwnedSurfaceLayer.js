@@ -51,12 +51,26 @@ function resourceAssetUrl(resource, image) {
 
 async function loadTexture(THREE, loader, url, { color = true } = {}) {
   if (!url) return null;
-  const texture = await loader.loadAsync(kphxRuntimeUrl(url));
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  texture.needsUpdate = true;
-  return texture;
+  const resolved=kphxRuntimeUrl(url);
+  let lastError=null;
+  for(let attempt=0;attempt<4;attempt++){
+    // GitHub Pages occasionally returned 503 for valid PNGs. Use a new query
+    // on retries so a transient CDN response cannot poison a texture cache.
+    const assetUrl=attempt===0?resolved:
+      resolved+(resolved.includes("?")?"&":"?")+`rr_retry=${attempt}`;
+    try{
+      const texture=await loader.loadAsync(assetUrl);
+      texture.wrapS=THREE.RepeatWrapping;
+      texture.wrapT=THREE.RepeatWrapping;
+      texture.colorSpace=color?THREE.SRGBColorSpace:THREE.NoColorSpace;
+      texture.needsUpdate=true;
+      return texture;
+    }catch(error){
+      lastError=error;
+      if(attempt<3)await new Promise(done=>setTimeout(done,[350,950,1900][attempt]));
+    }
+  }
+  throw new Error(`Texture failed after 4 attempts at ${resolved}: ${lastError?.message||String(lastError)}`);
 }
 
 function polygonUv(point, headingDegrees, scaleMeters) {
