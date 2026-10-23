@@ -19,6 +19,7 @@ on:
       - src/components/RampReadyStandupTrainerTerminal4.jsx
       - src/components/PushbackTrainer.jsx
       - tests/a1ThreeEquipmentLiveBrowser.mjs
+      - tests/a1AndroidFullRuntimeSmoke.mjs
       - scripts/audit-a1-runtime-asset-dependencies.mjs
       - scripts/stage-a1-mobile-surface-textures.mjs
       - src/environment/kphxFullAirport/installPackageOwnedObjectLayer.js
@@ -193,7 +194,7 @@ jobs:
   verify-live-site:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       EXPECTED_SHA: ${{ github.sha }}
@@ -338,6 +339,14 @@ jobs:
       - name: Install Chromium for live simulator render
         run: npx playwright install --with-deps chromium
 
+      - name: Verify simulated Android phone loads complete LIVE A1 scene
+        timeout-minutes: 8
+        run: node tests/a1AndroidFullRuntimeSmoke.mjs
+
+      - name: Verify LIVE simulator loading for all 3 vehicles in 5 supported modes
+        timeout-minutes: 16
+        run: node tests/a1ThreeEquipmentLiveBrowser.mjs
+
       - name: Verify the rendered Sky Harbor simulator scene
         shell: bash
         run: |
@@ -348,10 +357,6 @@ jobs:
       - name: Verify opt-in A1 mission on live GitHub Pages
         run: node tests/a1TurnaroundLiveBrowser.mjs
 
-      - name: Verify real simulator loading for all 3 vehicles and 5 supported modes
-        timeout-minutes: 12
-        run: node tests/a1ThreeEquipmentLiveBrowser.mjs
-
       - name: Upload simulator render evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -360,6 +365,7 @@ jobs:
           path: |
             live-phx-render-evidence/
             artifacts/a1-asset-audit/
+            artifacts/a1-mobile-load/
             test-results/
           if-no-files-found: warn
           retention-days: 1
