@@ -8,7 +8,7 @@ import crypto from "node:crypto";
 import sharp from "sharp";
 const publicRoot=path.resolve("public");
 const root=path.join(publicRoot,"models/kphx-full-airport");
-const manifests=["surfaces","t4-a1-zdp-surfaces","full-zdp-surfaces"];
+const manifests=["surfaces","t4-a1-zdp-surfaces","full-zdp-surfaces","surface-batches/misterx"];
 const files=new Map();
 const asLocal=url=>{
  if(!url?.startsWith("/models/kphx-full-airport/")||url.includes("..")||url.includes("?"))
@@ -52,6 +52,16 @@ for(const {src,dest} of files.values()){
   mobileSize:[outInfo.width,outInfo.height]});
 }
 if(count<5)throw Error("No mobile KPHX texture variants were generated");
+// The gate A1 release previously omitted every MisterX surface-batch texture,
+// while the browser nevertheless requested 20 -mobile.png variants. The
+// release must fail locally instead of publishing a 404-filled manifest.
+const misterXDerivatives=evidence.filter(x=>x.mobile.includes("/surface-batches/misterx/"));
+if(misterXDerivatives.length!==20)throw Error(
+  "Expected all 20 MisterX mobile surface textures, generated "+misterXDerivatives.length
+);
+for(const item of misterXDerivatives){
+ if(!(await fs.stat(asLocal(item.mobile))).size)throw Error("Missing rendered MisterX derivative "+item.mobile);
+}
 const reportPath=path.resolve("artifacts/a1-mobile-textures/report.json");
 await fs.mkdir(path.dirname(reportPath),{recursive:true});
 await fs.writeFile(reportPath,JSON.stringify({count,origBytes,derivedBytes,savedPct:
