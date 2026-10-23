@@ -269,17 +269,32 @@ export async function installKphxPackageOwnedObjectLayer(
 
   const templates = new Map();
   const assetFailures = [];
+  let transientRecoveryCount=0;
   await mapWithConcurrency(assetUrls, Math.max(1, assetConcurrency), async (assetUrl) => {
-    try {
-      const gltf = await loader.loadAsync(kphxRuntimeUrl(assetUrl));
-      if (!gltf?.scene) throw new Error("glTF loaded without a scene root");
-      templates.set(assetUrl, gltf.scene);
-    } catch (error) {
-      assetFailures.push({
-        assetUrl,
-        message: error instanceof Error ? error.message : String(error),
-      });
+    const resolved=kphxRuntimeUrl(assetUrl);
+    let lastError=null,loaded=false;
+    // GitHub Pages intermittently responds 503 for existing .bin and .png
+    // dependencies, producing incomplete T4. Re-load the complete glTF
+    // with a fresh source URL after bounded exponential backoff.
+    for(let attempt=0;attempt<4;attempt++){
+      const url=attempt===0?resolved:
+        resolved+(resolved.includes("?")?"&":"?")+`rr_retry=${attempt}`;
+      try{
+        const gltf=await loader.loadAsync(url);
+        if(!gltf?.scene)throw Error("glTF loaded without a scene root");
+        templates.set(assetUrl,gltf.scene);
+        if(attempt>0)transientRecoveryCount++;
+        loaded=true;
+        break;
+      }catch(error){
+        lastError=error;
+        if(attempt<3)await new Promise(done=>setTimeout(done,[450,1200,2400][attempt]));
+      }
     }
+    if(!loaded)assetFailures.push({
+      assetUrl,
+      message:`${lastError?.message||String(lastError)} (after 4 attempts; required glTF, .bin and textures)`,
+    });
   });
 
   if (strict && assetFailures.length) {
@@ -298,6 +313,7 @@ export async function installKphxPackageOwnedObjectLayer(
     expectedPlacementCount: placements.length,
     uniqueAssetCount: assetUrls.length,
     loadedUniqueAssetCount: templates.size,
+    transientRecoveryCount,
     assetFailures,
   };
 
