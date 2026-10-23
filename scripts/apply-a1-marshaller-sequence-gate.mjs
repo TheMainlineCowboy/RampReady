@@ -81,19 +81,28 @@ export function applyA1MarshallerSequenceGate(
           setStage(1);
           setMessage("Jetway parked clear. Approach directly from the front and stop inside the capture envelope.");
         }`,
-    `        if (!inspectionActive && jetway.retractionRequested && stageRef.current === 0) {
-          const gate = evaluateA1ApproachGate(jetway, a1MarshallerRef.current);
-          if (gate.ready) {
-            jetway.retractionRequested = false;
-            stageRef.current = 1;
-            setStage(1);
-            setMessage("Jetway fully parked. Marshaller in position. Approach the nose gear at idle speed.");
-          } else if (sim.lastA1GateMessage !== gate.reason) {
-            sim.lastA1GateMessage = gate.reason;
-            setMessage(gate.reason);
-          }
-        }`,
-    "step progression");
+    "        // The A1 readiness gate runs after the real human rig updates below.",
+    "remove legacy early progression");
+  code=substitute(code,
+    '      a1Marshaller.update(dt);',
+    `      a1Marshaller.update(dt);
+      // Match the actual character's END-OF-FRAME arrival state rather than
+      // relying on the previous render frame (which may be seconds old on
+      // mobile software WebGL). Step 2 should unlock immediately here.
+      if (!inspectionActive && jetway.retractionRequested && stageRef.current === 0) {
+        const gate = evaluateA1ApproachGate(jetway, a1MarshallerRef.current);
+        if (gate.ready) {
+          jetway.retractionRequested = false;
+          stageRef.current = 1;
+          setStage(1);
+          setMessage("Jetway fully parked. Marshaller in position. Approach the nose gear at idle speed.");
+        } else if (sim.lastA1GateMessage !== gate.reason) {
+          sim.lastA1GateMessage = gate.reason;
+          setMessage(gate.reason);
+        }
+      }
+`,
+    "stage progression after human update");
   code=substitute(code,
     '      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));',
     `      const approachGuideReady = stageRef.current !== 1 || a1MarshallerRef.current?.readyToGuide === true;
@@ -105,6 +114,8 @@ export function applyA1MarshallerSequenceGate(
   const marker=code.includes(readable)?readable:compact;
   code=substitute(code,marker,
     marker+`\n      canvas.dataset.a1MarshallerReadyToGuide = String(a1Marshaller.readyToGuide);
+      canvas.dataset.a1StageRef = String(stageRef.current);
+      canvas.dataset.a1RetractionRequested = String(jetway.retractionRequested);
       canvas.dataset.a1ApproachGateReady = String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
       canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.0005&&isA1JetwayParked(jetway.controller));`,
     "telemetry");

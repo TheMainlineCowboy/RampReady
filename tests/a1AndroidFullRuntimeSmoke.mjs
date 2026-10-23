@@ -90,7 +90,8 @@ try{
           message:document.querySelector(".rr-hud p")?.textContent,
           phase:c?.dataset.a1MarshallerPhase,ready:c?.dataset.a1MarshallerReadyToGuide,
           deployment:c?.dataset.a1JetwayDeployment,jetwayState:c?.dataset.a1JetwayState,
-          gate:c?.dataset.a1ApproachGateReady,jetwayParked:c?.dataset.a1JetwayCompletelyParked};
+          gate:c?.dataset.a1ApproachGateReady,jetwayParked:c?.dataset.a1JetwayCompletelyParked,
+          stageRef:c?.dataset.a1StageRef,retractionRequested:c?.dataset.a1RetractionRequested};
       });
       throw Error("Real Android A1 stage never advanced: "+JSON.stringify(snapshot)+" "+String(err));
     });
@@ -98,7 +99,8 @@ try{
     const c=document.querySelector("canvas.trainerCanvas");
     return {step:document.querySelector(".rr-kicker")?.textContent,
       phase:c?.dataset.a1MarshallerPhase,ready:c?.dataset.a1MarshallerReadyToGuide,
-      jetwayState:c?.dataset.a1JetwayState,jetwayParked:c?.dataset.a1JetwayCompletelyParked};
+      jetwayState:c?.dataset.a1JetwayState,jetwayParked:c?.dataset.a1JetwayCompletelyParked,
+      stageRef:c?.dataset.a1StageRef};
   });
   assert.equal(approach.ready,"true","Cannot start approach until marshaller is actually guiding");
   assert.equal(approach.jetwayParked,"true","Cannot start approach until the jetway is fully parked");
