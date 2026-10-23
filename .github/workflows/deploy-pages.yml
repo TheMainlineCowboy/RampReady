@@ -17,6 +17,8 @@ on:
       - src/simulation/a1HeadsetFit.js
       - src/simulation/a1VestMaterial.js
       - src/components/RampReadyStandupTrainerTerminal4.jsx
+      - src/components/PushbackTrainer.jsx
+      - tests/a1ThreeEquipmentLiveBrowser.mjs
       - scripts/prepare-terminal4-runtime.mjs
       - scripts/stage-a1-single-marshaller.mjs
       - .github/workflows/deploy-pages.yml
@@ -319,6 +321,10 @@ jobs:
 
       - name: Verify opt-in A1 mission on live GitHub Pages
         run: node tests/a1TurnaroundLiveBrowser.mjs
+
+      - name: Verify real simulator loading for all 3 vehicles and 5 supported modes
+        timeout-minutes: 12
+        run: node tests/a1ThreeEquipmentLiveBrowser.mjs
 
       - name: Upload simulator render evidence
         if: always()
