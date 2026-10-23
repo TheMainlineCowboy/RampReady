@@ -52,7 +52,8 @@ try{
           runtimeError:d.runtimeLoadError||d.kphxExactLiveT4Error||d.tugLoadError||null,
           loadingError:document.querySelector(".rr-runtime-loading-card p")?.textContent||null};
       });
-      await page.screenshot({path:`${output}/live-${key}.png`});
+      // Screenshots can hang on busy software-GPU runners after the fully loaded
+      // scene is ready; never mask the real loading assertions behind capture.
       assert.ok(!result.loadingError,key+" never finished loading: "+JSON.stringify({result,httpErrors,errors}));
       assert.equal(result.kphxExactLiveT4,"ready",key+": shared Terminal 4 missing");
       assert.equal(result.surface,"true",key+": KPHX surfaces missing");
@@ -61,8 +62,10 @@ try{
       assert.equal(httpErrors.length,0,key+": missing deployed files "+JSON.stringify(httpErrors));
       assert.deepEqual(errors,[],key+": browser JavaScript errors");
       console.log("PASS",key,JSON.stringify(result));
+      try{await page.screenshot({path:`${output}/live-${key}.png`,timeout:5000});}
+      catch(e){console.warn("Optional screenshot unavailable for",key,String(e).slice(0,150));}
     }catch(e){
-      try{await page.screenshot({path:`${output}/FAILED-${key}.png`});}catch{}
+      try{await page.screenshot({path:`${output}/FAILED-${key}.png`,timeout:5000});}catch{}
       console.error("FAILED equipment mode",key,"HTTP errors",JSON.stringify(httpErrors.slice(0,15)),String(e));
       throw e;
     }finally{await page.close();}
