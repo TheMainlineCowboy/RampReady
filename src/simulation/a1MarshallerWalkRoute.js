@@ -9,7 +9,7 @@ export function createA1MarshallerWalkRoute(THREE,start,finish,arrivalHeading){
   const initial=direction.clone().normalize();
   const final=new THREE.Vector3(Math.sin(arrivalHeading),0,Math.cos(arrivalHeading));
   const control1=start.clone().addScaledVector(initial,chord*0.36);
-  const control2=finish.clone().addScaledVector(final,-Math.min(0.85,chord*0.22));
+  const control2=finish.clone().addScaledVector(final,-Math.min(1.5,chord*0.32));
   const curve=new THREE.CubicBezierCurve3(start.clone(),control1,control2,finish.clone());
   const meters=curve.getLength();
   return {
