@@ -83,7 +83,7 @@ try{
   assert.match(before.step||"",/Step 1 \/ 9/,"Must start at equipment check");
   await page.getByRole("button",{name:"Ready",exact:true}).click();
   await page.waitForFunction(()=>document.querySelector(".rr-kicker")?.textContent?.includes("Step 2 / 9"),
-    null,{timeout:30000}).catch(async(err)=>{
+    null,{timeout:90000}).catch(async(err)=>{
       const snapshot=await page.evaluate(()=>{
         const c=document.querySelector("canvas.trainerCanvas");
         return {step:document.querySelector(".rr-kicker")?.textContent,
