@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import { installA1LiveMarshaller } from "../simulation/a1LiveMarshaller.js";
-import { evaluateA1ApproachGate } from "../simulation/a1MarshallerWorkflowGate.js";
+import { evaluateA1ApproachGate,isA1JetwayParked } from "../simulation/a1MarshallerWorkflowGate.js";
 import { JACKKNIFE_WARNING, createPushbackState, stepPushbackDynamics } from "../simulation/pushbackDynamics.js";
 import {
   CONNECTION_PHASES,
@@ -400,7 +400,7 @@ export default function RampReadyStandupTrainer({
     if (!sim || inspectionRef.current || stageRef.current !== 1) return;
     if (a1MarshallerRef.current?.readyToGuide !== true ||
         jetwayRef.current.deployment > 0.0005 ||
-        jetwayRef.current.controller?.getState?.() !== "parked") {
+        !isA1JetwayParked(jetwayRef.current.controller)) {
       setMessage("Capture locked: jetway must be parked and marshaller guiding.");
       return;
     }
@@ -1649,7 +1649,7 @@ export default function RampReadyStandupTrainer({
       canvas.dataset.a1MarshallerStopReady=String(a1Marshaller.stopPoseReady);
       canvas.dataset.a1MarshallerReadyToGuide=String(a1Marshaller.readyToGuide);
       canvas.dataset.a1ApproachGateReady=String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
-      canvas.dataset.a1JetwayCompletelyParked=String(jetway.deployment<=0.0005&&jetway.controller?.getState?.()==="parked");
+      canvas.dataset.a1JetwayCompletelyParked=String(jetway.deployment<=0.0005&&isA1JetwayParked(jetway.controller));
       canvas.dataset.a1MarshallerMode="single-no-wands-distance-driven-provisional";
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);

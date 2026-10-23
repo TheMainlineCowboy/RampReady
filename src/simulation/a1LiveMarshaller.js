@@ -9,7 +9,7 @@ import {A1_CAPTURE_STOP_METERS,mapA1CaptureDistanceToMotionDistance} from "./a1G
 // artificially delayed Stage 2 and made the character wander beside the jet.
 export const A1_WALK_ENTRY_DISTANCE_METERS=4.8;
 export const A1_WALK_SPEED_METERS_PER_SECOND=1.30;
-const EPSILON=.025;
+const TURN_DURATION_MS=320;
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 
 export function installA1LiveMarshaller(THREE,{
@@ -27,33 +27,29 @@ export function installA1LiveMarshaller(THREE,{
   // separate. Only turn while STATIONARY so she cannot crab-walk sideways.
   let walkInHeading=0,walkOutHeading=0;
   const headingFromTo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
-  function rotateStandingTo(target,dt){
-    const difference=Math.atan2(
-      Math.sin(target-agent.person.rotation.y),
-      Math.cos(target-agent.person.rotation.y)
-    );
-    const maxStep=dt*5.8;
-    if(Math.abs(difference)<=Math.max(.025,maxStep)){
-      agent.person.rotation.y=target;
-      return true;
-    }
-    agent.person.rotation.y+=Math.sign(difference)*maxStep;
+  let phaseStartedAt=0,turnFrom=0,lastRealUpdateAt=performance.now();
+  function startPhase(name,now){
+    phase=name;phaseStartedAt=now;turnFrom=agent.person.rotation.y;
+  }
+  function rotateStandingTo(target,now){
+    const arc=Math.atan2(Math.sin(target-turnFrom),Math.cos(target-turnFrom));
+    const t=clamp((now-phaseStartedAt)/TURN_DURATION_MS,0,1);
+    const eased=t*t*(3-2*t);
+    agent.person.rotation.y=turnFrom+arc*eased;
+    if(t>=1){agent.person.rotation.y=target;return true;}
     return false;
   }
-  function walkTo(target,dt){
-    const travel=target.clone().sub(agent.person.position);
-    travel.y=0;
-    const distance=travel.length();
-    const step=A1_WALK_SPEED_METERS_PER_SECOND*dt;
-    if(distance<=step+EPSILON){
-      agent.person.position.copy(target);
-      return true;
-    }
-    agent.person.position.addScaledVector(travel,step/distance);
-    return false;
+  function walkTo(from,to,now){
+    // Authoritative 1.3 m/s "walk.relaxed" GLB gait moves IN PLACE.
+    // World motion is elapsed-time based, never based on the 40ms frame cap.
+    const meters=from.distanceTo(to);
+    const fraction=clamp((now-phaseStartedAt)*A1_WALK_SPEED_METERS_PER_SECOND/
+      Math.max(.001,1000*meters),0,1);
+    agent.person.position.lerpVectors(from,to,fraction);
+    return fraction>=1;
   }
   function resetToWaiting(){
-    phase="waiting";approachMeters=A1_APPROACH_DISTANCE_METERS;
+    phase="waiting";phaseStartedAt=0;approachMeters=A1_APPROACH_DISTANCE_METERS;
     physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
     if(!agent)return;
     // Park visibly at a remote ramp-side staging point. Never pop into the
@@ -90,7 +86,11 @@ export function installA1LiveMarshaller(THREE,{
   return {
     update(dt){
       if(disposed||!agent)return;
-      dt=clamp(Number.isFinite(dt)?dt:0,0,.05);
+      const now=performance.now();
+      const realDelta=clamp((now-lastRealUpdateAt)/1000,0,1);
+      lastRealUpdateAt=now;
+      // Real elapsed time also advances Sam's walk cycle at the correct speed.
+      dt=Math.max(realDelta,clamp(Number.isFinite(dt)?dt:0,0,.05));
       const stage=readStage();
       if(readInspection()){
         if(phase!=="waiting")resetToWaiting();
@@ -104,35 +104,35 @@ export function installA1LiveMarshaller(THREE,{
         return;
       }
       if(phase==="waiting"&&(retracting||stage===1||stage===2)){
-        phase="entering";agent.person.visible=true;agent.setWalking(true);
+        startPhase("entering",now);agent.person.visible=true;agent.setWalking(true);
       }
       if(phase==="entering"){
-        const arrived=walkTo(atGuide,dt);
+        const arrived=walkTo(atEntry,atGuide,now);
         agent.update(dt);
         if(arrived){
-          phase="turning-to-guide";
+          startPhase("turning-to-guide",now);
           agent.setWalking(false);
         }
         return;
       }
       if(phase==="turning-to-guide"){
-        const facing=rotateStandingTo(guideHeading,dt);
+        const facing=rotateStandingTo(guideHeading,now);
         agent.update(dt);
         if(facing)phase="guiding";
         return;
       }
       if(stage>=3&&phase==="guiding"){
-        phase="turning-to-exit";
+        startPhase("turning-to-exit",now);
         agent.setWalking(false);
       }
       if(phase==="turning-to-exit"){
-        const facing=rotateStandingTo(walkOutHeading,dt);
+        const facing=rotateStandingTo(walkOutHeading,now);
         agent.update(dt);
-        if(facing){phase="leaving";agent.setWalking(true);}
+        if(facing){startPhase("leaving",now);agent.setWalking(true);}
         return;
       }
       if(phase==="leaving"){
-        const departed=walkTo(atEntry,dt);
+        const departed=walkTo(atGuide,atEntry,now);
         agent.update(dt);
         if(departed){
           // Stop at the apron edge, then remain present rather than vanishing.

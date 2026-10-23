@@ -10,7 +10,7 @@ function substitute(source,oldText,newText,label) {
   return pieces.join(newText);
 }
 const required=[
- "import { evaluateA1ApproachGate } from \"../simulation/a1MarshallerWorkflowGate.js\";",
+ "import { evaluateA1ApproachGate,isA1JetwayParked } from \"../simulation/a1MarshallerWorkflowGate.js\";",
  "const a1MarshallerRef = useRef(null);",
  "a1MarshallerRef.current = a1Marshaller;",
  "evaluateA1ApproachGate(jetway, a1MarshallerRef.current)",
@@ -52,7 +52,7 @@ export function applyA1MarshallerSequenceGate(
     `    if (!sim || inspectionRef.current || stageRef.current !== 1) return;
     if (a1MarshallerRef.current?.readyToGuide !== true ||
         jetwayRef.current.deployment > 0.0005 ||
-        jetwayRef.current.controller?.getState?.() !== "parked") {
+        !isA1JetwayParked(jetwayRef.current.controller)) {
       setMessage("Capture locked: jetway must be parked and marshaller guiding.");
       return;
     }
@@ -106,7 +106,7 @@ export function applyA1MarshallerSequenceGate(
   code=substitute(code,marker,
     marker+`\n      canvas.dataset.a1MarshallerReadyToGuide = String(a1Marshaller.readyToGuide);
       canvas.dataset.a1ApproachGateReady = String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
-      canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.0005&&jetway.controller?.getState?.()==="parked");`,
+      canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.0005&&isA1JetwayParked(jetway.controller));`,
     "telemetry");
   code=substitute(code,
     '      a1Marshaller.dispose();',
