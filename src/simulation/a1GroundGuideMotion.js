@@ -49,7 +49,11 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // leaving no elbow-bend freedom and visually pulling the sleeve away from
     // the shoulder. Crossing needs to happen via bent FOREARMS, not via
     // upper arms pointing inward through the neck.
-    const rising=.32*pose.raise;
+    // Bring crossed bare hands ABOVE the hairline at the last approach position.
+    // The preceding .32m rise stopped at eye level despite correct IK.
+    // Gradually raise throughout approach, with an extra controlled lift as
+    // the forearms cross in the final fraction of a metre.
+    const rising=.395*pose.raise+.050*pose.crossed;
     // Cross *forearms* above the forehead, not shoulder joints. Keep the
     // wrists ahead of the face as they converge so the upper arms remain
     // seated at the clavicles instead of folding through the neck.
