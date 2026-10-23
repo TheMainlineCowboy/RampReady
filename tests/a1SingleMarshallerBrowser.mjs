@@ -29,7 +29,7 @@ try{
  const width=Number(await page.locator("canvas").getAttribute("data-ear-fit-width"));
  assert.ok(width>.11&&width<.29,"Ear defenders must be fitted to measured human head");
  await page.evaluate(()=>window.__reviewCapture.begin());
- const distances=[7,6,5,4,3,2,1,.5,0];
+ const distances=[7,6,5,4,3,2,1.8,1.2,.7,.42,.3,0];
  let index=0, previous=-Infinity, final;
  let priorElbows=null;
  function distance3(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);}
@@ -82,6 +82,8 @@ try{
   final=pose;
  }
  assert.ok(final.pose.crossed>.98,"At the nose gear, stop animation must cross forearms");
+ const stopEnvelope=await page.evaluate(()=>window.__reviewCapture.render({distance:.42,stepCount:1}));
+ assert.ok(stopEnvelope.metrics.pose.crossed>.999,"At the REAL 0.42m capture envelope, stop must be completed on the first frame");
  // Former builds passed joint tests but stopped with crossed hands over
  // the eyes. The stop pose must finish visibly elevated above the brow.
  const finalMeanHeight=(final.l.hand[1]-final.l.shoulder[1]+final.r.hand[1]-final.r.shoulder[1])/2;

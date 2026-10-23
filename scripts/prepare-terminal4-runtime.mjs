@@ -382,11 +382,14 @@ addOneGuide(
 );
 addOneGuide(
   '    simRef.current = sim;\n\n    const canvas = renderer.domElement;',
-  '    simRef.current = sim;\n    const a1Marshaller = installA1LiveMarshaller(THREE,{scene,aircraft,rig,readStage:()=>stageRef.current,readInspection:()=>inspectionRef.current});\n\n    const canvas = renderer.domElement;'
+  '    simRef.current = sim;\n    const a1Marshaller = installA1LiveMarshaller(THREE,{scene,aircraft,rig,readStage:()=>stageRef.current,readInspection:()=>inspectionRef.current,readJetwayRetracting:()=>jetwayRef.current.retractionRequested});\n\n    const canvas = renderer.domElement;'
 );
 addOneGuide(
   '      renderer.render(scene, camera);\n      frame = requestAnimationFrame(tick);',
-  '      a1Marshaller.update(dt);\n      canvas.dataset.a1MarshallerStatus = a1Marshaller.status;\n      canvas.dataset.a1MarshallerMode = "single-no-wands-distance-driven-provisional";\n      renderer.render(scene, camera);\n      frame = requestAnimationFrame(tick);'
+  '      a1Marshaller.update(dt);\n      canvas.dataset.a1MarshallerStatus = a1Marshaller.status;
+      canvas.dataset.a1MarshallerPhase = a1Marshaller.phase;
+      canvas.dataset.a1MarshallerCaptureDistanceMeters = a1Marshaller.approachMeters.toFixed(3);
+      canvas.dataset.a1MarshallerStopReady = String(a1Marshaller.stopPoseReady);\n      canvas.dataset.a1MarshallerMode = "single-no-wands-distance-driven-provisional";\n      renderer.render(scene, camera);\n      frame = requestAnimationFrame(tick);'
 );
 addOneGuide(
   '      canvas.removeEventListener("wheel", handleWheel);\n      dispose(scene);',

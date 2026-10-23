@@ -30,6 +30,8 @@ jobs:
         run: npm ci
       - name: Verify and stage one CC0 skinned human
         run: node scripts/stage-a1-single-marshaller.mjs
+      - name: Inspect unchanged AP88 R187A operator-panel node hierarchy
+        run: node scripts/inspect-ap88-operator-layout.mjs
       - name: Build actual review and production simulator code
         run: npx vite build
       - name: Verify review route and source in compiled app

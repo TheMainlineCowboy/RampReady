@@ -1204,6 +1204,7 @@ export default function RampReadyStandupTrainer({
       scene,aircraft,rig,
       readStage:()=>stageRef.current,
       readInspection:()=>inspectionRef.current,
+      readJetwayRetracting:()=>jetwayRef.current.retractionRequested,
     });
 
     const canvas = renderer.domElement;
@@ -1615,6 +1616,9 @@ export default function RampReadyStandupTrainer({
       }
       a1Marshaller.update(dt);
       canvas.dataset.a1MarshallerStatus=a1Marshaller.status;
+      canvas.dataset.a1MarshallerPhase=a1Marshaller.phase;
+      canvas.dataset.a1MarshallerCaptureDistanceMeters=a1Marshaller.approachMeters.toFixed(3);
+      canvas.dataset.a1MarshallerStopReady=String(a1Marshaller.stopPoseReady);
       canvas.dataset.a1MarshallerMode="single-no-wands-distance-driven-provisional";
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
