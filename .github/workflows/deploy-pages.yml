@@ -120,11 +120,13 @@ jobs:
           import fs from 'node:fs';
           const r=JSON.parse(fs.readFileSync('artifacts/a1-mobile-textures/report.json','utf8'));
           if(r.count<5||r.savedPct<50)throw Error('Mobile texture tier incomplete');
+          const misterX=r.files.filter(x=>x.mobile.startsWith('/models/kphx-full-airport/surface-batches/misterx/'));
+          if(misterX.length!==20)throw Error('MisterX mobile texture coverage missing: '+misterX.length+' of 20');
           for(const x of r.files){
             if(!fs.existsSync('dist'+x.mobile))throw Error('Mobile PNG not bundled: '+x.mobile);
             if(fs.statSync('dist'+x.mobile).size!==x.mobileBytes)throw Error('Mobile PNG corrupted: '+x.mobile);
           }
-          console.log('Verified mobile texture derivatives',r.count,r.savedPct+'% lower bytes');
+          console.log('Verified mobile texture derivatives',r.count,r.savedPct+'% lower bytes; MisterX',misterX.length);
           MOBILE
           test -s dist/models/kphx-full-airport/t4-a1-zdp-surfaces/manifest.json
           node --input-type=module <<'TUG'
