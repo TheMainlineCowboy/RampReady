@@ -9,6 +9,17 @@ on:
       - main
     paths:
       - src/simulation/a1TurnaroundMission.js
+      - src/simulation/a1LiveMarshaller.js
+      - src/simulation/a1SingleMarshaller.js
+      - src/simulation/a1GroundGuideMotion.js
+      - src/simulation/a1OpenPalmPose.js
+      - src/simulation/a1MarshallerPPE.js
+      - src/simulation/a1HeadsetFit.js
+      - src/simulation/a1VestMaterial.js
+      - src/components/RampReadyStandupTrainerTerminal4.jsx
+      - scripts/prepare-terminal4-runtime.mjs
+      - scripts/stage-a1-single-marshaller.mjs
+      - .github/workflows/deploy-pages.yml
 
 
 permissions:
@@ -52,6 +63,9 @@ jobs:
           git reset --hard "${GITHUB_SHA}"
           git clean -fd
 
+      - name: Stage exact licensed single human NPC (no rejected sources)
+        run: node scripts/stage-a1-single-marshaller.mjs
+
       - name: Stamp exact release commit
         shell: bash
         run: |
@@ -73,6 +87,8 @@ jobs:
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
           test -s "dist/releases/${GITHUB_SHA}.txt"
           test "$(tr -d '\r\n' < "dist/releases/${GITHUB_SHA}.txt")" = "${GITHUB_SHA}"
+          test -s dist/models/a1-single-marshal/sam-locomotion.glb
+          printf 'glTF' | cmp -n 4 - dist/models/a1-single-marshal/sam-locomotion.glb
           test -s dist/models/crj700-mobile.glb
           printf 'glTF' | cmp -n 4 - dist/models/crj700-mobile.glb
           grep -Eq 'src="/RampReady/assets/[^"]+\.js"' dist/index.html
