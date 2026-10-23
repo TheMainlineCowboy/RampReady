@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { buildCRJ700Aircraft } from "./aircraft/crj700Model.js";
 import { installA1LiveMarshaller } from "../simulation/a1LiveMarshaller.js";
+import { evaluateA1ApproachGate } from "../simulation/a1MarshallerWorkflowGate.js";
 import { JACKKNIFE_WARNING, createPushbackState, stepPushbackDynamics } from "../simulation/pushbackDynamics.js";
 import {
   CONNECTION_PHASES,
@@ -155,6 +156,7 @@ export default function RampReadyStandupTrainer({
   const mountRef = useRef(null);
   const simRef = useRef(null);
   const stageRef = useRef(0);
+  const a1MarshallerRef = useRef(null);
   const cameraRef = useRef("chase");
   const inspectionRef = useRef(false);
   const inspectionPresetRef = useRef("a1");
@@ -363,6 +365,14 @@ export default function RampReadyStandupTrainer({
     if (!sim || inspectionRef.current) return;
     if (stageRef.current === 0) {
       if (jetwayRef.current.retractionRequested) return;
+      // Do not begin the timed jetway departure if its guiding crew member
+      // has not loaded. This prevents late GLB loading from causing pop-in.
+      if (a1MarshallerRef.current?.status !== "ready") {
+        setMessage(a1MarshallerRef.current?.status === "error"
+          ? "Marshaller failed to load. Approach is locked until resolved."
+          : "Preparing the marshaller before jetway retraction.");
+        return;
+      }
       const controller = jetwayRef.current.controller;
       if (!controller?.isDoorContactReady?.()) {
         setMessage("Waiting for the A1 jetway to make verified contact with the rendered CRJ L1 door.");
@@ -388,6 +398,12 @@ export default function RampReadyStandupTrainer({
   const capture = useCallback(() => {
     const sim = simRef.current;
     if (!sim || inspectionRef.current || stageRef.current !== 1) return;
+    if (a1MarshallerRef.current?.readyToGuide !== true ||
+        jetwayRef.current.deployment > 0.0005 ||
+        jetwayRef.current.controller?.getState?.() !== "parked") {
+      setMessage("Capture locked: jetway must be parked and marshaller guiding.");
+      return;
+    }
     sim.connection = requestCapture(sim.connection, connectionMetrics(sim));
     driveRef.current.throttle = 0;
     setThrottle(0);
@@ -1206,6 +1222,7 @@ export default function RampReadyStandupTrainer({
       readInspection:()=>inspectionRef.current,
       readJetwayRetracting:()=>jetwayRef.current.retractionRequested,
     });
+    a1MarshallerRef.current = a1Marshaller;
 
     const canvas = renderer.domElement;
     canvas.dataset.a1AircraftHeadingReady = "true";
@@ -1360,11 +1377,17 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.a1JetwaySupportTrianglePartitionExact = String(jetway.controller.isSupportTrianglePartitionExact?.() === true);
         renderer.domElement.dataset.a1JetwayFixedWallMotionMaxMeters = Number(jetway.controller.getFixedWallMotionMaxMeters?.() ?? Number.NaN).toFixed(6);
         renderer.domElement.dataset.a1JetwayFixedWallRotationMaxRadians = Number(jetway.controller.getFixedWallRotationMaxRadians?.() ?? Number.NaN).toFixed(9);
-        if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
-          jetway.retractionRequested = false;
-          stageRef.current = 1;
-          setStage(1);
-          setMessage("Jetway parked clear. Approach directly from the front and stop inside the capture envelope.");
+        if (!inspectionActive && jetway.retractionRequested && stageRef.current === 0) {
+          const gate = evaluateA1ApproachGate(jetway, a1MarshallerRef.current);
+          if (gate.ready) {
+            jetway.retractionRequested = false;
+            stageRef.current = 1;
+            setStage(1);
+            setMessage("Jetway fully parked. Marshaller in position. Approach the nose gear at idle speed.");
+          } else if (sim.lastA1GateMessage !== gate.reason) {
+            sim.lastA1GateMessage = gate.reason;
+            setMessage(gate.reason);
+          }
         }
       }
       const before = connectionMetrics(sim);
@@ -1410,7 +1433,11 @@ export default function RampReadyStandupTrainer({
       let steer = drive.steer;
       if (keysRef.current.has("a") || keysRef.current.has("arrowleft")) steer += 1;
       if (keysRef.current.has("d") || keysRef.current.has("arrowright")) steer -= 1;
-      const motionAllowed = inspectionActive || (connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
+      // Never allow physical tug movement in Step 1 (equipment check /
+      // jetway retraction), or if the guide is absent during approach.
+      const approachGuideReady = stageRef.current !== 1 || a1MarshallerRef.current?.readyToGuide === true;
+      const motionAllowed = inspectionActive || (stageRef.current !== 0 && approachGuideReady &&
+        connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));
       const towing = !inspectionActive && sim.connection.phase === CONNECTION_PHASES.TOWING;
       const keyboardForward = inspectionActive && (keysRef.current.has("w") || keysRef.current.has("arrowup"));
       const keyboardReverse = inspectionActive && (keysRef.current.has("s") || keysRef.current.has("arrowdown"));
@@ -1620,6 +1647,9 @@ export default function RampReadyStandupTrainer({
       canvas.dataset.a1MarshallerCaptureDistanceMeters=Number.isFinite(a1Marshaller.physicalDistanceMeters)?a1Marshaller.physicalDistanceMeters.toFixed(3):"waiting";
       canvas.dataset.a1MarshallerMotionDistanceMeters=a1Marshaller.approachMeters.toFixed(3);
       canvas.dataset.a1MarshallerStopReady=String(a1Marshaller.stopPoseReady);
+      canvas.dataset.a1MarshallerReadyToGuide=String(a1Marshaller.readyToGuide);
+      canvas.dataset.a1ApproachGateReady=String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
+      canvas.dataset.a1JetwayCompletelyParked=String(jetway.deployment<=0.0005&&jetway.controller?.getState?.()==="parked");
       canvas.dataset.a1MarshallerMode="single-no-wands-distance-driven-provisional";
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
@@ -1635,6 +1665,7 @@ export default function RampReadyStandupTrainer({
       window.removeEventListener("pointercancel", handlePointerUp);
       canvas.removeEventListener("wheel", handleWheel);
       a1Marshaller.dispose();
+      if(a1MarshallerRef.current===a1Marshaller)a1MarshallerRef.current=null;
       if (THREE.DefaultLoadingManager.onError !== previousAssetError) {
         THREE.DefaultLoadingManager.onError = previousAssetError;
       }

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import {applyA1MarshallerSequenceGate} from "./apply-a1-marshaller-sequence-gate.mjs";
 
 const trainerPath = "src/components/RampReadyStandupTrainerTerminal4.jsx";
 let source = fs.readFileSync(trainerPath, "utf8");
@@ -191,4 +192,5 @@ for (const forbidden of [
 }
 
 fs.writeFileSync(trainerPath, source, "utf8");
-console.log("Enforced exact KPHX A1 WED cabin-end + X-Plane CRJ ACF dock-port pose for aircraft and equipment.");
+applyA1MarshallerSequenceGate(trainerPath);
+console.log("Enforced exact KPHX A1 WED cabin-end + X-Plane CRJ ACF dock-port pose and staged marshaller readiness gate.");

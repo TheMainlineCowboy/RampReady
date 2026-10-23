@@ -49,7 +49,9 @@ export function installA1LiveMarshaller(THREE,{
     phase="waiting";approachMeters=A1_APPROACH_DISTANCE_METERS;
     physicalDistanceMeters=Number.NaN;approachEntryMeters=Number.NaN;
     if(!agent)return;
-    agent.person.visible=false;
+    // Park visibly at a remote ramp-side staging point. Never pop into the
+    // guide position when the deployment sequence reaches Step 2.
+    agent.person.visible=!readInspection();
     agent.person.position.copy(atEntry);
     agent.person.rotation.y=guideHeading;
     agent.setWalking(false);
@@ -67,7 +69,9 @@ export function installA1LiveMarshaller(THREE,{
       aircraft.position.z+approachZ*.95+sideZ*1.15
     );
     // Entry begins from the safe outer ramp side, not inside the tug path.
-    atEntry.copy(atGuide).add(new THREE.Vector3(sideX*4.8,0,sideZ*4.8));
+    // Walk about 11m during the real A1 jetway retraction, not 4.8m
+    // from a position that can be visible in the operator's view.
+    atEntry.copy(atGuide).add(new THREE.Vector3(sideX*11.5,0,sideZ*11.5));
     guideHeading=Math.PI+yaw;
     resetToWaiting();
     status="ready";
@@ -108,10 +112,13 @@ export function installA1LiveMarshaller(THREE,{
         const departed=walkTo(atEntry,dt);
         agent.update(dt);
         if(departed){
-          phase="finished";agent.person.visible=false;agent.setWalking(false);
+          // Remain physically present, idle at the safe apron staging point.
+          // Hiding here made her visibly disappear in an open ramp scene.
+          phase="finished";agent.setWalking(false);
         }
         return;
       }
+      if(phase==="finished"){agent.update(dt);return;}
       if(phase!=="guiding")return;
       gear.copy(aircraft.position);
       // This is exactly the distance used to authorize nose-gear capture.
@@ -134,6 +141,7 @@ export function installA1LiveMarshaller(THREE,{
     },
     get status(){return status;},
     get phase(){return phase;},
+    get readyToGuide(){return status==="ready"&&phase==="guiding"&&agent?.person.visible===true;},
     get approachMeters(){return approachMeters;},
     get physicalDistanceMeters(){return physicalDistanceMeters;},
     get stopPoseReady(){return phase==="guiding"&&approachMeters<=0;},
