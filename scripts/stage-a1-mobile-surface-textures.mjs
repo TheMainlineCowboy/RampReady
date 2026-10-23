@@ -8,7 +8,8 @@ import crypto from "node:crypto";
 import sharp from "sharp";
 const publicRoot=path.resolve("public");
 const root=path.join(publicRoot,"models/kphx-full-airport");
-const manifests=["surfaces","t4-a1-zdp-surfaces","full-zdp-surfaces"];
+// Cover ALL loaded PHX surface families, including dynamically materialized MisterX taxilines.
+const manifests=["surfaces","t4-a1-zdp-surfaces","full-zdp-surfaces","surface-batches/misterx"];
 const files=new Map();
 const asLocal=url=>{
  if(!url?.startsWith("/models/kphx-full-airport/")||url.includes("..")||url.includes("?"))
