@@ -63,6 +63,9 @@ jobs:
           git reset --hard "${GITHUB_SHA}"
           git clean -fd
 
+      - name: Reconstruct verified stand-up tug from checked-in payload parts
+        run: node scripts/materialize-standup-tug-runtime.mjs
+
       - name: Stage exact licensed single human NPC (no rejected sources)
         run: node scripts/stage-a1-single-marshaller.mjs
 
@@ -87,6 +90,20 @@ jobs:
           test "$(tr -d '\r\n' < dist/release-commit.txt)" = "${GITHUB_SHA}"
           test -s "dist/releases/${GITHUB_SHA}.txt"
           test "$(tr -d '\r\n' < "dist/releases/${GITHUB_SHA}.txt")" = "${GITHUB_SHA}"
+          # The stand-up tug is intentionally reconstructed after git clean.
+          # Fail before deployment if its runtime GLB is missing or corrupted.
+          test -s dist/models/standup-tug.glb
+          printf 'glTF' | cmp -n 4 - dist/models/standup-tug.glb
+          node --input-type=module <<'TUG'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const manifest=JSON.parse(fs.readFileSync('public/models/standup-tug/manifest.json','utf8'));
+          const bytes=fs.readFileSync('dist/models/standup-tug.glb');
+          const digest=crypto.createHash('sha256').update(bytes).digest('hex');
+          if(bytes.length!==manifest.runtime.glbBytes || digest!==manifest.runtime.glbSha256)
+            throw Error('Stand-up tug release GLB is not the checked-in verified asset');
+          console.log('Verified stand-up tug release GLB',bytes.length,digest);
+          TUG
           test -s dist/models/a1-single-marshal/sam-locomotion.glb
           printf 'glTF' | cmp -n 4 - dist/models/a1-single-marshal/sam-locomotion.glb
           test -s dist/models/crj700-mobile.glb
@@ -164,6 +181,9 @@ jobs:
           marker_url="${PAGE_URL}releases/${EXPECTED_SHA}.txt"
           marker_verified=false
           aircraft_verified=false
+          tug_verified=false
+          expected_tug_size=$(node -p "require('./public/models/standup-tug/manifest.json').runtime.glbBytes")
+          expected_tug_hash=$(node -p "require('./public/models/standup-tug/manifest.json').runtime.glbSha256")
 
           authored=false
           if [ -f public/models/crj700-user.asset.json ]; then
@@ -200,8 +220,16 @@ jobs:
               aircraft_verified=true
             fi
 
-            echo "Attempt ${attempt}: marker=${marker_status}/${live_sha}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}"
-            if [ "${marker_verified}" = true ] && [ "${aircraft_verified}" = true ]; then
+            # Verify that the same URL requested by the browser returns an
+            # actual valid GLB, not the GitHub Pages 404 fallback HTML.
+            tug_status=$(curl -L -sS -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o /tmp/live-standup-tug.glb -w '%{http_code}' "${PAGE_URL}models/standup-tug.glb?sha=${EXPECTED_SHA}&attempt=${attempt}" || true)
+            tug_size=$(stat -c%s /tmp/live-standup-tug.glb 2>/dev/null || echo 0)
+            tug_hash=$(sha256sum /tmp/live-standup-tug.glb 2>/dev/null | awk '{print $1}' || true)
+            if [ "${tug_status}" = "200" ] && [ "${tug_size}" = "${expected_tug_size}" ] && [ "${tug_hash}" = "${expected_tug_hash}" ]; then
+              tug_verified=true
+            fi
+            echo "Attempt ${attempt}: marker=${marker_status}/${live_sha}; aircraft=${aircraft_status}, bytes=${live_size}, sha256=${live_hash:-missing}; standup=${tug_status}, bytes=${tug_size}, sha256=${tug_hash:-missing}"
+            if [ "${marker_verified}" = true ] && [ "${aircraft_verified}" = true ] && [ "${tug_verified}" = true ]; then
               echo "Immutable release marker appeared; exact live aircraft matched after attempt ${attempt}."
               break
             fi
@@ -210,7 +238,9 @@ jobs:
 
           test "${marker_verified}" = true
           test "${aircraft_verified}" = true
+          test "${tug_verified}" = true
           printf 'glTF' | cmp -n 4 - /tmp/live-aircraft.glb
+          printf 'glTF' | cmp -n 4 - /tmp/live-standup-tug.glb
 
           curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
             -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
