@@ -60,11 +60,13 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // The preceding .32m rise stopped at eye level despite correct IK.
     // Gradually raise throughout approach, with an extra controlled lift as
     // the forearms cross in the final fraction of a metre.
-    const rising=.420*pose.raise+.075*pose.crossed;
+    const rising=.385*pose.raise+.030*pose.crossed;
     // Cross *forearms* above the forehead, not shoulder joints. Keep the
     // wrists ahead of the face as they converge so the upper arms remain
     // seated at the clavicles instead of folding through the neck.
-    const crossing=-.29*pose.crossed;
+    // Keep wrists close enough that the *hands/fingers* cross, without
+    // forcing the elbows inside the shoulders on this real 0.26m/0.27m arm rig.
+    const crossing=-.20*pose.crossed;
     return start.add(new THREE.Vector3(
       sign*(outer+crossing),rising-.025,.07+.11*pose.crossed));
   }
