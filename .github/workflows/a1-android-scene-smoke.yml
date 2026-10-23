@@ -46,6 +46,8 @@ jobs:
           }
           console.log('VERIFIED',report.count,'mobile texture derivatives;',report.savedPct,'% smaller packaged textures');
           NODE
+      - name: Verify natural curved walk route geometry
+        run: node tests/a1MarshallerWalkRoute.mjs
       - name: Verify Sam walking pace, complete endpoint turning, and no stage-one delay
         run: node tests/a1MarshallerWalkTiming.mjs
       - name: Simulated Android real WebGL complete A1 scene loads AND stage-two entry
