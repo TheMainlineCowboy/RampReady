@@ -53,11 +53,11 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // The preceding .32m rise stopped at eye level despite correct IK.
     // Gradually raise throughout approach, with an extra controlled lift as
     // the forearms cross in the final fraction of a metre.
-    const rising=.395*pose.raise+.050*pose.crossed;
+    const rising=.375*pose.raise+.030*pose.crossed;
     // Cross *forearms* above the forehead, not shoulder joints. Keep the
     // wrists ahead of the face as they converge so the upper arms remain
     // seated at the clavicles instead of folding through the neck.
-    const crossing=-.21*pose.crossed;
+    const crossing=-.18*pose.crossed;
     return start.add(new THREE.Vector3(
       sign*(outer+crossing),rising-.025,.07+.11*pose.crossed));
   }
@@ -96,7 +96,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
     // stay OUTSIDE its shoulder while the forearms cross above the forehead.
     const shoulderLocal=localOf(upper);
     const outwardPole=new THREE.Vector3(side*.41,-.025,.11)
-      .lerp(new THREE.Vector3(side*.48,.18,.16),pose.crossed);
+      .lerp(new THREE.Vector3(side*.62,-.11,.11),pose.crossed);
     const targetBend=person.localToWorld(shoulderLocal.add(outwardPole)).sub(a);
     targetBend.addScaledVector(axis,-targetBend.dot(axis));
     if(targetBend.lengthSq()<1e-8){
