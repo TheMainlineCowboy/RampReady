@@ -73,6 +73,38 @@ try{
    "The browser never requested mobile-friendly KPHX textures");
   assert.deepEqual(failed,[],"Missing or rejected live local-model dependencies");
   assert.deepEqual(consoleErrors,[],"Browser script threw an error");
+  await page.waitForFunction(()=>document.querySelector("canvas.trainerCanvas")?.dataset?.a1MarshallerStatus==="ready",
+    null,{timeout:30000});
+  const before=await page.evaluate(()=>{
+    const c=document.querySelector("canvas.trainerCanvas");
+    return {step:document.querySelector(".rr-kicker")?.textContent,
+      phase:c?.dataset.a1MarshallerPhase,deployment:c?.dataset.a1JetwayDeployment};
+  });
+  assert.match(before.step||"",/Step 1 \/ 9/,"Must start at equipment check");
+  await page.getByRole("button",{name:"Ready",exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector(".rr-kicker")?.textContent?.includes("Step 2 / 9"),
+    null,{timeout:30000}).catch(async(err)=>{
+      const snapshot=await page.evaluate(()=>{
+        const c=document.querySelector("canvas.trainerCanvas");
+        return {step:document.querySelector(".rr-kicker")?.textContent,
+          message:document.querySelector(".rr-hud p")?.textContent,
+          phase:c?.dataset.a1MarshallerPhase,ready:c?.dataset.a1MarshallerReadyToGuide,
+          deployment:c?.dataset.a1JetwayDeployment,jetwayState:c?.dataset.a1JetwayState,
+          gate:c?.dataset.a1ApproachGateReady,jetwayParked:c?.dataset.a1JetwayCompletelyParked};
+      });
+      throw Error("Real Android A1 stage never advanced: "+JSON.stringify(snapshot)+" "+String(err));
+    });
+  const approach=await page.evaluate(()=>{
+    const c=document.querySelector("canvas.trainerCanvas");
+    return {step:document.querySelector(".rr-kicker")?.textContent,
+      phase:c?.dataset.a1MarshallerPhase,ready:c?.dataset.a1MarshallerReadyToGuide,
+      jetwayState:c?.dataset.a1JetwayState,jetwayParked:c?.dataset.a1JetwayCompletelyParked};
+  });
+  assert.equal(approach.ready,"true","Cannot start approach until marshaller is actually guiding");
+  assert.equal(approach.jetwayParked,"true","Cannot start approach until the jetway is fully parked");
+  assert.equal(approach.phase,"guiding","Marshaller still walking when the approach was authorized");
+  fs.writeFileSync(out+"/approach-gate.json",JSON.stringify({before,approach},null,2));
+  console.log("PASS real Android A1 READY -> jetway retract -> natural walking entrance -> Step 2",JSON.stringify(approach));
   // Optional visual evidence cannot invalidate successful runtime checks.
   try{await page.screenshot({path:out+"/real-android-webgl.png",timeout:8000,animations:"disabled"});}
   catch(err){console.warn("Optional browser screenshot timed out; actual scene assertions passed:",String(err).slice(0,240));}
