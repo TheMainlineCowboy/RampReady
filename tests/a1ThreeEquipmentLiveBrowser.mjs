@@ -42,6 +42,8 @@ try{
           && d.kphxT4ZdpMarkingsReady==="true"
           && d.kphxMisterXLinesReady==="true";
       },null,{timeout:120000});
+      // The canvas may be ready just before React drops its loading overlay.
+      await page.locator(".rr-runtime-loading").waitFor({state:"hidden",timeout:20000});
       const result=await page.evaluate(()=>{
         const d=document.querySelector("canvas.trainerCanvas")?.dataset||{};
         return {tugSource:d.tugSource,kphxExactLiveT4:d.kphxExactLiveT4,
