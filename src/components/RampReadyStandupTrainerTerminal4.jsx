@@ -434,6 +434,25 @@ export default function RampReadyStandupTrainer({
     renderer.domElement.dataset.inspectionRouteAuthority = INSPECTION_ROUTE_AUTHORITY;
     mount.replaceChildren(renderer.domElement);
 
+    // Three.js image/GLB loaders sometimes reject with a bare Event,
+    // displayed as "[object Event]". Record its actual failed network URL.
+    const previousAssetError = THREE.DefaultLoadingManager.onError;
+    THREE.DefaultLoadingManager.onError = (url) => {
+      renderer.domElement.dataset.lastFailedAssetUrl = String(url);
+      renderer.domElement.dataset.lastFailedAssetTime = String(Date.now());
+      if (typeof previousAssetError === "function") previousAssetError(url);
+    };
+    const readableLoadError = (error) => {
+      const message = typeof error?.message === "string" && error.message
+        ? error.message : "";
+      const failingUrl = renderer.domElement.dataset.lastFailedAssetUrl;
+      if (message && message !== "[object Event]") return message;
+      const eventUrl = error?.target?.currentSrc || error?.target?.src ||
+        error?.target?.responseURL || failingUrl;
+      return eventUrl ? `Failed loading airport resource: ${eventUrl}`
+        : "A required airport asset could not be loaded; check network and deployment.";
+    };
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x9fc4e6);
     scene.fog = new THREE.Fog(0x9fc4e6, 2400, 6500);
@@ -815,7 +834,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.kphxExactLiveT4 = "load-error";
-        renderer.domElement.dataset.kphxExactLiveT4Error = String(error?.message || error);
+        renderer.domElement.dataset.kphxExactLiveT4Error = readableLoadError(error);
         renderer.domElement.dataset.kphxExactLiveT4GsePlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseMisterXPlacementCount = "load-error";
         renderer.domElement.dataset.kphxExactLiveT4GseCdbPlacementCount = "load-error";
@@ -1116,7 +1135,7 @@ export default function RampReadyStandupTrainer({
         renderer.domElement.dataset.environmentSource = environment.userData.environmentSource;
       })
       .catch((error) => {
-        renderer.domElement.dataset.runtimeLoadError = String(error?.message || error);
+        renderer.domElement.dataset.runtimeLoadError = readableLoadError(error);
         renderer.domElement.dataset.environmentSource = "load-error";
       });
 
@@ -1158,7 +1177,7 @@ export default function RampReadyStandupTrainer({
       })
       .catch((error) => {
         renderer.domElement.dataset.tugSource = "load-error";
-        renderer.domElement.dataset.tugLoadError = String(error?.message || error);
+        renderer.domElement.dataset.tugLoadError = readableLoadError(error);
         renderer.domElement.dataset.operatorControls = "load-error";
         console.error("RampReady equipment visual load failed", error);
         setMessage(`Equipment model failed to load: ${error.message}`);
@@ -1605,6 +1624,9 @@ export default function RampReadyStandupTrainer({
       window.removeEventListener("pointercancel", handlePointerUp);
       canvas.removeEventListener("wheel", handleWheel);
       a1Marshaller.dispose();
+      if (THREE.DefaultLoadingManager.onError !== previousAssetError) {
+        THREE.DefaultLoadingManager.onError = previousAssetError;
+      }
       dispose(scene);
       renderer.dispose();
       simRef.current = null;
