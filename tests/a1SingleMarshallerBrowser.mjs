@@ -47,6 +47,12 @@ try{
      elbows[side]=m.elbow;
      assert.ok(distance3(m.shoulderLocalPosition,m.shoulderBindPosition)<.002,
        "Shoulder attachment changed: "+side);
+     // The guide uses BARE HANDS. Derive true palm planes from the GLB's
+     // index/middle/pinky bones and verify they face the arriving LEKTRO.
+     assert.ok(m.palmFacingTug>.88,
+       "Hand palm faces the wrong way at "+distance+"m: "+side+" "+JSON.stringify(m));
+     assert.ok(m.fingerAlignedToForearm>.94,
+       "Unnatural wrist angle/finger direction at "+distance+"m: "+side+" "+JSON.stringify(m));
      const upperLength=distance3(m.shoulder,m.elbow);
      const foreLength=distance3(m.elbow,m.hand);
      assert.ok(upperLength>.16 && upperLength<.43 && foreLength>.16 && foreLength<.43,
