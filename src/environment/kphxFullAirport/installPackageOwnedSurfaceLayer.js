@@ -620,8 +620,16 @@ export async function installKphxPackageOwnedSurfaceLayer(
     }
   }
 
+  // Telemetry comes from the actual decoded textures, not the presence of a
+  // manifest file. Browser smoke tests can assert the mobile tier was used.
+  const decodedTextures=(await Promise.allSettled([...textureCache.values()]))
+    .filter(x=>x.status==="fulfilled"&&x.value).map(x=>x.value);
+  const mobileTextureCount=decodedTextures.filter(t=>t.userData?.rampReadyTextureTier==="mobile-1024").length;
+  const sourceTextureCount=decodedTextures.length-mobileTextureCount;
   layer.userData = {
     kphxFullAirport: true,
+    mobileTextureCount,
+    sourceTextureCount,
     sourceVersion: manifest.source.version,
     curvePolicy: KPHX_WED_CURVE_POLICY,
     polygonCount,
