@@ -2,6 +2,8 @@
 // This is based on the user's PHX ramp procedure, not aircraft-to-pilot
 // marshalling cards. At the nose-gear stop point forearms cross overhead.
 // No wand gestures are required for this specific tug positioning workflow.
+import {createA1OpenPalmPose} from "./a1OpenPalmPose.js";
+
 export const A1_GUIDE_CUES=Object.freeze(["hold","guide","slow","stop"]);
 export const A1_APPROACH_DISTANCE_METERS=7.0;
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
@@ -21,6 +23,7 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
   let renderedDistance=A1_APPROACH_DISTANCE_METERS;
   let cue="hold",walking=false;
   const last={l:null,r:null},signs={};
+  const palms=createA1OpenPalmPose(THREE,{person,bones});
   // Important: save shoulder-chain translations. IK is rotation-only;
   // translation on upper-arm or clavicle bones visually pulls sleeves out
   // of their sockets and is never a valid marshalling pose.
@@ -145,7 +148,10 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
         if(!last[id])last[id]=localOf(bones["hand_"+id]);
         last[id].lerp(desired,1-Math.exp(-dt/.19));
         solve(id,last[id],pose);
-        moveWands(id,pose);
+        // Solve wrist roll from actual finger bones AFTER the arm is posed.
+        // Fingers follow the forearm, both PALMS face the oncoming tug.
+        palms.pose(id);
+        if(grips[id]?.visible)moveWands(id,pose);
         // Enforce rotational IK. The source arm joint remains at the
         // shoulder even while the forearm crosses above the head.
         if(bones["upperarm_"+id].position.distanceTo(bindOffsets[id])>.002){
@@ -160,7 +166,8 @@ export function createA1GroundGuideMotion(THREE,{person,bones,mixer,idleAction,w
           elbow:localOf(bones["lowerarm_"+id]).toArray(),
           hand:localOf(bones["hand_"+id]).toArray(),
           shoulderLocalPosition:bones["upperarm_"+id].position.toArray(),
-          shoulderBindPosition:bindOffsets[id].toArray()};
+          shoulderBindPosition:bindOffsets[id].toArray(),
+          ...palms.metrics(id)};
       }
       return out;
     }
