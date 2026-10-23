@@ -82,6 +82,11 @@ try{
   final=pose;
  }
  assert.ok(final.pose.crossed>.98,"At the nose gear, stop animation must cross forearms");
+ // Former builds passed joint tests but stopped with crossed hands over
+ // the eyes. The stop pose must finish visibly elevated above the brow.
+ const finalMeanHeight=(final.l.hand[1]-final.l.shoulder[1]+final.r.hand[1]-final.r.shoulder[1])/2;
+ assert.ok(finalMeanHeight>.36,
+   "Final crossed hands remain too low: "+finalMeanHeight+"m above shoulder");
  for(const side of ["l","r"]){
    const p=final[side],outward=Math.sign(p.shoulder[0]);
    assert.ok(p.hand[1]>p.shoulder[1]+.28,
