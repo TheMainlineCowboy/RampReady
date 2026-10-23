@@ -137,8 +137,11 @@ async function checkOne(e){
     else throw Object.assign(new Error("Permanent HTTP "+res.status),{permanent:true});
     throw new Error("HTTP "+res.status+" "+res.statusText);
    }
-   if(size>0 && e.expectSize!=null && size!==e.expectSize)
-     throw Object.assign(new Error("live "+size+" bytes != source "+e.expectSize),{permanent:true});
+   // GitHub Pages compresses .bin over HTTP. Content-Length may describe
+   // the wire-encoded body, not the restored GLTF byteLength in the manifest.
+   const encoding=(res.headers.get("content-encoding")||"identity").toLowerCase();
+   if(size>0 && e.expectSize!=null && encoding==="identity" && size!==e.expectSize)
+     throw Object.assign(new Error("live uncompressed "+size+" bytes != source "+e.expectSize),{permanent:true});
    return null;
   }catch(err){
    lastError=err;
