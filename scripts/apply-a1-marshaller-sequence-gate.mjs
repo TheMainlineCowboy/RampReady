@@ -62,8 +62,18 @@ export function applyA1MarshallerSequenceGate(
   // on a single line. Match that exact declaration; do not assume the manually
   // expanded component layout from the review branch.
   const declaration="    const a1Marshaller = installA1LiveMarshaller(THREE,{scene,aircraft,rig,readStage:()=>stageRef.current,readInspection:()=>inspectionRef.current,readJetwayRetracting:()=>jetwayRef.current.retractionRequested});";
-  code=substitute(code,declaration,
-    declaration+'\n    a1MarshallerRef.current = a1Marshaller;',"instance");
+  if(code.includes(declaration)) {
+    code=substitute(code,declaration,
+      declaration+'\n    a1MarshallerRef.current = a1Marshaller;',"instance");
+  } else {
+    const expanded=`    const a1Marshaller = installA1LiveMarshaller(THREE,{
+      scene,aircraft,rig,
+      readStage:()=>stageRef.current,
+      readInspection:()=>inspectionRef.current,
+      readJetwayRetracting:()=>jetwayRef.current.retractionRequested,
+    });`;
+    code=substitute(code,expanded,expanded+'\n    a1MarshallerRef.current = a1Marshaller;',"expanded instance");
+  }
   code=substitute(code,
     `        if (!inspectionActive && jetway.retractionRequested && jetway.deployment <= 0.005 && stageRef.current === 0) {
           jetway.retractionRequested = false;
@@ -90,16 +100,17 @@ export function applyA1MarshallerSequenceGate(
       const motionAllowed = inspectionActive || (stageRef.current !== 0 && approachGuideReady &&
         connectionAllowsMotion(sim.connection) && ![3, 4, 8].includes(stageRef.current));`,
     "movement");
-  code=substitute(code,
-    '      canvas.dataset.a1MarshallerStopReady = String(a1Marshaller.stopPoseReady);',
-    `      canvas.dataset.a1MarshallerStopReady = String(a1Marshaller.stopPoseReady);
-      canvas.dataset.a1MarshallerReadyToGuide = String(a1Marshaller.readyToGuide);
+  const readable='      canvas.dataset.a1MarshallerStopReady = String(a1Marshaller.stopPoseReady);';
+  const compact='      canvas.dataset.a1MarshallerStopReady=String(a1Marshaller.stopPoseReady);';
+  const marker=code.includes(readable)?readable:compact;
+  code=substitute(code,marker,
+    marker+`\n      canvas.dataset.a1MarshallerReadyToGuide = String(a1Marshaller.readyToGuide);
       canvas.dataset.a1ApproachGateReady = String(stageRef.current>0||evaluateA1ApproachGate(jetway,a1Marshaller).ready);
       canvas.dataset.a1JetwayCompletelyParked = String(jetway.deployment<=0.0005&&jetway.controller?.getState?.()==="parked");`,
     "telemetry");
   code=substitute(code,
-    '      a1Marshaller.dispose();\n      dispose(scene);',
-    '      a1Marshaller.dispose();\n      if(a1MarshallerRef.current===a1Marshaller)a1MarshallerRef.current=null;\n      dispose(scene);',
+    '      a1Marshaller.dispose();',
+    '      a1Marshaller.dispose();\n      if(a1MarshallerRef.current===a1Marshaller)a1MarshallerRef.current=null;',
     "cleanup");
   for(const part of required)if(!code.includes(part))throw Error("A1 gate missing after generated pass: "+part);
   fs.writeFileSync(path,code,"utf8");
