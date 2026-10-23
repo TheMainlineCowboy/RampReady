@@ -4,6 +4,9 @@ on:
     paths:
       - 'a1-single-marshaller.html'
       - 'src/simulation/a1SingleMarshaller.js'
+      - 'src/simulation/a1OpenPalmPose.js'
+      - 'src/simulation/a1GroundGuideMotion.js'
+      - 'src/simulation/a1MarshallerPPE.js'
       - 'scripts/stage-a1-single-marshaller.mjs'
       - 'tests/a1SingleMarshallerBrowser.mjs'
       - 'vite.config.js'
@@ -34,7 +37,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install chromium --only-shell
-      - name: Render one human with all four signals
+      - name: Verify hands and rising arm signals in real WebGL
         run: node tests/a1SingleMarshallerBrowser.mjs
       - name: Save actual browser frames for independent playback
         if: always()
